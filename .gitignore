@@ -1,0 +1,76 @@
+# ---- 凭据与本机配置（绝不能进仓库）----
+.env
+.env.*
+*.key
+*.pem
+credentials.json
+secrets/
+accounts.json
+*_token*.json
+*_secret*.json
+ba_token*
+mail_*
+cookie*
+*.har
+
+# ---- 真实客户数据与商业资料（脱敏红线）----
+# 客户名单、海关原始数据、报价单、PI/合同、发票、单证
+customers_*.csv
+leads_raw*.csv
+*_real*.csv
+quotes_*.xlsx
+PI_*.pdf
+contract_*.pdf
+BL_*.pdf
+*.bl
+internal/
+private/
+商业资料/
+客户名单*
+报价单*
+合同*
+发票*
+单证*
+
+# ---- Excel 临时锁文件 ----
+~$*
+*.xlsx#*
+
+# ---- 数据库与备份 ----
+*.sqlite
+*.sqlite3
+*.db
+*.sql.gz
+dump.sql
+backup/
+backups/
+
+# ---- 大文件与模型权重 ----
+*.pth
+*.pt
+*.onnx
+*.safetensors
+*.bin
+*.mp4
+*.mov
+*.zip
+*.tar.gz
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ---- 编辑器与系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.lnk
+
+# ---- 本地脚本产物 ----
+*_scored.csv
+followup_plan_*.csv
+drafts.md
+*.log
