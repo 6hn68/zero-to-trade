@@ -184,9 +184,9 @@ Code contributions welcome too, with one hard constraint: **Python 3.8+, standar
 
 If this repo helped you, a star in the top-right corner is the biggest support. The trend chart starts filling in after the first star:
 
-![Stars](https://img.shields.io/github/stars/zero-to-trade/zero-to-trade?style=social)
+![Stars](https://img.shields.io/github/stars/6hn68/zero-to-trade?style=social)
 
-[View the full Star History chart](https://www.star-history.com/#zero-to-trade/zero-to-trade&Date)
+[View the full Star History chart](https://www.star-history.com/#6hn68/zero-to-trade&Date)
 
 ---
 
@@ -207,7 +207,7 @@ Use it, change it, sell with it — just keep the credit. Disclaimer: none of th
 
 ## Questions & contributions
 
-**Open an issue: https://github.com/zero-to-trade/zero-to-trade/issues**
+**Open an issue: https://github.com/6hn68/zero-to-trade/issues**
 
 Spot an error? Say so. Have field detail from a market this repo knows nothing about? Send a PR. Want to argue about the method? Open an issue.
 

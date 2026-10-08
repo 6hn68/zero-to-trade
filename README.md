@@ -1,6 +1,6 @@
 # zero-to-trade
 
-![CI](https://github.com/zero-to-trade/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.8%2B-306998)
+![CI](https://github.com/6hn68/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.8%2B-306998)
 
 **给外贸零基础新手的开源操作系统：7 个环节的完整工作流 + 一条能跑的 AI 工具链。**
 
@@ -206,9 +206,9 @@ v0.2 的前置条件是 v0.3 的背调数据——因为报价需要知道对方
 
 如果这个项目帮到了你，点右上角的 star 就是最大的支持。趋势图会在第一个 star 之后自动长出来：
 
-![Stars](https://img.shields.io/github/stars/zero-to-trade/zero-to-trade?style=social)
+![Stars](https://img.shields.io/github/stars/6hn68/zero-to-trade?style=social)
 
-[查看完整 Star History 趋势图](https://www.star-history.com/#zero-to-trade/zero-to-trade&Date)
+[查看完整 Star History 趋势图](https://www.star-history.com/#6hn68/zero-to-trade&Date)
 
 ---
 
@@ -229,7 +229,7 @@ v0.2 的前置条件是 v0.3 的背调数据——因为报价需要知道对方
 
 ## 联系与提问
 
-**请走 [GitHub Issues](https://github.com/zero-to-trade/zero-to-trade/issues)。**
+**请走 [GitHub Issues](https://github.com/6hn68/zero-to-trade/issues)。**
 
 包括：内容有错、指出来 · 想补你所在市场的实战细节、提 PR · 想讨论方法论、开issue 就行。
 
@@ -267,4 +267,4 @@ Ten sample leads come back tiered T0:2 / T1:5 / T2:1 / T3:2, each with its own n
 
 **Contributing:** the biggest gap here is country-specific field detail. If you actually sell into a market this repo knows nothing about, that's the highest-value contribution you can make. Read [CONTRIBUTING.md](CONTRIBUTING.md).
 
-MIT licensed. Questions, corrections, and contributions: [open an issue](https://github.com/zero-to-trade/zero-to-trade/issues).
+MIT licensed. Questions, corrections, and contributions: [open an issue](https://github.com/6hn68/zero-to-trade/issues).

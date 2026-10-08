@@ -4,16 +4,14 @@
 
 ---
 
-## 0. 改用户名（P0，阻塞推送）
+## 0. 用户名已锁定（P0 已解除阻塞）
 
-代码里所有 issue 链接、Pages 链接、CI badge 现在都指向 `github.com/zero-to-trade/zero-to-trade`。
-如果你的 GitHub 用户名不是 `zero-to-trade`，做一次全局替换即可：
+GitHub 用户名 = **`6hn68`**，仓库名 = **`zero-to-trade`**。代码里所有 issue 链接、Pages 链接、CI badge 已全部指向 `github.com/6hn68/zero-to-trade`，无需再替换。
 
-- 把 `zero-to-trade/zero-to-trade` 换成 `你的用户名/zero-to-trade`
 - 涉及文件：`README.md`、`README_EN.md`、`README_ES.md`、`CONTRIBUTING.md`、`docs/00-getting-started.md`，以及 `README.md` 顶部的 CI badge URL
-- 已修好的死链：`CONTRIBUTING.md` 与 `docs/00-getting-started.md` 里的 `TODO-your-username` 已全部换成 `zero-to-trade`，无需再改。
+- 已修好的死链：`CONTRIBUTING.md` 与 `docs/00-getting-started.md` 里的 `TODO-your-username` 已全部换成 `6hn68`，无需再改。
 
-> 仓库名建议保持 `zero-to-trade`，短、好搜、品类词直给。
+> 仓库名保持 `zero-to-trade`，短、好搜、品类词直给。
 > CI badge 在第一次 push 后、workflow 跑过一次才会显示状态（之前是灰色 "no status"，属正常）。
 
 ---
@@ -24,7 +22,7 @@
 
 **本地连远程并推**：
 ```bash
-git remote add origin https://github.com/你的用户名/zero-to-trade.git
+git remote add origin https://github.com/6hn68/zero-to-trade.git
 git branch -M main
 git push -u origin main
 ```
@@ -54,7 +52,7 @@ export
 ## 2. 开 GitHub Pages（P1，零安装 Demo）
 
 Settings → Pages → Source 选 `main` / `/root` → Save。
-几分钟后 `https://你的用户名.github.io/zero-to-trade/` 就是浏览器版分级 Demo（已写好 `index.html`）。
+几分钟后 `https://6hn68.github.io/zero-to-trade/` 就是浏览器版分级 Demo（已写好 `index.html`）。
 
 ---
 
@@ -70,7 +68,7 @@ Settings → Pages → Source 选 `main` / `/root` → Save。
 若确实有合适的 awesome 列表，PR 加一行：
 
 ```markdown
-- [zero-to-trade](https://github.com/你的用户名/zero-to-trade) - 开源外贸工作流：7 环节 + 4 个零依赖可跑脚本（线索分级/建联文案/跟进计划/报价引擎），给零基础新手，匿名不卖课。
+- [zero-to-trade](https://github.com/6hn68/zero-to-trade) - 开源外贸工作流：7 环节 + 4 个零依赖可跑脚本（线索分级/建联文案/跟进计划/报价引擎），给零基础新手，匿名不卖课。
 ```
 
 PR 标题建议：`add zero-to-trade: open-source foreign trade workflow for beginners`

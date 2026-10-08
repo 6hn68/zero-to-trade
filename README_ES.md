@@ -95,6 +95,6 @@ La mayor falta en este repo no es documentación, es **detalle de campo por paí
 
 ## Preguntas y contribuciones
 
-**Abre un issue: https://github.com/zero-to-trade/zero-to-trade/issues**
+**Abre un issue: https://github.com/6hn68/zero-to-trade/issues**
 
 > ⚠️ Esta es una traducción *starter* al español. Se busca colaborador para revisar y completar. La versión autoritativa es [README_EN.md](README_EN.md).
