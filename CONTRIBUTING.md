@@ -145,7 +145,7 @@ English version of the repo is [README_EN.md](README_EN.md). Contributions in En
 
 ## 联系方式
 
-**一律走 [GitHub Issues](https://github.com/TODO-your-username/zero-to-trade/issues)。** 不公开私人邮箱、微信或 WhatsApp。
+**一律走 [GitHub Issues](https://github.com/zero-to-trade/zero-to-trade/issues)。** 不公开私人邮箱、微信或 WhatsApp。
 
 公开讨论能省掉重复回答同样的问题，也让后来搜到同一问题的人受益。
 

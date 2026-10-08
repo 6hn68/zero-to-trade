@@ -6,13 +6,15 @@
 
 ## 0. 改用户名（P0，阻塞推送）
 
-代码里所有 issue 链接现在指向 `github.com/zero-to-trade/zero-to-trade`。
+代码里所有 issue 链接、Pages 链接、CI badge 现在都指向 `github.com/zero-to-trade/zero-to-trade`。
 如果你的 GitHub 用户名不是 `zero-to-trade`，做一次全局替换即可：
 
 - 把 `zero-to-trade/zero-to-trade` 换成 `你的用户名/zero-to-trade`
-- 涉及文件：`README.md`、`README_EN.md`（共 3 处 issue 链接 + 文中若干处）
+- 涉及文件：`README.md`、`README_EN.md`、`README_ES.md`、`CONTRIBUTING.md`、`docs/00-getting-started.md`，以及 `README.md` 顶部的 CI badge URL
+- 已修好的死链：`CONTRIBUTING.md` 与 `docs/00-getting-started.md` 里的 `TODO-your-username` 已全部换成 `zero-to-trade`，无需再改。
 
 > 仓库名建议保持 `zero-to-trade`，短、好搜、品类词直给。
+> CI badge 在第一次 push 后、workflow 跑过一次才会显示状态（之前是灰色 "no status"，属正常）。
 
 ---
 
@@ -41,6 +43,8 @@ beginners
 export
 ```
 
+> ⚠️ **别用 `os` / `operating-system` 当 Topic**：这个词已被 `TradeOS` 等项目占住，搜这个词刷不到你。本项目自称"操作系统"是比喻（一套工作流/清单），搜索优化靠上面的品类词（`foreign-trade`/`export`/`b2b`/`cold-email`/`lead-generation`）才精准。About 里也用 "workflow / checklist / system" 而不是反复强调 OS。
+
 **About 描述（仓库页右上 About 里填，带关键词）**：
 - 短描述：`Open-source operating system for starting foreign trade with zero experience — 7 stages + runnable scripts.`
 - 长描述（About 下方的 Description 框）：`An open-source foreign-trade workflow for absolute beginners: pick a market → find/vet leads → outreach → quote → deliver. Ships 4 stdlib-only Python scripts (lead scoring, outreach copy, follow-up plan, quoting engine) and 27 copy-paste AI prompts. Anonymous, no paid course.`
@@ -54,12 +58,19 @@ Settings → Pages → Source 选 `main` / `/root` → Save。
 
 ---
 
-## 3. 借流量：PR 到 awesome-foreign-trade（P1）
+## 3. 借流量：PR 到 awesome 列表（P1，先验证再提）
 
-它是一个 187★ 的链接集合，不是竞品。提一个 PR，加一行：
+> ⚠️ **核实后再 PR**：之前记录的 "awesome-foreign-trade 187★" 未经核实，GitHub 上 `foreign-trade` 主题下相关集合很少，**这个仓库可能不存在**。提 PR 前先搜一下确认它还活着，否则白费功夫。
+
+可选项（按可行性排序）：
+1. 搜 `topic:foreign-trade` / `topic:export` 下有没有活跃的 `awesome-*` 集合，有就提 PR。
+2. 没有合适 awesome 列表时，**改投相关项目的 README「友链 / 相关项目」区**，或在外贸论坛/社群发帖（见第 5 步）。
+3. 退路：不依赖外部 list，靠 Show HN + 博主（第 4、5 步）点火，这些更可控。
+
+若确实有合适的 awesome 列表，PR 加一行：
 
 ```markdown
-- [zero-to-trade](https://github.com/你的用户名/zero-to-trade) - 开源外贸操作系统：7 环节工作流 + 4 个零依赖可跑脚本（线索分级/建联文案/跟进计划/报价引擎），给零基础新手，匿名不卖课。
+- [zero-to-trade](https://github.com/你的用户名/zero-to-trade) - 开源外贸工作流：7 环节 + 4 个零依赖可跑脚本（线索分级/建联文案/跟进计划/报价引擎），给零基础新手，匿名不卖课。
 ```
 
 PR 标题建议：`add zero-to-trade: open-source foreign trade workflow for beginners`
@@ -81,6 +92,23 @@ AI prompts. Anonymous, no paid course. Feedback welcome — especially from peop
 selling into markets the docs don't cover yet.
 ```
 配一张 `index.html` 跑出来的分级表截图（或录 30 秒 GIF）。
+
+**首发评论（提交后立刻自己沙发，回答最高频问题 + 引流到 Demo）**：
+```
+Self-plug follow-up. The thing most people miss: it's not a course, it's a checklist + 4 scripts.
+
+- No install needed: open index.html, paste a CSV, see T0-T3 tiering in the browser.
+- Total beginner? docs/fast-path.md gets you from zero to your first reply in ~5 days.
+- All scripts are stdlib-only Python 3.8+, run in 30s, no pip.
+- Anonymous, MIT, no paid upsell. Happy to take feedback, especially from people selling into markets the docs don't cover yet.
+```
+
+**UTM 追踪（GitHub 不会告诉你 star 来自哪个渠道）**：在不同渠道发链接时带上不同 UTM 参数，方便事后看哪路点火最有效。例如：
+- 微信/视频号：`?utm_source=wechat&utm_medium=social&utm_campaign=launch`
+- Show HN：`?utm_source=news&utm_medium=hn&utm_campaign=launch`
+- 博主 A：`?utm_source=bloggerA&utm_medium=collab&utm_campaign=launch`
+
+GitHub 自身不解析 UTM，所以请**配合一张自建计数表**（Google Sheet / 飞书多维表），记录"哪天、哪个渠道、发了什么、当天新增 star"，累计到 100 个 star 后看来源集中度，集中处加投。
 
 ---
 

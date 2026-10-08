@@ -1,0 +1,29 @@
+name: Bug report
+description: 报告一个错误、过时信息或说不清的判断标准
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        三句话原则：哪一行看不懂、哪个数字没有来源、哪条不适用你所在的行业。
+  - type: input
+    id: where
+    attributes:
+      label: 哪一行 / 哪个文件
+      placeholder: e.g. docs/04-outreach.md 第 32 行
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: 你看到的是什么
+    validations:
+      required: true
+  - type: textarea
+    id: expect
+    attributes:
+      label: 你预期应该是什么（可选）
+  - type: textarea
+    id: context
+    attributes:
+      label: 你的行业 / 国家（便于判断是否适用）

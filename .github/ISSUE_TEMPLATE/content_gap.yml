@@ -1,0 +1,23 @@
+name: 补充市场/行业实战细节
+description: 你真跑过的环节细节，是全球买家最缺的内容
+labels: [content]
+body:
+  - type: input
+    id: market
+    attributes:
+      label: 国家 / 地区
+    validations:
+      required: true
+  - type: input
+    id: industry
+    attributes:
+      label: 行业 / 产品
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: 你真跑过的细节（字段名 / 单证名 / 渠道结构 / 付款习惯 / 常见拒付理由）
+      placeholder: 写你真做过的，不写你觉得应该这样。
+    validations:
+      required: true

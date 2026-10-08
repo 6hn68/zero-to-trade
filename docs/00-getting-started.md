@@ -20,7 +20,7 @@
 装了 Git 之后在命令行跑：
 
 ```bash
-git clone https://github.com/TODO-your-username/zero-to-trade.git
+git clone https://github.com/zero-to-trade/zero-to-trade.git
 ```
 
 > 小白暂时不用管方法 B。方法 A 够用。

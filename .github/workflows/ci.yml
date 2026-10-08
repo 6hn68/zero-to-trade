@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Compile scripts (stdlib-only guard)
+        run: python -m py_compile scripts/*.py
+
+      - name: Smoke test lead_score
+        run: python scripts/lead_score.py examples/leads_example.csv
+
+      - name: Smoke test quote_engine
+        run: python scripts/quote_engine.py --cost 28 --freight 6 --margin 15 --format json

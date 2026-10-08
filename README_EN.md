@@ -6,7 +6,7 @@
 
 > 🔥 **You sent 200 cold emails and got zero replies. It's not your English — it's your order of operations.** This repo breaks "from picking a market to getting paid" into 7 executable steps plus 3 scripts you can run, so each step tells you exactly which site to open, what to type, and what "passed" looks like.
 
-MIT licensed · v0.1 · [中文版](README.md)
+MIT licensed · v0.1.5 · [中文版](README.md)
 
 ---
 
@@ -23,9 +23,9 @@ How this repo handles it: **take one task all the way down until it becomes an a
 | What a tutorial says | What this repo says |
 |---|---|
 | "Do background research" | L1 screen checks exactly three things: does the site exist, how long has the company been registered, are the social accounts active. Fail any one and the lead is dead. |
-| "Quality matters more than quantity" | 8 leads get sorted into T0/T1/T2/T3, and each tier comes with its own next action and its own time budget. |
+| "Quality matters more than quantity" | 10 leads get sorted into T0/T1/T2/T3, and each tier comes with its own next action and its own time budget. |
 | "Follow up with them" | Day 1, 3, 5, 7. Different angle each time. Day 7 ends with either a clear close or a clear drop. |
-| "AI is changing trade" | Three stdlib-only Python scripts. `python scripts/lead_score.py examples/leads_example.csv` gives you a full tiering in 30 seconds. |
+| "AI is changing trade" | Four stdlib-only Python scripts (one alpha quoting engine). `python scripts/lead_score.py examples/leads_example.csv` gives you a full tiering in 30 seconds. |
 
 The difference isn't the amount of information. It's the **grain size**. Every conclusion in this repo has to land on: which site do you open this afternoon, what do you type, and what result counts as passed.
 
@@ -49,13 +49,15 @@ One continuous chain, from "pick a country" to "get the money." Each stage has a
 
 Stage docs live in `docs/`, one file per stage, all following the same six-part structure (see [CONTRIBUTING.md](CONTRIBUTING.md)): **what this stage is for → how to do it, step by step → the pass/fail criteria → the classic mistakes → copy-paste templates → the AI prompts for this stage.**
 
-**Total beginner?** Read [`docs/00-getting-started.md`](docs/00-getting-started.md) first — no git, no Python assumed, working in about 10 minutes.
+**Total beginner?** Read [`docs/00-getting-started.md`](docs/00-getting-started.md) first — no git, no Python assumed, working in about 10 minutes. Or start with [`docs/fast-path.md`](docs/fast-path.md): five days from zero to your first reply.
 
 ---
 
 ## 30-second quickstart
 
-Three scripts. No third-party packages. Python 3.8+.
+**No Python?** Just open [`index.html`](index.html) in a browser — paste a CSV and see the T0-T3 tiering, zero install, zero dependencies. (Auto-hosted on GitHub Pages once pushed, so anyone can open it.)
+
+Four scripts (one is the v0.2 alpha quoting engine). No third-party packages. Python 3.8+.
 
 ```bash
 # 1. Tier your leads. CSV in, T0-T3 out, each tier with its next action.
@@ -66,26 +68,27 @@ python scripts/outreach_gen.py examples/leads_example.csv --tier T0
 
 # 3. Build a 7-day, 3-touch follow-up plan with real dates.
 python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv examples/leads_example.csv
+
+# 4. (alpha) Quoting engine: cost + freight + margin → FOB/CIF range + 3-step concession ladder
+python scripts/quote_engine.py --cost 28 --freight 6 --margin 15
 ```
 
-Expected output from the first command (real output, 10 sample leads):
+Expected output from the first command. The script prints in Chinese; here is the same data translated into English (10 sample leads):
 
-```
-  分级   公司                      国家              得分  下一步
-  T0   Al-Drees Tyre Co           Saudi Arabia      95  contact today, don't wait
-  T0   Delta Tyre Group           Saudi Arabia      92  contact today, don't wait
-  T1   Blue Ocean Trading         Oman              77  this week
-  T1   East Star Auto             Saudi Arabia      71  this week
-  T1   Nile Trade Group           Egypt             67  this week
-  T1   Gulf Rim Trading LLC       UAE               65  this week
-  T1   Al-Hoda Tires              Saudi Arabia      64  this week
-  T2   Pioneer Motors Nigeria     Nigeria           46  low-freq pool, scan daily
-  T3   Levant Auto Supplies       Lebanon           20  info insufficient, top up first
-  T3   Riyadh Auto Parts          Saudi Arabia      10  info insufficient, top up first
+| Tier | Company | Country | Score | Next action |
+|---|---|---|---|---|
+| T0 | Al-Drees Tyre Co | Saudi Arabia | 95 | contact today, don't wait |
+| T0 | Delta Tyre Group | Saudi Arabia | 92 | contact today, don't wait |
+| T1 | Blue Ocean Trading | Oman | 77 | this week |
+| T1 | East Star Auto | Saudi Arabia | 71 | this week |
+| T1 | Nile Trade Group | Egypt | 67 | this week |
+| T1 | Gulf Rim Trading LLC | UAE | 65 | this week |
+| T1 | Al-Hoda Tires | Saudi Arabia | 64 | this week |
+| T2 | Pioneer Motors Nigeria | Nigeria | 46 | low-freq pool, scan daily |
+| T3 | Levant Auto Supplies | Lebanon | 20 | info insufficient, top up first |
+| T3 | Riyadh Auto Parts | Saudi Arabia | 10 | info insufficient, top up first |
 
-  Summary: T0:2 / T1:5 / T2:1 / T3:2
-  Reply to first: Al-Drees Tyre Co、Delta Tyre Group
-```
+Summary: **T0:2 / T1:5 / T2:1 / T3:2**. Reply to first: Al-Drees Tyre Co, Delta Tyre Group.
 
 CSV header:
 
@@ -101,8 +104,8 @@ The scripts only handle what a machine can decide: does an email exist, does a w
 
 ```
 zero-to-trade/
-├── README.md              # This file
-├── README_EN.md           # Full English version
+├── README.md              # Full Chinese version
+├── README_EN.md           # This file
 ├── index.html             # Zero-install browser demo (GitHub Pages)
 ├── MANIFESTO.md           # Anonymous, no paid course: the brand stance
 ├── GITHUB_LAUNCH.md       # Launch + promo checklist (Topics/About/PR/Show HN)
@@ -110,13 +113,15 @@ zero-to-trade/
 ├── LICENSE                # MIT
 ├── docs/                  # One file per stage
 │   ├── 00-getting-started.md
+│   ├── fast-path.md       # 5 days from zero to first reply
 │   ├── 01-market-selection.md
 │   ├── 02-find-leads.md
 │   ├── 03-due-diligence.md
 │   ├── 04-outreach.md
 │   ├── 05-negotiation.md
 │   ├── 06-quote.md
-│   └── 07-order-delivery.md
+│   ├── 07-order-delivery.md
+│   └── deal-walkthrough.md # A realistic first-deal worked example
 ├── scripts/               # Runnable Python, standard library only
 │   ├── lead_score.py      # Tier leads T0-T3
 │   ├── outreach_gen.py    # Bilingual outreach copy per tier
@@ -151,7 +156,7 @@ The scripts also deliberately avoid pandas and the OpenAI SDK. Environment setup
 
 | Version | Status | Contents |
 |---|---|---|
-| **v0.1.5** | Added | Zero-install browser demo (index.html) + v0.2 quoting engine alpha (quote_engine.py) + brand manifesto (MANIFESTO) + launch/promo checklist (GITHUB_LAUNCH) |
+| **v0.1.5** | Added | Zero-install browser demo (index.html) + v0.2 quoting engine alpha (quote_engine.py) + brand manifesto (MANIFESTO) + launch/promo checklist (GITHUB_LAUNCH) + Fast Path + deal walkthrough |
 | **v0.1** | Shipped | 7 stage docs, 3 stdlib scripts, 27 prompts, bilingual README |
 | **v0.2** | 🟡 In progress (alpha) | **AI quoting engine**: `scripts/quote_engine.py` is live in alpha — input costs + market + competitor anchor price → FOB/CIF range + a three-step concession ladder (each step must buy something) |
 | **v0.3** | Planned | **Buyer background-check agent**: input a company name → L1/L2/L3 research draft + red-flag checklist, with source links |
@@ -175,18 +180,20 @@ Code contributions welcome too, with one hard constraint: **Python 3.8+, standar
 
 ---
 
-## ⭐ Star History
+## ⭐ No star yet? You could be the first
 
-If this repo helped you, a star is the biggest support. Trend chart:
+If this repo helped you, a star in the top-right corner is the biggest support. The trend chart starts filling in after the first star:
 
-[![Star History Chart](https://api.star-history.com/svg?repos=zero-to-trade/zero-to-trade&type=Date)](https://www.star-history.com/#zero-to-trade/zero-to-trade&Date)
+![Stars](https://img.shields.io/github/stars/zero-to-trade/zero-to-trade?style=social)
+
+[View the full Star History chart](https://www.star-history.com/#zero-to-trade/zero-to-trade&Date)
 
 ---
 
 ## Translations
 
 - 🇨🇳 [中文版](README.md) (full, ready)
-- 🇪🇸 🇸🇦 🇵🇹 🇷🇺 🇫🇷 🇻🇳 wanted — translate any stage doc you're fluent in; keep the six-part structure and align terms against the glossary. See [CONTRIBUTING.md](CONTRIBUTING.md).
+- 🇪🇸 🇸🇦 🇵🇹 🇷🇺 🇫🇷 🇻🇳 wanted — translate any stage doc you're fluent in; keep the six-part structure and align terms against the glossary. See [CONTRIBUTING.md](CONTRIBUTING.md). A Spanish starter lives at [README_ES.md](README_ES.md).
 
 ---
 

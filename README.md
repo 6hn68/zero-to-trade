@@ -1,5 +1,7 @@
 # zero-to-trade
 
+![CI](https://github.com/zero-to-trade/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.8%2B-306998)
+
 **给外贸零基础新手的开源操作系统：7 个环节的完整工作流 + 一条能跑的 AI 工具链。**
 
 > 🔥 **你发 200 封开发信 0 回复，不是英语差，是顺序错了。** 这个项目把"从选市场到收钱"拆成 7 步可执行清单 + 3 个能跑的脚本，每步告诉你今天下午打开哪个网站、填什么、看到什么算过关。
@@ -56,7 +58,9 @@
 
 ## 30 秒快速上手
 
-三个脚本，零第三方依赖，只要 Python 3.8+。
+**不想装 Python？** 直接双击打开 [`index.html`](index.html) —— 浏览器里粘贴 CSV 就能看到 T0-T3 分级，零安装、零依赖。（推到 GitHub 后由 Pages 自动托管，别人也能直接打开。）
+
+四个脚本（其中一个是 v0.2 alpha 报价引擎），零第三方依赖，只要 Python 3.8+：
 
 ```bash
 # 1. 线索自动分级：输入 CSV，输出 T0-T3 排序 + 每级下一步动作
@@ -67,9 +71,12 @@ python scripts/outreach_gen.py examples/leads_example.csv --tier T0
 
 # 3. 生成 7 天 3 触达跟进计划表（带具体日期）
 python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv examples/leads_example.csv
+
+# 4. (alpha) 报价引擎：成本 + 海运费 + 毛利 → FOB/CIF 区间 + 三档让步阶梯
+python scripts/quote_engine.py --cost 28 --freight 6 --margin 15
 ```
 
-> 💡 不想装 Python？直接用浏览器打开 [`index.html`](index.html) 在线体验分级 Demo（推到 GitHub 后由 Pages 自动托管）。
+> 💡 完全零基础？先看 [`docs/fast-path.md`](docs/fast-path.md) —— 从 0 到收到第一封客户回复，照着做 5 天。
 
 ### 第 1 条命令的真实输出
 
@@ -120,19 +127,23 @@ company,country,product,source,email,phone,years,contact,note
 zero-to-trade/
 ├── README.md              # 你正在读的中文主门面
 ├── README_EN.md           # 完整英文版
+├── README_ES.md           # 西班牙语版（starter，招募校对）
 ├── index.html             # 零安装浏览器 Demo（GitHub Pages 自动托管）
 ├── MANIFESTO.md           # 匿名不卖课：品牌主张
 ├── GITHUB_LAUNCH.md       # 上线 + 推广执行清单（Topics/About/PR/Show HN）
 ├── CONTRIBUTING.md        # 贡献方式 + 文档/代码规范
 ├── LICENSE                # MIT
 ├── docs/                  # 7 个环节的详细文档（一个环节一个文件）
+│   ├── 00-getting-started.md   # 完全零基础：不懂 git/Python 也能 10 分钟跑起来
+│   ├── fast-path.md            # 5 天从零到第一封客户回复（新手最快路径）
 │   ├── 01-market-selection.md
 │   ├── 02-find-leads.md
 │   ├── 03-due-diligence.md
 │   ├── 04-outreach.md
 │   ├── 05-negotiation.md
 │   ├── 06-quote.md
-│   └── 07-order-delivery.md
+│   ├── 07-order-delivery.md
+│   └── deal-walkthrough.md     # 一笔真实感第一单的全流程走查（虚构示例）
 ├── scripts/               # 可直接跑的 Python 脚本（stdlib-only）
 │   ├── lead_score.py      # 线索 T0-T3 自动分级
 │   ├── outreach_gen.py    # 按分级生成中英对照建联消息
@@ -191,18 +202,20 @@ v0.2 的前置条件是 v0.3 的背调数据——因为报价需要知道对方
 
 ---
 
-## ⭐ Star History
+## ⭐ 还没 star？你可以是第一个
 
-如果这个项目帮到了你，点个 star 就是最大的支持。趋势图：
+如果这个项目帮到了你，点右上角的 star 就是最大的支持。趋势图会在第一个 star 之后自动长出来：
 
-[![Star History Chart](https://api.star-history.com/svg?repos=zero-to-trade/zero-to-trade&type=Date)](https://www.star-history.com/#zero-to-trade/zero-to-trade&Date)
+![Stars](https://img.shields.io/github/stars/zero-to-trade/zero-to-trade?style=social)
+
+[查看完整 Star History 趋势图](https://www.star-history.com/#zero-to-trade/zero-to-trade&Date)
 
 ---
 
 ## 多语言
 
 - 🇺🇸 [English](README_EN.md)（完整版，已就绪）
-- 🇪🇸 🇸🇦 🇵🇹 🇷🇺 🇫🇷 🇻🇳 招募中 —— 任意语言熟就可以翻，结构不变、术语对齐术语表，详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+- 🇪🇸 [Español](README_ES.md)（starter，招募校对）· 🇸🇦 🇵🇹 🇷🇺 🇫🇷 🇻🇳 招募中 —— 任意语言熟就可以翻，结构不变、术语对齐术语表，详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ---
 
@@ -246,11 +259,11 @@ The premise: **AI does the heavy lifting, you make the calls.** Most tutorials t
 python scripts/lead_score.py examples/leads_example.csv
 ```
 
-Eight sample leads come back tiered T0:1 / T1:2 / T2:4 / T3:1, each with its own next action.
+Ten sample leads come back tiered T0:2 / T1:5 / T2:1 / T3:2, each with its own next action.
 
 **What makes it different:** discipline, not tooling. The rules are what carry value — T0 gets contacted today, T3 goes in the cold pool, a concession without a condition is a donation. Anything that can be an `if/else` lives in a script, anything that needs judgment lives in the docs, anything that needs to sound like a human lives in `prompts/`.
 
-**Roadmap:** v0.1 (docs + scripts + 21 prompts) → v0.2 AI quoting engine → v0.3 buyer background-check agent → long term: industry packs, more languages, real lead datasets.
+**Roadmap:** v0.1 (docs + scripts + 27 prompts) → v0.2 AI quoting engine → v0.3 buyer background-check agent → long term: industry packs, more languages, real lead datasets.
 
 **Contributing:** the biggest gap here is country-specific field detail. If you actually sell into a market this repo knows nothing about, that's the highest-value contribution you can make. Read [CONTRIBUTING.md](CONTRIBUTING.md).
 

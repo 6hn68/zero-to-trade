@@ -14,7 +14,7 @@ quote_engine.py — v0.2 报价引擎 (alpha)
     --cost        单位成本（工厂/EXW 价，USD/件或 USD/套），必填
     --freight     到目的港海运费（USD/件），默认 0
     --margin      目标毛利百分比，默认 15
-    --insurance   保险费率（占货值比例），默认 0.01
+    --insurance   保险费率（占货值比例），默认 0.0015（约万分之1.5；海运险通常 0.1%–0.3%）
     --local       本地费用（报关/拖车/港杂，USD/件），默认 0
     --contingency 不可预见费比例，默认 0.03
     --anchor      竞品锚价（USD/件，可选）—— 有则给定位建议
@@ -35,10 +35,13 @@ def build_quote(cost, freight, margin, insurance_rate, local, contingency, ancho
     landed_cost = cost * (1 + contingency) + local
     # FOB = 成本 + 毛利（海运费不进 FOB）
     fob = landed_cost * (1 + margin / 100.0)
-    # CIF = FOB + 海运费 + 保险（保险按货值 110% 估算）
-    insured_value = (fob + freight) * 1.10
-    insurance = insured_value * insurance_rate
-    cif = fob + freight + insurance
+    # CIF 标准公式：保险按 CIF 货值 110% 投保，故 CIF = (FOB+运费) / (1 - 1.10×费率)
+    rate = insurance_rate
+    denom = 1 - 1.10 * rate
+    if denom <= 0:
+        denom = 0.99835  # 费率异常（≥90%）时回退到近似，避免除零/负值
+    cif = (fob + freight) / denom
+    insurance = cif * 1.10 * rate
 
     # 报价格子：给客户一个区间而不是死价，留出谈判空间
     fob_list = round(fob, 2)
@@ -85,8 +88,8 @@ def print_table(q):
     print("  报价引擎 (alpha) 结果")
     print("=" * 60)
     print("  落地成本(含不可预见) : %s" % q["landed_cost"])
-    print("  FOB 报价区间        : %s ~ %s  (底线 %s)" % (q["fob_list"], q["fob_list"], q["fob_floor"]))
-    print("  CIF 报价区间        : %s ~ %s  (底线 %s)" % (q["cif_list"], q["cif_list"], q["cif_floor"]))
+    print("  FOB 报价区间        : %s ~ %s  (底线 %s)" % (q["fob_floor"], q["fob_list"], q["fob_floor"]))
+    print("  CIF 报价区间        : %s ~ %s  (底线 %s)" % (q["cif_floor"], q["cif_list"], q["cif_floor"]))
     print("  保险                : %s" % q["insurance"])
     print("-" * 60)
     print("  三档让步阶梯（每一步必须换条件）:")
@@ -107,7 +110,7 @@ def main():
     p.add_argument("--cost", type=float, required=True, help="单位成本(EXW/工厂价, USD)")
     p.add_argument("--freight", type=float, default=0.0, help="到港海运费(USD/件)")
     p.add_argument("--margin", type=float, default=15.0, help="目标毛利%%, 默认 15")
-    p.add_argument("--insurance", type=float, default=0.01, help="保险费率, 默认 0.01")
+    p.add_argument("--insurance", type=float, default=0.0015, help="保险费率(占CIF货值), 默认 0.0015")
     p.add_argument("--local", type=float, default=0.0, help="本地费用(报关/拖车/港杂, USD/件)")
     p.add_argument("--contingency", type=float, default=0.03, help="不可预见费比例, 默认 0.03")
     p.add_argument("--anchor", type=float, default=None, help="竞品锚价(USD/件, 可选)")
