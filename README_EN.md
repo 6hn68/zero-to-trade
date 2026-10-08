@@ -6,7 +6,9 @@
 
 > 🔥 **You sent 200 cold emails and got zero replies. It's not your English — it's your order of operations.** This repo breaks "from picking a market to getting paid" into 7 executable steps plus 3 scripts you can run, so each step tells you exactly which site to open, what to type, and what "passed" looks like.
 
-MIT licensed · v0.1.5 · [中文版](README.md)
+> 🔓 MIT open source · 🚫 No paid course · ✅ Scripts run with zero deps (CI passing) · 🛡️ Anonymous author — credibility comes from the content
+
+MIT licensed · v0.1.6 · [中文版](README.md)
 
 ---
 
@@ -180,11 +182,24 @@ Code contributions welcome too, with one hard constraint: **Python 3.8+, standar
 
 ---
 
-## ⭐ No star yet? You could be the first
+## 🛠️ For developers: hackable, zero-dependency
 
-If this repo helped you, a star in the top-right corner is the biggest support. The trend chart starts filling in after the first star:
+All four scripts (`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine`) use the Python standard library only — **no third-party dependencies**. Fork it, tweak it, embed it:
 
-![Stars](https://img.shields.io/github/stars/6hn68/zero-to-trade?style=social)
+- Change scoring weights? Edit the four constants at the top of `lead_score.py` (`CONTACT_W / SOURCE_W / SIGNAL_W / MATURITY_W`); the max stays 100.
+- Plug in your own customs data? Align your CSV header to `company,country,product,source,email,phone,years,contact,note` and feed it in.
+- Embed in your own toolchain? Each script is importable — `score_leads()`, `build_message()`, `plan_followups()`, `quote_range()` are pure functions returning dicts/lists. No network, no file writes.
+- CI runs `py_compile` + smoke tests (py3.8/3.11/3.13) on every PR, so your edits won't silently break.
+
+> Design philosophy: **verifiable > flashy.** You don't have to trust me — run `python scripts/lead_score.py examples/leads_example.csv` and see for yourself.
+
+---
+
+## ⭐ Like it? Drop a star
+
+zero-to-trade is **actively maintained** (recent commits in the repo history). If it saved you from a wrong turn, a star in the top-right corner is the best feedback — and the easiest way to find it again.
+
+![Stars](https://img.shields.io/github/stars/6hn68/zero-to-trade?style=social) ![Last Commit](https://img.shields.io/github/last-commit/6hn68/zero-to-trade)
 
 [View the full Star History chart](https://www.star-history.com/#6hn68/zero-to-trade&Date)
 

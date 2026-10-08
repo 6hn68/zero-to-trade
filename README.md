@@ -11,6 +11,8 @@
 **An open-source operating system for new foreign-trade sellers: a 7-stage workflow plus a working AI toolchain.**
 > Core idea in one line: **AI does the heavy lifting, you make the calls.**
 
+> 🔓 MIT 开源 · 🚫 不卖课 · ✅ 脚本零依赖、跑得通（CI 已在跑）· 🛡️ 作者匿名，可信度来自内容本身
+
 ---
 
 ## 这个项目解决什么问题
@@ -202,11 +204,24 @@ v0.2 的前置条件是 v0.3 的背调数据——因为报价需要知道对方
 
 ---
 
-## ⭐ 还没 star？你可以是第一个
+## 🛠️ 给开发者：可 hack、零依赖
 
-如果这个项目帮到了你，点右上角的 star 就是最大的支持。趋势图会在第一个 star 之后自动长出来：
+这 4 个脚本（`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine`）只用 Python 标准库，**没有任何第三方依赖**，你随便改、随便嵌：
 
-![Stars](https://img.shields.io/github/stars/6hn68/zero-to-trade?style=social)
+- 想换打分权重？改 `lead_score.py` 顶部的 `CONTACT_W / SOURCE_W / SIGNAL_W / MATURITY_W` 四个常量即可，满分仍是 100。
+- 想接你自己的海关数据？把 CSV 表头对齐 `company,country,product,source,email,phone,years,contact,note`，直接喂进去。
+- 想嵌进你自己的工具链？每个脚本都能当模块 `import`，`score_leads()` / `build_message()` / `plan_followups()` / `quote_range()` 都是纯函数，返回字典/列表，不碰网络、不写文件。
+- CI 已在 GitHub Actions 跑 `py_compile` + 冒烟测试（py3.8/3.11/3.13），改完提 PR 不会悄悄坏。
+
+> 设计哲学：**可验证 > 可炫**。你不需要相信我，跑一遍 `python scripts/lead_score.py examples/leads_example.csv` 自己看结果。
+
+---
+
+## ⭐ 喜欢就点个 star
+
+zero-to-trade 是 **活跃维护** 的开源项目（最近提交见仓库 commit 历史）。如果它帮你少走了弯路，点右上角 star 就是最好的反馈——也方便你下次回来找。
+
+![Stars](https://img.shields.io/github/stars/6hn68/zero-to-trade?style=social) ![Last Commit](https://img.shields.io/github/last-commit/6hn68/zero-to-trade)
 
 [查看完整 Star History 趋势图](https://www.star-history.com/#6hn68/zero-to-trade&Date)
 
