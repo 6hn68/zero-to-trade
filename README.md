@@ -48,6 +48,8 @@
 
 每环节文档在 `docs/`，统一采用六段结构（见 [CONTRIBUTING.md](CONTRIBUTING.md#文档规范)）：**这个环节在干什么 → 怎么做（分步） → 判断标准 → 常见坑 → 可复制模板 → 本环节的 AI 提示词**。
 
+**完全零基础？** 先读 [`docs/00-getting-started.md`](docs/00-getting-started.md) —— 不懂 git、不懂 Python 也能在 10 分钟内跑起来。
+
 ---
 
 ## 30 秒快速上手

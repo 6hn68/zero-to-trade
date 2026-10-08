@@ -47,6 +47,8 @@ One continuous chain, from "pick a country" to "get the money." Each stage has a
 
 Stage docs live in `docs/`, one file per stage, all following the same six-part structure (see [CONTRIBUTING.md](CONTRIBUTING.md)): **what this stage is for → how to do it, step by step → the pass/fail criteria → the classic mistakes → copy-paste templates → the AI prompts for this stage.**
 
+**Total beginner?** Read [`docs/00-getting-started.md`](docs/00-getting-started.md) first — no git, no Python assumed, working in about 10 minutes.
+
 ---
 
 ## 30-second quickstart
