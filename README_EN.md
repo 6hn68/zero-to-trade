@@ -4,6 +4,8 @@
 
 > The premise, in one line: **AI does the heavy lifting, you make the calls.**
 
+> 🔥 **You sent 200 cold emails and got zero replies. It's not your English — it's your order of operations.** This repo breaks "from picking a market to getting paid" into 7 executable steps plus 3 scripts you can run, so each step tells you exactly which site to open, what to type, and what "passed" looks like.
+
 MIT licensed · v0.1 · [中文版](README.md)
 
 ---
@@ -63,24 +65,32 @@ python scripts/lead_score.py examples/leads_example.csv
 python scripts/outreach_gen.py examples/leads_example.csv --tier T0
 
 # 3. Build a 7-day, 3-touch follow-up plan with real dates.
-python scripts/followup_plan.py --tier T0 --start 2026-10-08
+python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv examples/leads_example.csv
 ```
 
-Expected output from the first command:
+Expected output from the first command (real output, 10 sample leads):
 
 ```
-Read 8 leads
-  T0: 1    contact today, three channels in parallel
-  T1: 2    first touch within 3 days
-  T2: 4    low-frequency pool, prep material first
-  T3: 1    no time investment
-→ examples/leads_example_scored.csv
+  分级   公司                      国家              得分  下一步
+  T0   Al-Drees Tyre Co           Saudi Arabia      95  contact today, don't wait
+  T0   Delta Tyre Group           Saudi Arabia      92  contact today, don't wait
+  T1   Blue Ocean Trading         Oman              77  this week
+  T1   East Star Auto             Saudi Arabia      71  this week
+  T1   Nile Trade Group           Egypt             67  this week
+  T1   Gulf Rim Trading LLC       UAE               65  this week
+  T1   Al-Hoda Tires              Saudi Arabia      64  this week
+  T2   Pioneer Motors Nigeria     Nigeria           46  low-freq pool, scan daily
+  T3   Levant Auto Supplies       Lebanon           20  info insufficient, top up first
+  T3   Riyadh Auto Parts          Saudi Arabia      10  info insufficient, top up first
+
+  Summary: T0:2 / T1:5 / T2:1 / T3:2
+  Reply to first: Al-Drees Tyre Co、Delta Tyre Group
 ```
 
 CSV header:
 
 ```
-company_name,country,website,contact_name,contact_title,email,linkedin,source,last_contact_date,notes
+company,country,product,source,email,phone,years,contact,note
 ```
 
 The scripts only handle what a machine can decide: does an email exist, does a website exist, does this lead clear the T0 threshold. Whether a lead is *worth your time* stays in the docs and in your head.
@@ -93,24 +103,29 @@ The scripts only handle what a machine can decide: does an email exist, does a w
 zero-to-trade/
 ├── README.md              # This file
 ├── README_EN.md           # Full English version
+├── index.html             # Zero-install browser demo (GitHub Pages)
+├── MANIFESTO.md           # Anonymous, no paid course: the brand stance
+├── GITHUB_LAUNCH.md       # Launch + promo checklist (Topics/About/PR/Show HN)
 ├── CONTRIBUTING.md        # How to contribute + doc and code conventions
 ├── LICENSE                # MIT
 ├── docs/                  # One file per stage
-│   ├── 01-pick-a-market.md
+│   ├── 00-getting-started.md
+│   ├── 01-market-selection.md
 │   ├── 02-find-leads.md
-│   ├── 03-vet-the-buyer.md
-│   ├── 04-make-contact.md
-│   ├── 05-talk-specs.md
-│   ├── 06-quote-negotiate.md
-│   └── 07-delivery.md
+│   ├── 03-due-diligence.md
+│   ├── 04-outreach.md
+│   ├── 05-negotiation.md
+│   ├── 06-quote.md
+│   └── 07-order-delivery.md
 ├── scripts/               # Runnable Python, standard library only
 │   ├── lead_score.py      # Tier leads T0-T3
 │   ├── outreach_gen.py    # Bilingual outreach copy per tier
-│   └── followup_plan.py   # 7-day, 3-touch follow-up plan
+│   ├── followup_plan.py   # 7-day, 3-touch follow-up plan
+│   └── quote_engine.py    # v0.2 quoting engine (alpha): FOB/CIF range + 3-step concession ladder
 ├── examples/
 │   └── leads_example.csv  # Sample data, runnable as-is
 ├── prompts/
-│   └── AI_PROMPTS.md      # 21+ copy-paste English prompts, grouped by stage
+│   └── AI_PROMPTS.md      # 27 copy-paste English prompts, grouped by stage
 └── assets/                # Screenshots, diagrams
 ```
 
@@ -136,8 +151,9 @@ The scripts also deliberately avoid pandas and the OpenAI SDK. Environment setup
 
 | Version | Status | Contents |
 |---|---|---|
-| **v0.1** | Shipped | 7 stage docs, 3 stdlib scripts, 21+ prompts, bilingual README |
-| **v0.2** | Planned | **AI quoting engine**: input costs + market + competitor anchor price → FOB/CIF range + a three-step concession ladder |
+| **v0.1.5** | Added | Zero-install browser demo (index.html) + v0.2 quoting engine alpha (quote_engine.py) + brand manifesto (MANIFESTO) + launch/promo checklist (GITHUB_LAUNCH) |
+| **v0.1** | Shipped | 7 stage docs, 3 stdlib scripts, 27 prompts, bilingual README |
+| **v0.2** | 🟡 In progress (alpha) | **AI quoting engine**: `scripts/quote_engine.py` is live in alpha — input costs + market + competitor anchor price → FOB/CIF range + a three-step concession ladder (each step must buy something) |
 | **v0.3** | Planned | **Buyer background-check agent**: input a company name → L1/L2/L3 research draft + red-flag checklist, with source links |
 | **Long term** | — | Industry packs (tyres, building materials, machinery, hardware); outreach copy in Spanish/Arabic/French/Russian; public de-identified lead datasets; wiring v0.2's quoting engine to customs data for automatic competitor anchor pricing |
 
@@ -159,6 +175,21 @@ Code contributions welcome too, with one hard constraint: **Python 3.8+, standar
 
 ---
 
+## ⭐ Star History
+
+If this repo helped you, a star is the biggest support. Trend chart:
+
+[![Star History Chart](https://api.star-history.com/svg?repos=zero-to-trade/zero-to-trade&type=Date)](https://www.star-history.com/#zero-to-trade/zero-to-trade&Date)
+
+---
+
+## Translations
+
+- 🇨🇳 [中文版](README.md) (full, ready)
+- 🇪🇸 🇸🇦 🇵🇹 🇷🇺 🇫🇷 🇻🇳 wanted — translate any stage doc you're fluent in; keep the six-part structure and align terms against the glossary. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
 ## License
 
 [MIT](LICENSE) © 2026 zero-to-trade contributors
@@ -169,7 +200,7 @@ Use it, change it, sell with it — just keep the credit. Disclaimer: none of th
 
 ## Questions & contributions
 
-**Open an issue: https://github.com/TODO-your-username/zero-to-trade/issues**
+**Open an issue: https://github.com/zero-to-trade/zero-to-trade/issues**
 
 Spot an error? Say so. Have field detail from a market this repo knows nothing about? Send a PR. Want to argue about the method? Open an issue.
 

@@ -2,6 +2,8 @@
 
 **给外贸零基础新手的开源操作系统：7 个环节的完整工作流 + 一条能跑的 AI 工具链。**
 
+> 🔥 **你发 200 封开发信 0 回复，不是英语差，是顺序错了。** 这个项目把"从选市场到收钱"拆成 7 步可执行清单 + 3 个能跑的脚本，每步告诉你今天下午打开哪个网站、填什么、看到什么算过关。
+
 > 核心理念一句话：**AI 干重活，人做判断。**
 
 **An open-source operating system for new foreign-trade sellers: a 7-stage workflow plus a working AI toolchain.**
@@ -67,6 +69,8 @@ python scripts/outreach_gen.py examples/leads_example.csv --tier T0
 python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv examples/leads_example.csv
 ```
 
+> 💡 不想装 Python？直接用浏览器打开 [`index.html`](index.html) 在线体验分级 Demo（推到 GitHub 后由 Pages 自动托管）。
+
 ### 第 1 条命令的真实输出
 
 ```
@@ -116,6 +120,9 @@ company,country,product,source,email,phone,years,contact,note
 zero-to-trade/
 ├── README.md              # 你正在读的中文主门面
 ├── README_EN.md           # 完整英文版
+├── index.html             # 零安装浏览器 Demo（GitHub Pages 自动托管）
+├── MANIFESTO.md           # 匿名不卖课：品牌主张
+├── GITHUB_LAUNCH.md       # 上线 + 推广执行清单（Topics/About/PR/Show HN）
 ├── CONTRIBUTING.md        # 贡献方式 + 文档/代码规范
 ├── LICENSE                # MIT
 ├── docs/                  # 7 个环节的详细文档（一个环节一个文件）
@@ -129,11 +136,12 @@ zero-to-trade/
 ├── scripts/               # 可直接跑的 Python 脚本（stdlib-only）
 │   ├── lead_score.py      # 线索 T0-T3 自动分级
 │   ├── outreach_gen.py    # 按分级生成中英对照建联消息
-│   └── followup_plan.py   # 7 天 3 触达跟进计划表
+│   ├── followup_plan.py   # 7 天 3 触达跟进计划表
+│   └── quote_engine.py    # v0.2 报价引擎(alpha)：FOB/CIF 区间 + 三档让步阶梯
 ├── examples/
 │   └── leads_example.csv  # 示例数据，可直接跑
 ├── prompts/
-│   └── AI_PROMPTS.md      # 21+ 条可直接粘贴的英文提示词，按环节分组
+│   └── AI_PROMPTS.md      # 27 条可直接粘贴的英文提示词，按环节分组
 └── assets/                # 图片、截图、图表
 ```
 
@@ -159,8 +167,9 @@ zero-to-trade/
 
 | 版本 | 状态 | 内容 |
 |---|---|---|
-| **v0.1** | ✅ 已完成 | 7 环节文档骨架 + 3 个 stdlib 脚本 + 21+ 条提示词 + 双语 README |
-| **v0.2** | 计划中 | **AI 报价引擎**：输入成本 + 市场 + 竞品锚价，输出 FOB/CIF 报价区间 + 三档让步阶梯 |
+| **v0.1.5** | ✅ 已补充 | 零安装浏览器 Demo(index.html) + v0.2 报价引擎 alpha(quote_engine.py) + 品牌主张(MANIFESTO) + 上线推广清单(GITHUB_LAUNCH) |
+| **v0.1** | ✅ 已完成 | 7 环节文档骨架 + 3 个 stdlib 脚本 + 27 条提示词 + 双语 README |
+| **v0.2** | 🟡 进行中(alpha) | **AI 报价引擎**：`scripts/quote_engine.py` 已落地 alpha —— 输入成本 + 市场 + 竞品锚价，输出 FOB/CIF 报价区间 + 三档让步阶梯（每步必须换条件） |
 | **v0.3** | 计划中 | **客户背调 Agent**：输入公司名，输出 L1/L2/L3 三级背调草稿 + 红旗清单，带来源链接 |
 | **长期** | — | 行业包（轮胎、建材、机械、五金各自的环节细节）；多语言建联消息（西/阿/法/俄）；真实线索集（脱敏后公开）；把 v0.2 的报价引擎接到海关数据上做竞品锚价自动抓取 |
 
@@ -182,6 +191,21 @@ v0.2 的前置条件是 v0.3 的背调数据——因为报价需要知道对方
 
 ---
 
+## ⭐ Star History
+
+如果这个项目帮到了你，点个 star 就是最大的支持。趋势图：
+
+[![Star History Chart](https://api.star-history.com/svg?repos=zero-to-trade/zero-to-trade&type=Date)](https://www.star-history.com/#zero-to-trade/zero-to-trade&Date)
+
+---
+
+## 多语言
+
+- 🇺🇸 [English](README_EN.md)（完整版，已就绪）
+- 🇪🇸 🇸🇦 🇵🇹 🇷🇺 🇫🇷 🇻🇳 招募中 —— 任意语言熟就可以翻，结构不变、术语对齐术语表，详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+---
+
 ## License
 
 [MIT](LICENSE) © 2026 zero-to-trade contributors
@@ -192,7 +216,7 @@ v0.2 的前置条件是 v0.3 的背调数据——因为报价需要知道对方
 
 ## 联系与提问
 
-**请走 [GitHub Issues](https://github.com/TODO-your-username/zero-to-trade/issues)。**
+**请走 [GitHub Issues](https://github.com/zero-to-trade/zero-to-trade/issues)。**
 
 包括：内容有错、指出来 · 想补你所在市场的实战细节、提 PR · 想讨论方法论、开issue 就行。
 
@@ -230,4 +254,4 @@ Eight sample leads come back tiered T0:1 / T1:2 / T2:4 / T3:1, each with its own
 
 **Contributing:** the biggest gap here is country-specific field detail. If you actually sell into a market this repo knows nothing about, that's the highest-value contribution you can make. Read [CONTRIBUTING.md](CONTRIBUTING.md).
 
-MIT licensed. Questions, corrections, and contributions: [open an issue](https://github.com/TODO-your-username/zero-to-trade/issues).
+MIT licensed. Questions, corrections, and contributions: [open an issue](https://github.com/zero-to-trade/zero-to-trade/issues).

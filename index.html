@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>zero-to-trade · 线索分级 Demo（零安装）</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --card:#ffffff; --ink:#15233b; --muted:#5b6b85;
+    --line:#e3e9f2; --blue:#1f6feb; --t0:#d93025; --t1:#e8830c; --t2:#1f7a3d; --t3:#6b7280;
+    --shadow:0 1px 3px rgba(20,35,59,.08),0 8px 24px rgba(20,35,59,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft Yahei",sans-serif}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 18px 60px}
+  h1{font-size:24px;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow);padding:18px;margin:0 0 18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:680px){.grid{grid-template-columns:1fr}}
+  label{display:block;font-weight:600;margin:0 0 6px}
+  textarea{width:100%;min-height:150px;padding:10px;border:1px solid var(--line);
+    border-radius:10px;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical}
+  button{cursor:pointer;border:none;border-radius:10px;padding:10px 16px;font-weight:600;
+    background:var(--blue);color:#fff;font-size:14px}
+  button.ghost{background:#eef3fb;color:var(--blue)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+  .hint{color:var(--muted);font-size:13px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+  th{background:#f0f4fa;font-weight:600}
+  .badge{display:inline-block;padding:2px 9px;border-radius:999px;color:#fff;font-weight:700;font-size:12px}
+  .b-T0{background:var(--t0)} .b-T1{background:var(--t1)} .b-T2{background:var(--t2)} .b-T3{background:var(--t3)}
+  .counts{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .pill{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-weight:600;background:#fff}
+  .first{margin-top:8px;font-weight:600}
+  code{background:#eef1f6;padding:1px 6px;border-radius:6px;font-size:12px}
+  a{color:var(--blue)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>zero-to-trade · 线索分级 Demo</h1>
+  <p class="sub">零安装、纯浏览器跑。逻辑和 <code>scripts/lead_score.py</code> 完全一致（满分 100：联系40 / 来源30 / 采购信号20 / 成熟度10）。</p>
+
+  <div class="card">
+    <div class="grid">
+      <div>
+        <label>① 粘贴你的 CSV（表头：company,country,product,source,email,phone,years,contact,note）</label>
+        <textarea id="csv" placeholder="Al-Drees Tyre Co,Saudi Arabia,TBR 12.00R20,referral,info@aldrees-tyre.com,+966...,18,purchasing manager,Annual RFQ"></textarea>
+      </div>
+      <div>
+        <label>② 或一键载入示例（10 条虚构数据）</label>
+        <div class="row">
+          <button class="ghost" id="load">载入示例</button>
+          <button id="run">开始分级</button>
+        </div>
+        <p class="hint" style="margin-top:14px">
+          source 填：<code>referral</code> / <code>trade_show</code> / <code>customs</code> / <code>linkedin</code> / <code>search</code>（影响最大）。<br>
+          只有 company 必填，其余缺省也能跑（缺项按最低分算）。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="out" style="display:none">
+    <div class="counts" id="counts"></div>
+    <div class="first" id="first"></div>
+    <div style="overflow:auto;margin-top:12px">
+      <table id="tbl">
+        <thead><tr><th>分级</th><th>公司</th><th>国家</th><th>得分</th><th>下一步</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="hint" id="detail" style="margin-top:10px"></p>
+  </div>
+
+  <p class="hint">想本地跑同款 Python 脚本、生成建联文案和跟进计划？看仓库 <a href="README.md">README</a>。</p>
+</div>
+
+<script>
+const SOURCE_SCORE={referral:30,trade_show:26,customs:22,linkedin:16,search:10};
+const BUYING=[
+  {pts:5,kws:["rfq","quotation request","request for quote","sourcing","looking for supplier","tender","enquiry","inquiry","采购","求购","招标","询价"]},
+  {pts:4,kws:["tyre","tire","tube","rim","truck","bus","radial","轮胎","钢圈","内胎"]},
+  {pts:3,kws:["container","40hq","20gp","fcl","lcl","bulk","ton","pallet","柜","吨"]},
+  {pts:3,kws:["purchasing manager","procurement","buyer","sourcing manager","采购经理","总经理","负责人"]},
+];
+const TIER_NEXT={T0:"今天就发首触，别等",T1:"排进本周，今天准备文案",T2:"进 B 池，每天固定时段扫一遍",T3:"信息不足，先补联系方式/需求再打"};
+const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$/;
+
+function parseCSV(text){
+  const rows=[];
+  let i=0,field="",row=[],inQ=false;
+  while(i<text.length){
+    const c=text[i];
+    if(inQ){
+      if(c==='"'){ if(text[i+1]==='"'){field+='"';i++;} else inQ=false; }
+      else field+=c;
+    }else{
+      if(c==='"') inQ=true;
+      else if(c===',') {row.push(field);field="";}
+      else if(c==='\n'){row.push(field);rows.push(row);row=[];field="";}
+      else if(c==='\r'){}
+      else field+=c;
+    }
+    i++;
+  }
+  if(field.length||row.length){row.push(field);rows.push(row);}
+  return rows.filter(r=>r.some(x=>(x||"").trim()!==""));
+}
+
+function scoreLead(r){
+  const email=(r.email||"").trim(), phone=(r.phone||"").trim();
+  let contact=0,clabel="none";
+  if(email&&phone){contact=40;clabel="email+phone";}
+  else if(email){contact=28;clabel="email";}
+  else if(phone){contact=22;clabel="phone";}
+  else if(/wa|whatsapp/i.test(phone)){contact=10;clabel="wa";}
+  if(email&&!EMAIL_RE.test(email)&&(clabel==="email"||clabel==="email+phone")){
+    contact=Math.max(0,contact-18);clabel+="(格式存疑)";
+  }
+  const src=(r.source||"search").trim().toLowerCase();
+  const source=SOURCE_SCORE[src]===undefined?10:SOURCE_SCORE[src];
+  const blob=[r.note,r.product,r.company,r.contact].join(" ").toLowerCase();
+  let buying=0;
+  for(const g of BUYING){ if(g.kws.some(k=>blob.includes(k))) buying+=g.pts; }
+  buying=Math.min(buying,20);
+  const y=parseFloat(r.years); const yy=isNaN(y)?0:y;
+  let maturity=0,mlabel="未知";
+  if(yy>=10){maturity=10;mlabel=">=10y";}
+  else if(yy>=3){maturity=7;mlabel="3-10y";}
+  else if(yy>=1){maturity=4;mlabel="1-3y";}
+  const total=contact+source+buying+maturity;
+  const tier=total>=80?"T0":total>=60?"T1":total>=40?"T2":"T3";
+  return {total,tier,contact,clabel,source,src,buying,maturity,mlabel};
+}
+
+function run(){
+  const txt=document.getElementById("csv").value;
+  const rows=parseCSV(txt);
+  if(rows.length<2){alert("没读到数据，确认 CSV 表头和至少一行数据。");return;}
+  const header=rows[0].map(h=>h.trim().toLowerCase());
+  const idx=k=>header.indexOf(k);
+  const data=rows.slice(1).map(cells=>{
+    const get=k=>{const j=idx(k);return j>=0?cells[j]:"";};
+    const rec={company:get("company"),country:get("country"),product:get("product"),
+      source:get("source"),email:get("email"),phone:get("phone"),years:get("years"),
+      contact:get("contact"),note:get("note")};
+    const s=scoreLead(rec);
+    return {...rec,...s};
+  }).sort((a,b)=>b.total-a.total||a.company.localeCompare(b.company));
+
+  const counts={T0:0,T1:0,T2:0,T3:0};
+  data.forEach(d=>counts[d.tier]++);
+  const c=document.getElementById("counts");
+  c.innerHTML=["T0","T1","T2","T3"].map(t=>
+    `<span class="pill"><span class="badge b-${t}">${t}</span> ${counts[t]}</span>`).join("");
+  document.getElementById("first").innerHTML=
+    "先回谁：<b>"+(data.filter(d=>d.tier==="T0").map(d=>d.company).join("、")||"无")+"</b>";
+
+  const tb=document.querySelector("#tbl tbody");tb.innerHTML="";
+  data.forEach(d=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><span class="badge b-${d.tier}">${d.tier}</span></td>
+      <td>${d.company||"(未命名)"}</td><td>${d.country||"?"}</td>
+      <td><b>${d.total}</b></td><td>${TIER_NEXT[d.tier]}</td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById("detail").textContent=
+    `分项：联系(${""}) 来源 采购信号 成熟度 —— 想看明细用 python 版 --format detail。`;
+  document.getElementById("out").style.display="block";
+}
+
+function loadExample(){
+  fetch("examples/leads_example.csv").then(r=>r.text()).then(t=>{
+    document.getElementById("csv").value=t.trim();run();
+  }).catch(()=>{
+    document.getElementById("csv").value=
+`company,country,product,source,email,phone,years,contact,note
+Al-Drees Tyre Co,Saudi Arabia,TBR 12.00R20,referral,info@aldrees-tyre.com,+966 11 234 5678,18,purchasing manager,Annual RFQ for truck tyres
+Delta Tyre Group,Saudi Arabia,TBR PCR OTR,referral,procurement@deltatyre.sa,+966 13 887 7665,15,purchasing manager,Strategic RFQ 3 years contract
+Blue Ocean Trading,Oman,TBR 12.00R20,customs,sales@blueocean-om.com,+968 24 112233,25,,Tender invitation
+East Star Auto,Saudi Arabia,PCR alloy wheels,linkedin,info@eaststar-ksa.com,+966 55 118 2233,4,sourcing manager,interested timing unclear
+Nile Trade Group,Egypt,PCR tubes motorcycle,search,contact@niletrade.eg,+20 2 2519 7788,6,procurement,Requesting quotation 20GP
+Gulf Rim Trading LLC,UAE,PCR 195/65R15,rade_show,,+971 4 220 3344,9,buyer,Met at Gulf Oil Show asked quotation
+Al-Hoda Tires,Saudi Arabia,TBR 315/80R22.5,customs,purchase@alhoda-tires.sa,,12,,,Importer 6 shipments year
+Pioneer Motors Nigeria,Nigeria,PCR tubes,search,,+234 803 123 4567,7,buyer,Asked FOB pricing no quantity
+Levant Auto Supplies,Lebanon,PCR tubes,linkedin,,,,2,,Small distributor no import
+Riyadh Auto Parts,Saudi Arabia,spare parts,search,,,,3,,Retail shop no import record`;
+    run();
+  });
+}
+
+document.getElementById("run").onclick=run;
+document.getElementById("load").onclick=loadExample;
+loadExample();
+</script>
+</body>
+</html>
