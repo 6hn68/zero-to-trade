@@ -32,6 +32,15 @@ private/
 发票*
 单证*
 
+# ---- CSV / Excel 兜底（拦住新手随意命名的真实导出，闭合脱敏红线）----
+*.csv
+*.xlsx
+报价*.xlsx
+客户*.csv
+# 示例数据（脱敏版）允许进仓库
+!examples/leads_example.csv
+!**/examples/**
+
 # ---- Excel 临时锁文件 ----
 ~$*
 *.xlsx#*

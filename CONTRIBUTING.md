@@ -27,7 +27,7 @@ English version of the repo is [README_EN.md](README_EN.md). Contributions in En
 规则：
 
 - **保持六段结构不变**，只换语言。结构一致才能横向对照，也方便后续维护。
-- **术语对齐**：`FOB` / `CIF` / `L/C` / `T/T` / `D/P` 这类贸易术语保留英文原文，不要意译。首次出现时写成「西语原文（English 术语）」。
+- **术语对齐**：贸易术语保留英文原文，不要意译；完整中英西三语对照见 [GLOSSARY.md](GLOSSARY.md)。首次出现时写成「西语原文（English 术语）」，例如 *debida diligencia (due diligence)* / *carta de crédito (L/C)*。
 - **代码块、CSV 表头、文件名保持原样**，不要翻译。这些是给人复制粘贴用的。
 - **数字、单位、日期格式可以本地化**，但同一份文档内保持一致。
 - 翻译不是逐字直译。原文里的口语、大白话，翻译时保留语气，不要翻成书面官腔——这份仓库的价值就在于它不像教材。
@@ -47,11 +47,21 @@ English version of the repo is [README_EN.md](README_EN.md). Contributions in En
 
 ---
 
+## 怎么扩西语 starter / 加一国别小节
+
+西语 starter（`README_ES.md`）目前在招募校对，流程刻意做得轻，目的是让懂西语的人能马上上手：
+
+- **扩 README_ES**：直接编辑 `README_ES.md` 即可。改完在改动附近加标记 `es-proofread`（行内注释或该行末尾标注都行），方便后续校对者一眼定位还没审的段落。
+- **翻译环节文档**：放 `docs/es/` 下，文件名 `NN-slug-es.md`（例如 `docs/es/03-due-diligence-es.md`）。保持六段结构，术语对齐 [GLOSSARY.md](GLOSSARY.md)。
+- **补某国 / 某行业的实战细节**：**不要新建文件**，直接在对应的环节文档里加一个 `### 国别/行业：XX` 小节。例如补厄瓜多尔的建材清关，就在 `docs/03-due-diligence.md` 或 `docs/07-order-delivery.md` 末尾加 `### 国别/行业：厄瓜多尔 · 建材`。这样细节始终挂在环节下，不会散落成孤立文件，也方便横向对照。
+
+---
+
 ## 文档规范
 
 ### 每个环节的六段结构
 
-`docs/` 下每个环节一个文件，文件名 `NN-环节名.md`（中文版）或 `NN-english-slug.md`（英文版）。**新增环节必须严格按这个结构**，否则 review 时会被打回。
+`docs/` 下每个环节一个文件，统一用英文 slug 命名：`NN-english-slug.md`（例如 `01-market-selection.md`）。**翻译版**放 `docs/<lang>/` 下，命名 `NN-slug-<lang>.md`（例如西语 `docs/es/03-due-diligence-es.md`）。**新增环节必须严格按这个结构**，否则 review 时会被打回。
 
 | 段 | 标题 | 必须包含 |
 |---|---|---|
@@ -68,6 +78,7 @@ English version of the repo is [README_EN.md](README_EN.md). Contributions in En
 - 截图放在 `assets/`，引用用相对路径，不用外链（外链会失效）。
 - 段落之间空一行，标题前后空一行，遵循 CommonMark。
 - 中文文档用中文标点，中英文之间加空格（`30 秒` 不是 `30秒`）。
+- 六个段标题均用二级标题 `##`（如 `## 这个环节在干什么`），不要混用 `#` 或 `###`，保证结构可被脚本/工具稳定识别。
 
 ### 新增环节时
 
@@ -108,15 +119,16 @@ English version of the repo is [README_EN.md](README_EN.md). Contributions in En
 
 原因：零基础用户的第一道坎是环境。装环境耗掉的时间可能比他找客户还多，一个 `pip install` 失败就足以让人永久放弃。标准库是 Python 自带的，零成本。
 
-具体禁止清单（最常被违反的几个）：`pandas`、`numpy`、`requests`、`openpyxl`、`python-docx`、`beautifulsoup4`、`openai`、`httpx`。需要 HTTP 请求就用 `urllib.request`，需要 CSV 就用 `csv` 模块，需要 JSON 就用 `json`——这些标准库功能都够。
+具体禁止清单（最常被违反的几个）：`pandas`、`numpy`、`requests`、`openpyxl`、`python-docx`、`beautifulsoup4`、`openai`、`httpx`、`urllib`。**唯一权威规则：本仓库任何脚本都不得发起网络请求。** 标准库够用——CSV 用 `csv` 模块，JSON 用 `json`，读本地文件用 `pathlib` / `io`。网络抓取留给用户自己用工具做，因为自动化抓取有合规风险，且违背零依赖原则。
 
 ### 其他要求
 
 - **目标 Python 3.8**，不要用 3.9+ 的语法（比如 `dict[str, int]` 这种内置泛型标注、`match` 语句）。
-- **单文件不超过 400 行。** 超了就说明逻辑该拆，或者该进文档而不是进代码。
+- **单文件不超过 400 行。** 超了就说明逻辑该拆，或者该进文档而不是进代码。（README 里提到的 `lead_score` 约 200 行是设计目标，不是硬上限；400 行才是打回红线。）
 - **只用 `argparse` 处理命令行参数**，不用 `click` / `typer`。
 - **每个脚本必须能独立运行**，`python scripts/xxx.py --help` 要有可读的帮助文本。
 - **必须有一个 `examples/` 里的示例输入**，让用户能零准备跑通。
+- **4 个脚本共用同一个示例输入** `examples/leads_example.csv`，不要为每个脚本另建示例文件；保证一份数据能跑通全部命令（`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine`）。
 - **输出编码 UTF-8**。Windows 终端是 GBK，中文输出必须显式处理，否则一堆乱码。用 `sys.stdout.reconfigure(encoding='utf-8')` 或在 `print` 层处理。
 - **评分逻辑必须把阈值写成模块级常量**，并在文件顶部注释里说明每个阈值为什么是这个数。让别人能改，而不是让他读代码猜。
 - **不要发网络请求。** 脚本只处理本地文件。网络抓取留给用户自己用工具做，因为自动化抓取有合规风险，且违背零依赖原则。

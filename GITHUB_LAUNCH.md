@@ -4,7 +4,7 @@
 
 ---
 
-## 0. 用户名已锁定（P0 已解除阻塞）
+## 0. 用户名已锁定（P0 · ✅ 已解除阻塞）
 
 GitHub 用户名 = **`6hn68`**，仓库名 = **`zero-to-trade`**。代码里所有 issue 链接、Pages 链接、CI badge 已全部指向 `github.com/6hn68/zero-to-trade`，无需再替换。
 
@@ -16,7 +16,9 @@ GitHub 用户名 = **`6hn68`**，仓库名 = **`zero-to-trade`**。代码里所�
 
 ---
 
-## 1. 建仓库 + 设 Topics / About（P0）
+## 1. 建仓库 + 设 Topics / About（P0 · ✅ 已完成）
+
+> ✅ 仓库已建并 push 到 `origin/main`（见 `git status`：本地领先 `origin/main` 1 个 commit）。下面的命令仅留作记录，**无需再执行**。
 
 **建仓**：GitHub → New repository → 名字 `zero-to-trade` → 选 Public → **不要**勾 Initialize with README（本地已有）→ Create。
 
@@ -44,7 +46,7 @@ export
 > ⚠️ **别用 `os` / `operating-system` 当 Topic**：这个词已被 `TradeOS` 等项目占住，搜这个词刷不到你。本项目自称"操作系统"是比喻（一套工作流/清单），搜索优化靠上面的品类词（`foreign-trade`/`export`/`b2b`/`cold-email`/`lead-generation`）才精准。About 里也用 "workflow / checklist / system" 而不是反复强调 OS。
 
 **About 描述（仓库页右上 About 里填，带关键词）**：
-- 短描述：`Open-source operating system for starting foreign trade with zero experience — 7 stages + runnable scripts.`
+- 短描述：`Open-source foreign-trade workflow for starting export with zero experience — 7 stages + 4 stdlib-only Python scripts (quoting engine is alpha).`
 - 长描述（About 下方的 Description 框）：`An open-source foreign-trade workflow for absolute beginners: pick a market → find/vet leads → outreach → quote → deliver. Ships 4 stdlib-only Python scripts (lead scoring, outreach copy, follow-up plan, quoting engine) and 27 copy-paste AI prompts. Anonymous, no paid course.`
 
 ---
@@ -75,10 +77,12 @@ PR 标题建议：`add zero-to-trade: open-source foreign trade workflow for beg
 
 ---
 
-## 4. 点火：Show HN（P2）
+## 4. 点火：Show HN（P1 · 技术背书 / 外链，非主引擎）
+
+> 优先级说明：0→1 主引擎是中文社媒 + 中腰部 KOL（见 STAR-GROWTH 二、已统一为 P0）。Show HN 在这里仅作技术背书与外链，降为 P1，与 STAR-GROWTH 对齐。
 
 Hacker News → Submit → Title：
-`Zero-to-Trade: an open-source "operating system" for starting export with zero experience`
+`Zero-to-Trade: an open-source foreign-trade workflow for starting export with zero experience`
 
 正文（贴一段，别长）：
 ```
@@ -116,7 +120,7 @@ GitHub 自身不解析 UTM，所以请**配合一张自建计数表**（Google S
 私信/评论模板（口语化，别像广告）：
 
 ```
-老师好，我做了一份开源的外贸新手操作系统，把"选市场→找客户→背调→建联→报价→交单"
+老师好，我做了一份开源的外贸新手工作流，把"选市场→找客户→背调→建联→报价→交单"
 拆成能直接照做的清单，还带了 4 个能跑的 Python 小工具（不用装环境，浏览器也能跑分级）。
 完全免费、MIT、不卖课。觉得对你的粉丝有用我就把链接发你，随便用随便改。
 ```

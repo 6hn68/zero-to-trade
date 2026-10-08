@@ -14,7 +14,8 @@ quote_engine.py — v0.2 报价引擎 (alpha)
     --cost        单位成本（工厂/EXW 价，USD/件或 USD/套），必填
     --freight     到目的港海运费（USD/件），默认 0
     --margin      目标毛利百分比，默认 15
-    --insurance   保险费率（占货值比例），默认 0.0015（约万分之1.5；海运险通常 0.1%–0.3%）
+    --insurance   保险费率（占CIF货值百分比%），默认 0.15（即 0.15%；海运险通常 0.1%–0.3%）
+    --insurance-rate  高级入口：保险费率(比率)，如 0.0015=0.15%，可覆盖 --insurance
     --local       本地费用（报关/拖车/港杂，USD/件），默认 0
     --contingency 不可预见费比例，默认 0.03
     --anchor      竞品锚价（USD/件，可选）—— 有则给定位建议
@@ -31,6 +32,11 @@ from datetime import datetime
 
 
 def build_quote(cost, freight, margin, insurance_rate, local, contingency, anchor=None):
+    # 输入校验：防止静默错价 / 亏本报价
+    if cost <= 0:
+        raise ValueError("成本必须 > 0")
+    if margin < 0:
+        raise ValueError("毛利率不能为负（负毛利=亏本报价）")
     # 不可预见费先叠进成本
     landed_cost = cost * (1 + contingency) + local
     # FOB = 成本 + 毛利（海运费不进 FOB）
@@ -39,7 +45,8 @@ def build_quote(cost, freight, margin, insurance_rate, local, contingency, ancho
     rate = insurance_rate
     denom = 1 - 1.10 * rate
     if denom <= 0:
-        denom = 0.99835  # 费率异常（≥90%）时回退到近似，避免除零/负值
+        # 费率 ≥ 90.9% 时分母非正，CIF 无定义，必须明确报错而非静默回退
+        raise ValueError("保险费率过高(≥90.9%%)导致 CIF 分母非正，请检查 --insurance")
     cif = (fob + freight) / denom
     insurance = cif * 1.10 * rate
 
@@ -82,24 +89,26 @@ def build_quote(cost, freight, margin, insurance_rate, local, contingency, ancho
     }
 
 
-def print_table(q):
-    print("")
-    print("=" * 60)
-    print("  报价引擎 (alpha) 结果")
-    print("=" * 60)
-    print("  落地成本(含不可预见) : %s" % q["landed_cost"])
-    print("  FOB 报价区间        : %s ~ %s  (底线 %s)" % (q["fob_floor"], q["fob_list"], q["fob_floor"]))
-    print("  CIF 报价区间        : %s ~ %s  (底线 %s)" % (q["cif_floor"], q["cif_list"], q["cif_floor"]))
-    print("  保险                : %s" % q["insurance"])
-    print("-" * 60)
-    print("  三档让步阶梯（每一步必须换条件）:")
-    for s in q["ladder"]:
-        print("   第%s步  -%s%%  → FOB %s  | 条件: %s" % (s["step"], s["cut_pct"], s["new_fob"], s["condition"]))
+def render_table(q):
+    s = []
+    s.append("")
+    s.append("=" * 60)
+    s.append("  报价引擎 (alpha) 结果")
+    s.append("=" * 60)
+    s.append("  落地成本(含不可预见) : %s" % q["landed_cost"])
+    s.append("  FOB 报价区间        : 底价 %s ~ 报价 %s (USD/件)" % (q["fob_floor"], q["fob_list"]))
+    s.append("  CIF 报价区间        : 底价 %s ~ 报价 %s (USD/件)" % (q["cif_floor"], q["cif_list"]))
+    s.append("  保险费              : %s USD/件 (按 CIF 110%% 投保)" % q["insurance"])
+    s.append("-" * 60)
+    s.append("  三档让步阶梯（每一步必须换条件）:")
+    for st in q["ladder"]:
+        s.append("   第%s步  -%s%%  → FOB %s  | 条件: %s" % (st["step"], st["cut_pct"], st["new_fob"], st["condition"]))
     if q["positioning"]:
-        print("-" * 60)
-        print("  竞品锚价定位: %s" % q["positioning"])
-    print("=" * 60)
-    print("")
+        s.append("-" * 60)
+        s.append("  竞品锚价定位: %s" % q["positioning"])
+    s.append("=" * 60)
+    s.append("")
+    return "\n".join(s)
 
 
 def main():
@@ -110,21 +119,32 @@ def main():
     p.add_argument("--cost", type=float, required=True, help="单位成本(EXW/工厂价, USD)")
     p.add_argument("--freight", type=float, default=0.0, help="到港海运费(USD/件)")
     p.add_argument("--margin", type=float, default=15.0, help="目标毛利%%, 默认 15")
-    p.add_argument("--insurance", type=float, default=0.0015, help="保险费率(占CIF货值), 默认 0.0015")
+    p.add_argument("--insurance", type=float, default=0.15,
+                   help="保险费率(占CIF货值%%, 默认 0.15%%)")
+    p.add_argument("--insurance-rate", type=float, default=None,
+                   help="高级入口：保险费率(比率, 如 0.0015=0.15%%)，覆盖 --insurance")
     p.add_argument("--local", type=float, default=0.0, help="本地费用(报关/拖车/港杂, USD/件)")
     p.add_argument("--contingency", type=float, default=0.03, help="不可预见费比例, 默认 0.03")
     p.add_argument("--anchor", type=float, default=None, help="竞品锚价(USD/件, 可选)")
     p.add_argument("--format", choices=["table", "json"], default="table")
     args = p.parse_args()
 
+    # 保险费率：默认收「百分比」，内部换算为比率；--insurance-rate 为高级比率入口
+    if args.insurance_rate is not None:
+        rate = args.insurance_rate
+    else:
+        rate = args.insurance / 100.0
+    if rate > 0.05:
+        raise SystemExit("✗ 保险费率 %.2f%% 异常(>5%%)? 新手常把 0.3%%输成0.3。请确认单位。" % (rate * 100))
+
     q = build_quote(args.cost, args.freight, args.margin,
-                   args.insurance, args.local, args.contingency, args.anchor)
+                   rate, args.local, args.contingency, args.anchor)
 
     if args.format == "json":
         print(json.dumps({"generated_at": datetime.now().isoformat(timespec="seconds"),
                           **q}, ensure_ascii=False, indent=2))
     else:
-        print_table(q)
+        print(render_table(q))
 
 
 if __name__ == "__main__":

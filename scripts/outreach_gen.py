@@ -51,7 +51,7 @@ BODY = {
 
 Hi {contact},
 
-I saw {why_them}. We manufacture {product} and supply buyers in {country} on a regular basis.
+I noticed {why_them}. We manufacture {product} and supply buyers in {country} on a regular basis.
 
 Two things I can confirm straight away:
 - Specification: {product}, mixed loading on 40HQ accepted
@@ -59,7 +59,7 @@ Two things I can confirm straight away:
 
 If it helps, I can send our price list for {product} first — no obligation, and if the range does not fit you we will say so.
 
-What is the specification and annual volume you are working with?
+What are the specifications and annual volume you are working with?
 
 Best regards,
 {sender}""",
@@ -166,17 +166,23 @@ def short_product(product):
 
 
 def build_why_them(row, product):
+    prod = product or _get(row, "product", "") or "the products you handle"
+    short = short_product(prod)
+    country = _get(row, "country", "your market")
+    note = _get(row, "note", "").strip()
+    # 优先用这一家真实的备注情报，拼一句只对它成立的话（杜绝模板套话）
+    if note:
+        return ("your note mentioned: %s" % note,
+                "贵司备注提到：%s" % note)
     src = _get(row, "source", "search").strip().lower()
     en, zh = WHY_THEM.get(src, WHY_THEM["search"])
-    prod = product or _get(row, "product", "") or "the products you handle"
-    return en.format(product=short_product(prod), country=_get(row, "country", "your market")), \
-           zh.format(product=short_product(prod), country=_get(row, "country", "贵司所在市场"))
+    return en.format(product=short, country=country), \
+           zh.format(product=short, country=_get(row, "country", "贵司所在市场"))
 
 
 def render(lead, sender):
     tier = lead["tier"]
     short_prod = short_product(lead.get("product"))
-    full_prod = lead.get("product") or "our products"
     # 联系人：CSV 里没写contact 就退回Hi there / 你好，不要在正文里塞占位符
     raw_contact = (lead.get("contact") or "").strip()
     if raw_contact and raw_contact.lower() not in ("there", "-", "n/a"):
@@ -205,7 +211,7 @@ def render(lead, sender):
     out.append("")
     out.append("[ZH — 中文对照，仅供你审批，客户不收]")
     out.append(body["zh"].format(company=lead["company"], contact=contact_zh,
-                                 product=full_prod, sender=sender,
+                                 product=short_prod, sender=sender,
                                  country=lead["country"], why_them_zh=zh_why))
     out.append("")
     out.append("发送前自查:")
@@ -234,11 +240,17 @@ def main():
         raise SystemExit("错误：找不到文件 %s" % args.csv_path)
 
     leads = analyze(rows)
-    # 把 why_them 挂上去，供 render 用
+    # 把 why_them 与 contact 都透传给 lead，供 render 用
     for lead in leads:
-        raw = next(r for r in rows
-                   if _get(r, "company", "").lower() == lead["company"].lower())
-        lead["why_them"] = build_why_them(raw, lead.get("product", ""))
+        raw = next((r for r in rows
+                    if _get(r, "company", "").lower() == lead["company"].lower()),
+                   None)
+        if raw is None:
+            lead["contact"] = ""
+            lead["why_them"] = build_why_them({}, lead.get("product", ""))
+        else:
+            lead["contact"] = _get(raw, "contact", "")
+            lead["why_them"] = build_why_them(raw, lead.get("product", ""))
 
     if args.tier == "all":
         targets = [t for t in ("T0", "T1", "T2", "T3")
@@ -257,8 +269,15 @@ def main():
                 skipped += 1
                 continue
             if args.lang == "en":
-                text = "\n".join(l for l in text.split("\n")
-                                 if not l.strip().startswith("[ZH") )
+                keep, out = False, []
+                for line in text.split("\n"):
+                    if line.startswith("[EN"):
+                        keep = True
+                    if line.startswith("[ZH"):
+                        keep = False
+                    if keep:
+                        out.append(line)
+                text = "\n".join(out)
             elif args.lang == "zh":
                 keep, out = False, []
                 for line in text.split("\n"):
@@ -272,19 +291,37 @@ def main():
             blocks.append(text)
             picked += 1
         if picked == 0:
-            blocks.append("[%s] 本级无线索。" % t)
+            count = sum(1 for l in leads if l["tier"] == t)
+            if count > 0:
+                blocks.append("[%s] 存在 %d 条 %s 线索，但无需写首触文案，先补齐信息。"
+                              % (t, count, t))
+            else:
+                blocks.append("[%s] 本级无线索。" % t)
 
-    header = (
-        "# 建联文案草稿\n\n"
-        "- 生成自: `%s`\n"
-        "- 分级: %s\n"
-        "- 落款: %s\n"
-        "- ⚠️ 每封发前必看自查清单；EN 段发送，ZH 段仅供审批。\n\n"
-        % (args.csv_path, ", ".join(targets), args.sender)
-    )
-    body = header + "\n".join(blocks)
-    body += ("\n" + "-" * 70 + "\n"
-             "共生成 %d 份草稿。T3 无需写文案——先把信息补齐。\n" % len(blocks))
+    if args.lang == "en":
+        header = (
+            "# Outreach drafts\n\n"
+            "- Generated from: `%s`\n"
+            "- Tiers: %s\n"
+            "- Signature: %s\n"
+            "- ⚠️ Review the checklist before sending; send the EN part, ZH is for your review only.\n\n"
+            % (args.csv_path, ", ".join(targets), args.sender)
+        )
+        footer = ("\n" + "-" * 70 + "\n"
+                  "Generated %d drafts. T3 needs no copy — fill the gaps first.\n" % len(blocks))
+    else:
+        header = (
+            "# 建联文案草稿\n\n"
+            "- 生成自: `%s`\n"
+            "- 分级: %s\n"
+            "- 落款: %s\n"
+            "- ⚠️ 每封发前必看自查清单；EN 段发送，ZH 段仅供审批。\n\n"
+            % (args.csv_path, ", ".join(targets), args.sender)
+        )
+        footer = ("\n" + "-" * 70 + "\n"
+                  "共生成 %d 份草稿。T3 无需写文案——先把信息补齐。\n" % len(blocks))
+
+    body = header + "\n".join(blocks) + footer
 
     if args.out:
         with open(args.out, "w", encoding="utf-8") as f:

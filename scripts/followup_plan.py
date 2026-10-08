@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-followup_plan.py — 生成 7 天 3 触达跟进计划表
+followup_plan.py — 生成低频 3 触达跟进计划表（T0/T1 为 7 天内，T2 为 14 天节奏）
 
-第一条消息发出去之后，真正的钱在跟进。本脚本按T0/T1 生成一份带具体日期的
-7 天三次触达表：哪天做什么、带什么新信息、什么时候该停手。
+第一条消息发出去之后，真正的钱在跟进。本脚本按 T0/T1/T2 生成一份带具体日期的
+三触达表：哪天做什么、带什么新信息、什么时候该停手。
+注意节奏因 tier 而异：T0 与 T1 的触达集中在首 7 天内（D0/D2/D5 或 D0/D3/D6），
+T2 是低频培育，跨度到 D14（约 14 天）。标题里说的「7 天」仅指 T0/T1。
 
 只用标准库，Python 3.8+ 可直接跑。
 
@@ -13,13 +15,14 @@ followup_plan.py — 生成 7 天 3 触达跟进计划表
     python scripts/followup_plan.py --tier T1 --start 2026-10-08 --csv examples/leads_example.csv
     python scripts/followup_plan.py --tier T0 --start 2026-10-08 --format csv --out plan.csv
 
-为什么是 3 次而不是 7 次:
+为什么是 3 次而不是更多:
     跟进不是越多越好。第 3 次仍无回应，就该停手进长名单——
     继续发只会拉低你的域名信誉，而且对方已经用行为告诉你答案了。
 """
 
 import argparse
 import csv
+import os
 import sys
 from datetime import datetime, timedelta
 
@@ -85,7 +88,12 @@ CADENCE_HINT = {
 
 
 def build_plan(tier, start, company=None):
-    start_dt = datetime.strptime(start, "%Y-%m-%d")
+    if tier not in CADENCE:
+        raise ValueError("未知 tier：%s（可选：%s）" % (tier, "/".join(CADENCE)))
+    try:
+        start_dt = datetime.strptime(start, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError("起算日格式应为 YYYY-MM-DD，收到的是 %r" % start)
     steps = CADENCE[tier]
     rows = []
     for offset, channel, subject, newinfo, stop in steps:
@@ -110,7 +118,8 @@ def print_plan(tier, start, rows, companies):
     start_dt = datetime.strptime(start, "%Y-%m-%d")
     print("")
     print("=" * 74)
-    print("  7 天跟进计划  ·  %s (%s)" % (tier, label))
+    span = "T2" if tier == "T2" else "7 天内"
+    print("  低频 3 触达跟进计划（%s）  ·  %s (%s)" % (span, tier, label))
     print("  起算日: %s   线索数: %d" % (start_dt.strftime("%Y-%m-%d"), len(companies)))
     print("=" * 74)
     print("")
@@ -133,7 +142,7 @@ def print_plan(tier, start, rows, companies):
     print("每次跟进前自查:")
     print("  □ 这封比上一封多了什么新东西？没有新东西就别发")
     print("  □ 「why them」那句话还是只对这家公司成立吗")
-    print("  □ 第 %s 次了？该考虑停手，不要靠意志力硬撑" % rows[-1]["offset"])
+    print("  □ 已经是第 %d 次触达了？该考虑停手，不要靠意志力硬撑" % len(rows))
     print("")
     print("=" * 74)
     print("")
@@ -160,7 +169,7 @@ def main():
     companies = []
     if args.csv:
         try:
-            sys.path.insert(0, __file__.rsplit("\\", 1)[0].rsplit("/", 1)[0])
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
             from lead_score import analyze, read_leads
             leads = [l for l in analyze(read_leads(args.csv)) if l["tier"] == args.tier]
             companies = [l["company"] for l in leads]
@@ -170,16 +179,19 @@ def main():
     rows = build_plan(args.tier, args.start, args.company)
 
     if args.format == "csv":
+        targets = companies or [args.company or "(全部本级线索)"]
         path = args.out or "followup_plan_%s.csv" % args.tier
         with open(path, "w", encoding="utf-8-sig", newline="") as f:
             w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
             w.writeheader()
-            for r in rows:
-                w.writerow(r)
-            for c in companies:
-                w.writerow(dict(r, company=c))
-        print("已写入 %s" % path)
+            for t in targets:
+                for r in rows:
+                    w.writerow(dict(r, company=t))
+        print("已写入 %s（%d 家 × 3 步）" % (path, len(targets)))
         return
+
+    if args.out:
+        print("提示：--out 仅对 --format csv 生效，本次为 table 已忽略。")
 
     print_plan(args.tier, args.start, rows, companies)
 

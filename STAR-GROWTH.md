@@ -7,7 +7,7 @@
 ## 一、核心判断（共识）
 
 1. **真实受众在中文外贸圈**，不在 Product Hunt / HN。视频号（微信社交图谱=精准 B2B）> 小红书 > 知乎长尾。这是你 0→1 的主战场。
-2. **技术爆发靠 Show HN**：同类教程仓（the-art-of-command-line 162k★、developer-roadmap 369k★）的增长引擎都是 Show HN，不是广告。
+2. **技术背书靠 Show HN**：同类教程仓（the-art-of-command-line 162k★、developer-roadmap 369k★）的口碑来自 Show HN 的外链与 SEO 加权，但它只是「技术背书 / 外链」渠道（P1），不是 0→1 主引擎。真正的主战场见一.1：中文外贸圈。
 3. **站内被发现靠元数据**：GitHub 搜索只索引 仓库名 / About / Topics（README 需 `in:readme`）。现在 Topics 只用了 10/20，About 关键词被埋。
 4. **转化靠视觉信任资产**：Social Preview 图、30 秒 Demo GIF、首屏「不卖课·MIT·可信度来自内容」信任条，现在全缺。
 5. **「你可以是第一个 star」是负向社交证明**——等于公开承认 0 star，触发从众反向心理。要换成「活跃项目 / 最近更新」信号。
@@ -20,8 +20,8 @@
 | 优先级 | 渠道 | 受众/形式 | 工作量 | 预期 star | 谁来做 |
 |---|---|---|---|---|---|
 | **P0** | 中文内容平台（视频号首选 / 小红书 / 知乎） | 中文外贸新手，精准 B2B | 中 | 主引擎，月增 80–200 | **你**（需账号） |
-| **P0** | Show HN | 技术/开发者，爆发点 | 低 | 单帖可能 50–500 | **你发帖，我备文案** |
 | **P0** | 中腰部外贸 KOL（3–5 个抖音/小红书） | 垂直粉丝=精准用户 | 低 | 单条口播留存 star 高 | **你发私信，我备模板** |
+| **P1** | Show HN | 技术背书 + 外链（非主引擎） | 低 | 单帖可能 50–500（外链加权） | **你发帖，我备文案** |
 | **P1** | GitHub 站内 SEO | 搜 "foreign trade/export/b2b" 的人 | 极低 | 被动曝光基线 | **我直接做** |
 | **P1** | 博客「开发信 0 回复的真相」 | dev.to+掘金+知乎 SEO | 中 | 长尾 50–200 | 你写/我起草 |
 | **P2** | YouTube 7 集「跟着做」 | 搜索+Google 视频索引 | 高 | 长尾 6–12 月持续 | 你录/我用示例素材 |
@@ -31,20 +31,30 @@
 | **P3** | 社群（微信+Discord） | 晒单→贡献→star 闭环 | 中 | 长期 | 你建群/我配模板 |
 | **P3** | 贡献钩子 | good first issue 翻译任务 | 低 | 增贡献者 | **我来做** |
 
+> **优先级统一说明**：0→1 主引擎是 **中文社媒 + 中腰部 KOL（P0）**，真实受众在中文外贸圈（见一.1）。Show HN 降为 **P1**，仅作技术背书与外链，不再当主战场。本表与 GITHUB_LAUNCH 的渠道优先级已对齐。
+
 ---
 
-## 三、仓库内立刻改（CRO/SEO/信任底座，我直接做，零风险）
+## 三、仓库内现状（CRO/SEO/信任底座 · 已落地核对表）
 
-这些是所有渠道的转化底座——渠道把人引来，仓库页决定他点不点 star。
+这些是所有渠道的转化底座——渠道把人引来，仓库页决定他点不点 star。下面逐项核对**真实现状**（不是待办清单）：
 
-1. **补满 20 个 Topics** + 重写 About（关键词前置）。新增：`international-trade` / `ecommerce` / `email-marketing` / `marketing` / `automation` / `small-business` / `open-source` / `education` / `prompt-engineering` / `tutorial`。About 改为：`Foreign-trade OS for beginners — 7 stages + 4 Python scripts. B2B cold-email & lead-gen. Anonymous, no course.`
-2. **做 Social Preview 图（1280×640）**：项目名 + 钩子「AI 干重活，你做决策」+ 7 阶段缩略图 + Demo 截图。每次社媒/群聊分享的唯一视觉资产，点击率 +30–50%。
-3. **README 首屏加 30 秒 Demo GIF**（录 `index.html` 粘贴示例 CSV→出 T0-T3 分级，标「示例数据」）+ **信任条三行**：「不卖课 · MIT 可商用 · 可信度来自内容而非作者」。
-4. **把「你可以是第一个 star」换成活跃信号**：放「最近更新 / Release 版本 / CI 通过」徽章，证明「项目还活着」。
-5. **发 v0.1 Release**（带 changelog）——被 Google 收录、显成熟度。
-6. **加「For Developers / Hackable」区块**（中英双语）：架构三分法（能 if/else 进脚本 / 要判断进 docs / 要人味进 prompts）+ 扩展点 + "脚本即模板，可 copy 成你自己的 CLI" + 27 条 prompt 当可收藏 prompt-library。
-7. **KOL 私信模板 + UTM 分渠道链接清单** 备好（见第四节），你发博主即取。
-8. **UTM 归因看板说明**（飞书多维表字段）备好（见第五节）。
+| # | 项 | 现状 |
+|---|---|---|
+| 1 | 补满 Topics + 重写 About（关键词前置） | ✅ 已完成（见 GITHUB_LAUNCH step 1） |
+| 2 | Social Preview 图（1280×640） | ✅ 已完成（`assets/social-preview.png` 已存在；需在 GitHub Settings 上传并引用） |
+| 3 | README 首屏 Demo GIF + 信任条三行 | ✅ 已完成（信任条已上线；Demo GIF 以仓库实际为准） |
+| 4 | 删掉「你可以是第一个 star」→ 活跃信号 | ✅ 已完成 |
+| 5 | 发 v0.1 Release（带 changelog） | ❌ **唯一未做**：本地 `git tag` 为空，未在 GitHub 发 Release |
+| 6 | For Developers / Hackable 区块（中英双语） | ✅ 已完成 |
+| 7 | KOL 私信模板 + UTM 分渠道链接清单 | ✅ 已完成（见第四节） |
+| 8 | UTM 归因看板说明（飞书多维表字段） | ✅ 已完成（见第五节） |
+
+> **结论**：仓库内 CRO/SEO/信任底座**几乎全部落地**。唯一确定未做的是 **GitHub Release v0.1（本地 `git tag` 为空，未发布）**——这是当前最高优先级的仓库内动作：发一个带 changelog 的 v0.1，既被 Google 收录、也显成熟度。
+
+### 3.1 已采纳文案（OS 口径已改）
+
+- About（已统一为 workflow 口径，不用 operating system / OS）：`Foreign-trade workflow for beginners — 7 stages + 4 stdlib-only Python scripts (quoting engine is alpha). B2B cold-email & lead-gen. Anonymous, no course.`
 
 ---
 
@@ -67,8 +77,8 @@
 筛选标准：近 30 条含「开发信/海关数据/找客户/背调/报价」关键词；评论区有人问"具体怎么做"。**先评论暖 3–5 天再私信**。
 
 ### 4.5 UTM 分渠道链接清单（每个渠道专属，便于归因）
-基础：`https://github.com/6hn68/zero-to-trade?utm_campaign=launch_v1`
-- Show HN：`&utm_source=news.ycombinator&utm_medium=forum`
+基础：`https://github.com/6hn68/zero-to-trade?utm_campaign=launch`
+- Show HN：`&utm_source=news&utm_medium=hn`
 - Reddit：`&utm_source=reddit&utm_medium=community`
 - LinkedIn：`&utm_source=linkedin&utm_medium=social`
 - 视频号：`&utm_source=weixin_channels&utm_medium=shortvideo`
@@ -109,7 +119,7 @@
 
 ## 七、关键更正 / 风险提示
 
-- ⚠️ **awesome-foreign-trade 187★ 不实**：真实仓库 `tshwangq/awesome-foreign-trade` 最后提交 2023-12、近乎停滞、无 187★ 记录。改用活跃且对口的 **`sasharun/awesome-waimao-dulizhan` / `awesome-waimao-seo`** 系列（中文、长期更新、带 Topic）。
+- 🔎 **awesome 列表：提 PR 前先搜活的**：先 `topic:foreign-trade` / `topic:export` 搜一遍，确认列表还活跃（近期有提交、带 Topic）再提，否则白费功夫。当前对口且长期更新的可选 **`sasharun/awesome-waimao-dulizhan` / `awesome-waimao-seo`** 系列（中文、长期更新、带 Topic）。
 - ⚠️ Product Hunt 非主引擎，仅作 SEO 反链（Domain Rating 91），顺手做即可。
 - 🔴 **令牌安全**：之前给的 classic PAT（repo 范围）用完即焚，务必去 GitHub Settings → Developer settings → PAT 点 Revoke。
 - ✅ 匿名定位本身不扣分（OSS 约 38% 贡献者匿名），关键是首屏用"活跃信号 + 不卖课"替代"身份背书"。

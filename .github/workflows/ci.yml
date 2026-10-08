@@ -4,13 +4,15 @@ on:
   push:
     branches: [main, master]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.8", "3.11", "3.13"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
 
@@ -27,3 +29,9 @@ jobs:
 
       - name: Smoke test quote_engine
         run: python scripts/quote_engine.py --cost 28 --freight 6 --margin 15 --format json
+
+      - name: Smoke test outreach_gen
+        run: python scripts/outreach_gen.py examples/leads_example.csv --tier T0 --lang en
+
+      - name: Smoke test followup_plan
+        run: python scripts/followup_plan.py --start 2026-10-08 --tier T0 --csv examples/leads_example.csv --format table

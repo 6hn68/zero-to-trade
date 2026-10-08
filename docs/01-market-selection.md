@@ -45,7 +45,16 @@
 **第 5 步：立一个最小验证目标**
 不是「今年做到 X 万」，是「30 天内：拿到 20 条真线索、发出 100 封开发信、拿到 5 个回复、2 个报价机会」。达不到就说明市场选错了或者打法错了，两者都比硬撑便宜。
 
-## 三、AI 提示词
+## 三、判断标准
+
+本环节「做好了」的硬标准（对照自查，不靠感觉）：
+
+- 市场已砍到 **1 个**，且有可查证的三维打分支撑（语言/需求/壁垒每项都有依据，不是拍脑袋）。
+- 三条硬理由均含**具体事实**（数字、集群名称、渠道特征），没有「潜力很大」这类空话。
+- 30 天最小验证目标已**量化**（线索数 / 发件数 / 回复数 / 报价机会数）。
+- 已记录 ≥3 个公开展会 / 协会 / 批发市场名称，作为后续找客户与背调的入口。
+
+## 四、AI 提示词
 
 **提示词 1：市场三维打分**
 
@@ -62,7 +71,7 @@ Score each country 0-5 on three dimensions:
 CRITICAL RULES:
 - Do NOT invent numbers. If you do not have a verified figure, write "UNVERIFIED - needs Comtrade
   or official customs check".
-- For certification requirements, state the scheme NAME (e.g. GSO/SABER) but never fabricate
+- For certification requirements, state the scheme NAME (e.g. SASO/SABER; Saudi: SASO is the certification scheme, SABER is the platform) but never fabricate
   article numbers or clause text. Add: "confirm on the official portal".
 - For tariffs, write "check current tariff schedule of the destination customs authority".
 
@@ -120,18 +129,18 @@ to check. If uncertain, say so explicitly. Never invent duty rates or document n
 
 中文说明：这段专门用来防「样品发出去才发现认证过不了」。核心是每个条目都要求 AI 写出「去哪核实」，把 AI 当线索生成器，不当答案机。
 
-## 四、检查清单
+## 五、检查清单
 
 - [ ] 候选池已列出 10-15 个国家，且每个都有一句话理由说明为什么被放进候选
 - [ ] 每个候选国完成三维打分（语言/需求/壁垒），且分数背后有可查证的依据，不是感觉
 - [ ] 所有引用的进口额、增速、税率数字都已标注数据来源与时间，UNVERIFIED 项已去官方源核实或已剔除
-- [ ] 认证要求只写了体系名称（如 GSO/SABER），并注明「以官方最新公告为准」
+- [ ] 认证要求只写了体系名称（如 SASO/SABER（沙特为 SASO）），并注明「以官方最新公告为准」
 - [ ] 最终只保留 1 个首站市场，另外 2 个作为「第 2 站候选」记录在案
 - [ ] 三条硬理由已写完，每条都含具体事实（数字、集群名称、渠道特征），没有「潜力很大」这类空话
 - [ ] 30 天最小验证目标已写成数字（线索数/发件数/回复数/报价机会数）
 - [ ] 目标市场的 3 个公开展会/协会/批发市场名称已记下来，作为后续找客户和调研的入口
 
-## 五、新手常见坑
+## 六、新手常见坑
 
 **坑 1：选「市场最大」的那个**
 - 现象：第一轮调研就锁定美国、欧盟、巴西这些大市场，本子上写满了宏观数据。
@@ -158,6 +167,22 @@ to check. If uncertain, say so explicitly. Never invent duty rates or document n
 - 原因：朋友能开门，但开不了整扇门，市场容量和竞争状况还是空白。
 - 正确做法：朋友这条线单独保留为「暖启动通道」，市场选择仍然按三维打分走。两条腿走路，别把一条腿当全部。
 
-## 六、下一环节
+## 七、可复制模板（照填，不依赖 AI）
+
+```
+# 首站市场选择卡
+- 选定市场：__________
+- 三条硬理由：
+  1. ______________
+  2. ______________
+  3. ______________
+- 第 2 站候选（暂不主攻）：__________ / __________
+- 30 天最小验证目标：
+  线索 ___ 条 / 开发信 ___ 封 / 回复 ___ 个 / 报价机会 ___ 个
+- 已记录的公开展会/协会/批发市场：
+  1. __________  2. __________  3. __________
+```
+
+## 八、下一环节
 
 市场定下来了，接下来要在这个市场里挖出具体的人。下一步是**找客户**——把「这个国家有轮胎进口」变成「这 20 个公司名和联系方式」。

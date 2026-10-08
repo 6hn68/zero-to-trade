@@ -18,6 +18,7 @@ lead_score.py — 客户线索 T0-T3 自动分级
     source        线索来源：referral / trade_show / linkedin / customs / search
     email         邮箱（可选，有则加分）
     phone         电话（可选）
+    contact       对接人/角色（可选，参与采购信号关键词命中）
     years         成立年数（可选）
     note          备注（可选，会被关键词命中影响分级）
 
@@ -38,7 +39,7 @@ from datetime import datetime
 # ---------------------------------------------------------------- 分级规则
 
 TIER_RULES = {
-    "T0": (80, "立刻打（当天）", "今天就发首触消息，别等"),
+    "T0": (80, "立刻打（当天）", "今天就发首触，别等"),
     "T1": (60, "本周打", "排进本周，今天准备文案"),
     "T2": (40, "排期打", "进 B 池，每天固定时段扫一遍"),
     "T3": (0,  "先养后打", "信息不足，先补联系方式/需求再打"),
@@ -57,9 +58,9 @@ SOURCE_SCORE = {
 CONTACT_POINTS = [
     (40, "email+phone",  lambda r: bool(_get(r, "email")) and bool(_get(r, "phone"))),
     (28, "email",        lambda r: bool(_get(r, "email"))),
-    (22, "phone",        lambda r: bool(_get(r, "phone"))),
     (10, "wa",           lambda r: "wa" in str(_get(r, "phone", "")).lower()
                                      or "whatsapp" in str(_get(r, "phone", "")).lower()),
+    (22, "phone",        lambda r: bool(_get(r, "phone"))),
     (0,  "none",         lambda r: True),
 ]
 
@@ -165,18 +166,33 @@ def grade(total):
 # ---------------------------------------------------------------- 主流程
 
 def read_leads(path):
-    """读 CSV。自动跳过 # 开头的注释行和空行，所以示例文件可以带免责声明。"""
+    """读 CSV。表头（第一行有效数据）之前以 # 开头的行视为免责声明注释并跳过；
+    表头确定后，即使某条数据公司名以 # 开头也照常读入，不会被静默吞掉。
+    用 csv 模块逐行解析，支持带引号字段与多行字段。"""
     with open(path, "r", encoding="utf-8-sig", newline="") as f:
-        raw_lines = f.read().splitlines()
+        reader = csv.reader(f)
+        header = None
+        records = []
+        for raw in reader:
+            # 跳过完全空白的行（表头前后都跳）
+            if not raw or all((c or "").strip() == "" for c in raw):
+                continue
+            # 表头尚未确定时，# 开头的行当作免责声明注释跳过
+            if header is None:
+                if (raw[0] or "").lstrip().startswith("#"):
+                    continue
+                header = [h.strip() for h in raw]
+                continue
+            records.append(dict(zip(header, raw)))
 
-    body = "\n".join(l for l in raw_lines if not l.lstrip().startswith("#"))
-    reader = csv.DictReader(body.splitlines())
-    rows = [r for r in reader if any((v or "").strip() for v in r.values())]
+    if header is None:
+        raise SystemExit("错误：CSV 为空或没有表头行，无法读取数据。")
+    if "company" not in [h.lower() for h in header]:
+        raise SystemExit("错误：CSV 缺少 company 列。表头示例见 examples/leads_example.csv")
 
+    rows = [r for r in records if any((v or "").strip() for v in r.values())]
     if not rows:
         raise SystemExit("错误：CSV 里没有读到任何有效数据行。")
-    if "company" not in [k.strip().lower() for k in (rows[0].keys() if rows else [])]:
-        raise SystemExit("错误：CSV 缺少 company 列。表头示例见 examples/leads_example.csv")
     return rows
 
 
@@ -257,10 +273,13 @@ def main():
     p.add_argument("--out", help="把 JSON 结果写到文件")
     args = p.parse_args()
 
+    if args.out and args.format != "json":
+        print("提示：--out 仅对 --format json 生效，本次未写入文件。")
+
     try:
         rows = read_leads(args.csv_path)
-    except FileNotFoundError:
-        raise SystemExit("错误：找不到文件 %s" % args.csv_path)
+    except OSError as e:
+        raise SystemExit("错误：无法读取文件 %s\n  %s" % (args.csv_path, e))
 
     results = analyze(rows, args.country, args.product)
 

@@ -38,18 +38,43 @@
   .first{margin-top:8px;font-weight:600}
   code{background:#eef1f6;padding:1px 6px;border-radius:6px;font-size:12px}
   a{color:var(--blue)}
+  .steps{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#eef3fb;
+    border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 14px;font-size:13px}
+  .steps .step{padding:3px 10px;border-radius:999px;background:#fff;border:1px solid var(--line);
+    color:var(--muted);font-weight:600;white-space:nowrap}
+  .steps .step.cur{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .steps .arrow{color:var(--muted);margin:0 2px}
+  .lead{background:#fff7ed;border:1px solid #fcd9b6;color:#9a3412;border-radius:10px;
+    padding:9px 12px;margin:0 0 14px;font-size:13.5px;line-height:1.6}
+  .guide{color:var(--ink);margin:0 0 6px;font-size:14.5px;line-height:1.6}
+  .legend{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:2px 0 2px;
+    font-size:13px;color:var(--muted)}
+  .subrow td{background:#fafbfd}
+  .subdetail{color:var(--muted);font-size:12px;padding-top:0!important}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <div class="steps">
+    <span class="step">① 选市场</span><span class="arrow">→</span>
+    <span class="step">② 找客户</span><span class="arrow">→</span>
+    <span class="step">③ 背调</span><span class="arrow">→</span>
+    <span class="step cur">④ 线索分级</span><span class="arrow">→</span>
+    <span class="step">⑤ 建联文案</span><span class="arrow">→</span>
+    <span class="step">⑥ 跟进</span><span class="arrow">→</span>
+    <span class="step">⑦ 报价成交</span>
+  </div>
+  <p class="lead">这是「零基础跑通外贸」7 步里的第 4 步：把客户名单按多快能成交排个队。你现在在这页，只做分级这一件事。</p>
+
   <h1>zero-to-trade · 线索分级 Demo</h1>
+  <p class="guide">把你的潜在客户（<b>线索</b>）名单粘进来，我帮你算出「先回谁」。<b>线索</b>＝可能买你东西的公司联系人，一个名字、一张名片都算一条。</p>
   <p class="sub">零安装、纯浏览器跑。逻辑和 <code>scripts/lead_score.py</code> 完全一致（满分 100：联系40 / 来源30 / 采购信号20 / 成熟度10）。</p>
 
   <div class="card">
     <div class="grid">
       <div>
         <label>① 粘贴你的 CSV（表头：company,country,product,source,email,phone,years,contact,note）</label>
-        <textarea id="csv" placeholder="Al-Drees Tyre Co,Saudi Arabia,TBR 12.00R20,referral,info@aldrees-tyre.com,+966...,18,purchasing manager,Annual RFQ"></textarea>
+        <textarea id="csv" placeholder="【示例】海湾轮胎贸易,Saudi Arabia,TBR 12.00R20,referral,demo01@sample.example,+966 00 000 0000,18,purchasing manager,Annual RFQ"></textarea>
       </div>
       <div>
         <label>② 或一键载入示例（10 条虚构数据）</label>
@@ -67,6 +92,7 @@
 
   <div class="card" id="out" style="display:none">
     <div class="counts" id="counts"></div>
+    <p class="legend">分级含义：<span class="badge b-T0">T0</span> 今天立刻打 · <span class="badge b-T1">T1</span> 排进本周 · <span class="badge b-T2">T2</span> 排期扫一遍 · <span class="badge b-T3">T3</span> 先补信息再打</p>
     <div class="first" id="first"></div>
     <div style="overflow:auto;margin-top:12px">
       <table id="tbl">
@@ -93,17 +119,26 @@ const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$/;
 
 function parseCSV(text){
   const rows=[];
-  let i=0,field="",row=[],inQ=false;
+  let i=0,field="",row=[],inQ=false,comment=false;
   while(i<text.length){
     const c=text[i];
     if(inQ){
       if(c==='"'){ if(text[i+1]==='"'){field+='"';i++;} else inQ=false; }
       else field+=c;
+    }else if(comment){
+      // 跳过 # 开头的注释行（与 Python 端 csv 行为对齐）：吃掉整行直到换行
+      if(c==='\n'){comment=false;row=[];field="";}
+      // \r 及其它字符在注释行内一律忽略
     }else{
       if(c==='"') inQ=true;
       else if(c===',') {row.push(field);field="";}
       else if(c==='\n'){row.push(field);rows.push(row);row=[];field="";}
       else if(c==='\r'){}
+      else if(c==='#'){
+        // 仅当处于一行开头（field 与 row 皆空）时视为注释
+        if(field==="" && row.length===0){comment=true;}
+        else field+=c;
+      }
       else field+=c;
     }
     i++;
@@ -143,6 +178,10 @@ function run(){
   const rows=parseCSV(txt);
   if(rows.length<2){alert("没读到数据，确认 CSV 表头和至少一行数据。");return;}
   const header=rows[0].map(h=>h.trim().toLowerCase());
+  if(header.indexOf("company")<0){
+    alert("CSV 表头缺少 company 列，所有字段会读成空、整页结果全变 T3。\n请确认第一行为：\ncompany,country,product,source,email,phone,years,contact,note\n（表头不区分大小写，但 company 必填，其余缺省也能跑）");
+    return;
+  }
   const idx=k=>header.indexOf(k);
   const data=rows.slice(1).map(cells=>{
     const get=k=>{const j=idx(k);return j>=0?cells[j]:"";};
@@ -168,9 +207,13 @@ function run(){
       <td>${d.company||"(未命名)"}</td><td>${d.country||"?"}</td>
       <td><b>${d.total}</b></td><td>${TIER_NEXT[d.tier]}</td>`;
     tb.appendChild(tr);
+    const trd=document.createElement("tr");
+    trd.className="subrow";
+    trd.innerHTML=`<td colspan="5" class="subdetail">分项：联系 ${d.contact}（${d.clabel}） · 来源 ${d.source}（${d.src||"search"}） · 采购信号 ${d.buying} · 成熟度 ${d.maturity}（${d.mlabel}）＝ 共 ${d.total}</td>`;
+    tb.appendChild(trd);
   });
   document.getElementById("detail").textContent=
-    "计分上限：联系 40 / 来源 30 / 采购信号 20 / 成熟度 10 = 100。逐项明细请用 Python 版：python scripts/lead_score.py --format detail。";
+    "计分上限：联系 40 / 来源 30 / 采购信号 20 / 成熟度 10 = 100。想看完整明细或导出 JSON，可用同款 Python：python scripts/lead_score.py examples/leads_example.csv --format detail。";
   document.getElementById("out").style.display="block";
 }
 
@@ -178,18 +221,21 @@ function loadExample(){
   fetch("examples/leads_example.csv").then(r=>r.text()).then(t=>{
     document.getElementById("csv").value=t.trim();run();
   }).catch(()=>{
+    // fetch 失败（新手双击 file:// 直接打开必走这里）：用与 examples/leads_example.csv
+    // 正文 100% 同源的脱敏数据兜底——【示例】前缀 + sample.example 保留域名，
+    // 电话统一为明显占位的 +966 00 000 0000，绝不出现任何真实公司/真实域名。
     document.getElementById("csv").value=
 `company,country,product,source,email,phone,years,contact,note
-Al-Drees Tyre Co,Saudi Arabia,TBR 12.00R20,referral,info@aldrees-tyre.com,+966 11 234 5678,18,purchasing manager,Annual RFQ for truck tyres
-Delta Tyre Group,Saudi Arabia,TBR PCR OTR,referral,procurement@deltatyre.sa,+966 13 887 7665,15,purchasing manager,Strategic RFQ 3 years contract
-Blue Ocean Trading,Oman,TBR 12.00R20,customs,sales@blueocean-om.com,+968 24 112233,25,,Tender invitation
-East Star Auto,Saudi Arabia,PCR alloy wheels,linkedin,info@eaststar-ksa.com,+966 55 118 2233,4,sourcing manager,interested timing unclear
-Nile Trade Group,Egypt,PCR tubes motorcycle,search,contact@niletrade.eg,+20 2 2519 7788,6,procurement,Requesting quotation 20GP
-Gulf Rim Trading LLC,UAE,PCR 195/65R15,trade_show,,+971 4 220 3344,9,buyer,Met at Gulf Oil Show asked quotation
-Al-Hoda Tires,Saudi Arabia,TBR 315/80R22.5,customs,purchase@alhoda-tires.sa,,12,,,Importer 6 shipments year
-Pioneer Motors Nigeria,Nigeria,PCR tubes,search,,+234 803 123 4567,7,buyer,Asked FOB pricing no quantity
-Levant Auto Supplies,Lebanon,PCR tubes,linkedin,,,,2,,Small distributor no import
-Riyadh Auto Parts,Saudi Arabia,spare parts,search,,,,3,,Retail shop no import record`;
+【示例】海湾轮胎贸易,Saudi Arabia,"TBR 12.00R20, PCR tubes",referral,demo01@sample.example,+966 00 000 0000,18,purchasing manager,"Annual RFQ for truck tyres, looking for supplier, 40HQ container regular"
+【示例】迪拜轮毂行,UAE,"PCR 195/65R15, alloy rims",trade_show,,+966 00 000 0000,9,buyer,"Met at Gulf Oil Show, asked for quotation, 20GP trial order"
+【示例】利雅得汽配,Saudi Arabia,"TBR 315/80R22.5",customs,purchase@sample.example,,12,,,Importer record: 6 shipments/year from Asia
+【示例】尼罗河商贸,Egypt,"PCR tubes, motorcycle tyres",search,contact@sample.example,+966 00 000 0000,6,procurement,"Requesting quotation for 20GP mixed container"
+【示例】半岛汽车,Saudi Arabia,"PCR, alloy wheels",linkedin,info@sample.example,+966 00 000 0000,4,sourcing manager,"LinkedIn message, interested but timing unclear"
+【示例】利雅得零件店,Saudi Arabia,"spare parts",search,,,,3,,Retail shop, no import record
+【示例】阿曼蓝海,Oman,"TBR 12.00R20",customs,sales@sample.example,+966 00 000 0000,25,,"Tender invitation issued by Oman municipality"
+【示例】黎凡特供配,Lebanon,"PCR tubes",linkedin,,,,2,,Small distributor, no evidence of import
+【示例】三角洲轮胎,Saudi Arabia,"TBR, PCR, OTR",referral,procurement@sample.example,+966 00 000 0000,15,purchasing manager,"Strategic supplier RFQ, tender, 3 years contract, needs SASO compliance"
+【示例】尼日利亚先锋,Nigeria,"PCR tubes",search,,+966 00 000 0000,7,buyer,"Asked about FOB pricing, no quantity confirmed"`;
     run();
   });
 }

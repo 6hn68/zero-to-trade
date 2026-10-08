@@ -3,7 +3,9 @@
 > **本环节目标**：你不懂 git、不懂 Python，照这篇也能在 10 分钟内把项目跑起来、拿到第一份客户分级名单。
 > **一句话原理**：文档负责「想清楚」，脚本负责「别手算」，提示词负责「不会写也能写」。
 
-这份文档假设你是**完全的小白**：没装过 Python、没用过命令行、不知道 GitHub 是啥。会这些的可以直接跳到 [docs/](../README.md) 的 30 秒快速上手。
+> **完全不想装 Python？** 项目里有个 `index.html`，**双击用浏览器打开**，把 CSV 粘进去点『开始分级』就能看 T0-T3，零安装零命令行。想本地跑脚本再往下看。
+
+这份文档假设你是**完全的小白**：没装过 Python、没用过命令行、不知道 GitHub 是啥。会这些的可以直接跳到 [README](../README.md) 的 30 秒快速上手。
 
 ---
 
@@ -13,7 +15,7 @@
 
 1. 打开这个项目的 GitHub 页面（地址见仓库首页）。
 2. 点右上角绿色按钮 **Code** → 选 **Download ZIP**。
-3. 解压到任意文件夹，比如桌面。你会看到一个 `zero-to-trade` 文件夹。
+3. 解压到任意文件夹，比如桌面。你会看到一个 `zero-to-trade-main` 文件夹（GitHub 默认分支叫 `main`，所以解压出来带 `-main` 后缀）。
 
 ### 方法 B：用 Git（以后想跟着更新再用）
 
@@ -43,6 +45,8 @@ python --version
 
 跳出一行 `Python 3.x.x` 就是成功了。没跳出就重装一遍，记得勾 PATH。
 
+> 如果 `python` 提示「不是内部或外部命令」，Windows 上往往只有微软商店版 `py`，那就改用 `py --version` 验证；后面所有命令里的 `python` 也都换成 `py` 即可。
+
 ---
 
 ## 第三步：跑第一个脚本（看效果）
@@ -50,10 +54,11 @@ python --version
 1. 在刚才那个 `cmd` 黑框里，进到你解压的文件夹。比如你放桌面了：
 
    ```bash
-   cd Desktop\zero-to-trade
+   cd Desktop\zero-to-trade-main
    ```
 
    > 不会 `cd`？桌面路径不会错的话，也可以直接在文件夹地址栏输 `cmd` 回车，自动就在这个目录了。
+   > 文件夹名以你解压出来的实际文件夹名为准（默认是 `zero-to-trade-main`，如果你下的是别的版本分支，名字会带对应后缀）。
 
 2. 跑这条命令：
 
@@ -61,17 +66,19 @@ python --version
    python scripts/lead_score.py examples/leads_example.csv
    ```
 
-3. 屏幕会吐出一张表，大概长这样（数字可能略有不同）：
+3. 屏幕会吐出一张表，大概长这样（数字可能略有不同，公司名以你实际数据为准）：
 
    ```
    分级   公司                         国家                得分  下一步
-   T0   Al-Drees Tyre Co           Saudi Arabia      95  今天就发首触消息，别等
-   T0   Delta Tyre Group           Saudi Arabia      92  今天就发首触消息，别等
-   T1   Blue Ocean Trading         Oman              77  排进本周，今天准备文案
+   T0   【示例】海湾轮胎贸易                 Saudi Arabia      95  今天就发首触消息，别等
+   T0   【示例】三角洲轮胎                  Saudi Arabia      92  今天就发首触消息，别等
+   T1   【示例】阿曼蓝海                   Oman              77  排进本周，今天准备文案
    ...
    汇总: T0:2 / T1:5 / T2:1 / T3:2
-   先回谁: Al-Drees Tyre Co、Delta Tyre Group
+   先回谁: 【示例】海湾轮胎贸易、【示例】三角洲轮胎
    ```
+
+   > 上面表格里的公司名带「【示例】」前缀，是项目自带的脱敏演示数据。你跑自己 CSV 时，显示的就是你填的真公司名，数字也会随你的数据变化。
 
    到这步你就跑通了。**T0 那两家，就是今天该先打的人。**
 
@@ -82,7 +89,7 @@ python --version
 示例数据是公司编的，没用。换成你的真线索：
 
 1. 打开 `examples/leads_example.csv`（双击，用 Excel 或记事本都能开）。
-2. **第一行表头别动**，从第二行开始照格式填。只需要填 `company`（公司名）这一列就能量运行，其他列有就填、没有空着。
+2. **文件最上面可能有一行 `#` 开头的注释别删**；真正的表头是 `company,country,...` 那一行，从表头**下面一行**开始填。只需要填 `company`（公司名）这一列就能运行，其他列有就填、没有空着。
 
    ```
    company,country,product,source,email,phone,years,contact,note

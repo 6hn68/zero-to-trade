@@ -1,12 +1,12 @@
-# 本文件全部为虚构示例数据。公司名、邮箱、电话均为演示用途虚构，不对应任何真实企业或真实联系人，请勿据此联系。
+# 本文件全部为虚构示例数据（仅用于教学演示）。公司名带「【示例】」前缀、邮箱统一使用 sample.example 保留域名，均不对应任何真实企业或真实联系人。请勿据此联系。
 company,country,product,source,email,phone,years,contact,note
-Al-Drees Tyre Co,Saudi Arabia,"TBR 12.00R20, PCR tubes",referral,info@aldrees-tyre.com,+966 11 234 5678,18,purchasing manager,"Annual RFQ for truck tyres, looking for supplier, 40HQ container regular"
-Gulf Rim Trading LLC,UAE,"PCR 195/65R15, alloy rims",trade_show,,+971 4 220 3344,9,buyer,"Met at Gulf Oil Show, asked for quotation, 20GP trial order"
-Al-Hoda Tires,Saudi Arabia,"TBR 315/80R22.5",customs,purchase@alhoda-tires.sa,,12,,,Importer record: 6 shipments/year from Asia
-Nile Trade Group,Egypt,"PCR tubes, motorcycle tyres",search,contact@niletrade.eg,+20 2 2519 7788,6,procurement,"Requesting quotation for 20GP mixed container"
-East Star Auto,Saudi Arabia,"PCR, alloy wheels",linkedin,info@eaststar-ksa.com,+966 55 118 2233,4,sourcing manager,"LinkedIn message, interested but timing unclear"
-Riyadh Auto Parts,Saudi Arabia,"spare parts",search,,,,3,,Retail shop, no import record
-Blue Ocean Trading,Oman,"TBR 12.00R20",customs,sales@blueocean-om.com,+968 24 112233,25,,"Tender invitation issued by Oman municipality"
-Levant Auto Supplies,Lebanon,"PCR tubes",linkedin,,,,2,,Small distributor, no evidence of import
-Delta Tyre Group,Saudi Arabia,"TBR, PCR, OTR",referral,procurement@deltatyre.sa,+966 13 887 7665,15,purchasing manager,"Strategic supplier RFQ, tender, 3 years contract, needs SASO compliance"
-Pioneer Motors Nigeria,Nigeria,"PCR tubes",search,,+234 803 123 4567,7,buyer,"Asked about FOB pricing, no quantity confirmed"
+【示例】海湾轮胎贸易,Saudi Arabia,"TBR 12.00R20, PCR tubes",referral,demo01@sample.example,+966 11 234 5678,18,purchasing manager,"Annual RFQ for truck tyres, looking for supplier, 40HQ container regular"
+【示例】迪拜轮毂行,UAE,"PCR 195/65R15, alloy rims",trade_show,,+971 4 220 3344,9,buyer,"Met at Gulf Oil Show, asked for quotation, 20GP trial order"
+【示例】利雅得汽配,Saudi Arabia,"TBR 315/80R22.5",customs,purchase@sample.example,,12,,,Importer record: 6 shipments/year from Asia
+【示例】尼罗河商贸,Egypt,"PCR tubes, motorcycle tyres",search,contact@sample.example,+20 2 2519 7788,6,procurement,"Requesting quotation for 20GP mixed container"
+【示例】半岛汽车,Saudi Arabia,"PCR, alloy wheels",linkedin,info@sample.example,+966 55 118 2233,4,sourcing manager,"LinkedIn message, interested but timing unclear"
+【示例】利雅得零件店,Saudi Arabia,"spare parts",search,,,,3,,Retail shop, no import record
+【示例】阿曼蓝海,Oman,"TBR 12.00R20",customs,sales@sample.example,+968 24 112233,25,,"Tender invitation issued by Oman municipality"
+【示例】黎凡特供配,Lebanon,"PCR tubes",linkedin,,,,2,,Small distributor, no evidence of import
+【示例】三角洲轮胎,Saudi Arabia,"TBR, PCR, OTR",referral,procurement@sample.example,+966 13 887 7665,15,purchasing manager,"Strategic supplier RFQ, tender, 3 years contract, needs SASO compliance"
+【示例】尼日利亚先锋,Nigeria,"PCR tubes",search,,+234 803 123 4567,7,buyer,"Asked about FOB pricing, no quantity confirmed"

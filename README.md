@@ -4,7 +4,7 @@
 
 **给外贸零基础新手的开源操作系统：7 个环节的完整工作流 + 一条能跑的 AI 工具链。**
 
-> 🔥 **你发 200 封开发信 0 回复，不是英语差，是顺序错了。** 这个项目把"从选市场到收钱"拆成 7 步可执行清单 + 3 个能跑的脚本，每步告诉你今天下午打开哪个网站、填什么、看到什么算过关。
+> 🔥 **你发 200 封开发信 0 回复，不是英语差，是顺序错了。** 这个项目把"从选市场到收钱"拆成 7 步可执行清单 + 4 个能跑的脚本（含 1 个 alpha 报价引擎），每步告诉你今天下午打开哪个网站、填什么、看到什么算过关。
 
 > 核心理念一句话：**AI 干重活，人做判断。**
 
@@ -12,6 +12,8 @@
 > Core idea in one line: **AI does the heavy lifting, you make the calls.**
 
 > 🔓 MIT 开源 · 🚫 不卖课 · ✅ 脚本零依赖、跑得通（CI 已在跑）· 🛡️ 作者匿名，可信度来自内容本身
+
+> 🤝 欢迎各路江湖大佬提 PR / 补你所在市场的实战细节 / 翻译成你的母语 —— 详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ---
 
@@ -30,7 +32,7 @@
 | 「要做客户背调」 | L1 筛查查 3 项（官网存在性、成立年份、社媒是否活跃），任一项不过直接淘汰 |
 | 「要重视客户质量」 | 8 条线索自动分成 T0/T1/T2/T3，每级写清下一步该干什么、该花多少时间 |
 | 「记得跟进」 | 第 1/3/5/7 天各一次触达，每次话术不同，第 7 天给一个明确的收尾或推进动作 |
-| 「AI 会改变外贸」 | 3 个 stdlib-only Python 脚本，`python scripts/lead_score.py examples/leads_example.csv` 30 秒出分级结果 |
+| 「AI 会改变外贸」 | 4 个 stdlib-only Python 脚本（含 1 个 alpha 报价引擎），`python scripts/lead_score.py examples/leads_example.csv` 30 秒出分级结果 |
 
 差别不在信息量，在于**颗粒度**。这个项目的每一条结论都要能落到「今天下午打开哪个网站、填什么、看到什么算过关」。
 
@@ -88,20 +90,23 @@ python scripts/quote_engine.py --cost 28 --freight 6 --margin 15
 ==========================================================================
 分级   公司                         国家                得分  下一步
 --------------------------------------------------------------------------
-T0   Al-Drees Tyre Co           Saudi Arabia      95  今天就发首触消息，别等
-T0   Delta Tyre Group           Saudi Arabia      92  今天就发首触消息，别等
-T1   Blue Ocean Trading         Oman              77  排进本周，今天准备文案
-T1   East Star Auto             Saudi Arabia      71  排进本周，今天准备文案
-T1   Nile Trade Group           Egypt              67  排进本周，今天准备文案
-T1   Gulf Rim Trading LLC       UAE                65  排进本周，今天准备文案
-T1   Al-Hoda Tires              Saudi Arabia      64  排进本周，今天准备文案
-T2   Pioneer Motors Nigeria  Nigeria            46  进 B 池，每天固定时段扫一遍
-T3   Levant Auto Supplies        Lebanon             20  信息不足，先补联系方式/需求再打
-T3   Riyadh Auto Parts          Saudi Arabia      10  信息不足，先补联系方式/需求再打
+T0   【示例】海湾轮胎贸易                 Saudi Arabia      95  今天就发首触消息，别等
+T0   【示例】三角洲轮胎                  Saudi Arabia      92  今天就发首触消息，别等
+T1   【示例】阿曼蓝海                   Oman              77  排进本周，今天准备文案
+T1   【示例】半岛汽车                   Saudi Arabia      71  排进本周，今天准备文案
+T1   【示例】尼罗河商贸                  Egypt             67  排进本周，今天准备文案
+T1   【示例】迪拜轮毂行                  UAE               65  排进本周，今天准备文案
+T1   【示例】利雅得汽配                  Saudi Arabia      60  排进本周，今天准备文案
+T2   【示例】尼日利亚先锋                 Nigeria           46  进 B 池，每天固定时段扫一遍
+T3   【示例】黎凡特供配                  Lebanon           20  信息不足，先补联系方式/需求再打
+T3   【示例】利雅得零件店                 Saudi Arabia      10  信息不足，先补联系方式/需求再打
 --------------------------------------------------------------------------
 汇总: T0:2 / T1:5 / T2:1 / T3:2
 
-先回谁: Al-Drees Tyre Co、Delta Tyre Group
+先回谁: 【示例】海湾轮胎贸易、【示例】三角洲轮胎
+先打谁: 【示例】阿曼蓝海、【示例】半岛汽车、【示例】尼罗河商贸、【示例】迪拜轮毂行、【示例】利雅得汽配
+
+下一步: 用 outreach_gen.py 按这份分级生成建联文案。
 ```
 
 ### CSV 字段
@@ -115,7 +120,7 @@ company,country,product,source,email,phone,years,contact,note
 只有 `company` 是必需的，其余缺省也能跑（缺项按最低分算）。`source` 建议填
 `referral` / `trade_show` / `customs` / `linkedin` / `search` 之一，这项对分数影响最大。
 
-三个脚本都支持 `--help`。`lead_score.py` 另有 `--format json` 和 `--country/--product` 过滤，
+四个脚本都支持 `--help`。`lead_score.py` 另有 `--format json` 和 `--country/--product` 过滤，
 方便你接进自己的表格工具。
 
 脚本只做**机械可判定的部分**（有没有邮箱、来源可不可信、T0 阈值）。判断「值不值得投入时间」
@@ -181,7 +186,7 @@ zero-to-trade/
 | 版本 | 状态 | 内容 |
 |---|---|---|
 | **v0.1.5** | ✅ 已补充 | 零安装浏览器 Demo(index.html) + v0.2 报价引擎 alpha(quote_engine.py) + 品牌主张(MANIFESTO) + 上线推广清单(GITHUB_LAUNCH) |
-| **v0.1** | ✅ 已完成 | 7 环节文档骨架 + 3 个 stdlib 脚本 + 27 条提示词 + 双语 README |
+| **v0.1** | ✅ 已完成 | 7 环节文档骨架 + 4 个 stdlib 脚本 + 27 条提示词 + 双语 README |
 | **v0.2** | 🟡 进行中(alpha) | **AI 报价引擎**：`scripts/quote_engine.py` 已落地 alpha —— 输入成本 + 市场 + 竞品锚价，输出 FOB/CIF 报价区间 + 三档让步阶梯（每步必须换条件） |
 | **v0.3** | 计划中 | **客户背调 Agent**：输入公司名，输出 L1/L2/L3 三级背调草稿 + 红旗清单，带来源链接 |
 | **长期** | — | 行业包（轮胎、建材、机械、五金各自的环节细节）；多语言建联消息（西/阿/法/俄）；真实线索集（脱敏后公开）；把 v0.2 的报价引擎接到海关数据上做竞品锚价自动抓取 |
@@ -197,10 +202,10 @@ v0.2 的前置条件是 v0.3 的背调数据——因为报价需要知道对方
 三种贡献方式，按门槛从低到高：
 
 1. **提 issue 纠错。** 看到错字、过时信息、说不清的判断标准，直接开 issue。哪怕只有一句话也比不说好。issue 模板里问三个问题：哪一行看不懂、哪个数字没有来源、哪条你觉得不适用你所在的行业。
-2. **翻译环节文档。** 西班牙语、阿拉伯语、葡萄牙语、俄语、法语、越南语——哪个语言你熟就翻哪个。文档六段结构保持不变，只换语言，术语在术语表里对齐即可。
+2. **翻译环节文档。** 西班牙语、阿拉伯语、葡萄牙语、俄语、法语、越南语——哪个语言你熟就翻哪个。文档六段结构保持不变，只换语言，术语在 [GLOSSARY.md](GLOSSARY.md) 里对齐即可。
 3. **补充你所在行业 / 国家的环节细节。** 这是最缺的部分。写作要求：写你真跑过的，不写你觉得应该这样。具体到字段名、单证名、渠道结构、付款习惯、常见拒付理由。
 
-也可以直接改代码，但硬约束是 **Python 3.8+、零第三方依赖**，理由和理由见 CONTRIBUTING。
+也可以直接改代码，但硬约束是 **Python 3.8+、零第三方依赖**，理由见 CONTRIBUTING。
 
 ---
 
@@ -230,7 +235,7 @@ zero-to-trade 是 **活跃维护** 的开源项目（最近提交见仓库 commi
 ## 多语言
 
 - 🇺🇸 [English](README_EN.md)（完整版，已就绪）
-- 🇪🇸 [Español](README_ES.md)（starter，招募校对）· 🇸🇦 🇵🇹 🇷🇺 🇫🇷 🇻🇳 招募中 —— 任意语言熟就可以翻，结构不变、术语对齐术语表，详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+- 🇪🇸 [Español](README_ES.md)（starter，招募校对）· 🇸🇦 🇵🇹 🇷🇺 🇫🇷 🇻🇳 招募中 —— 任意语言熟就可以翻，结构不变、术语对齐 [GLOSSARY.md](GLOSSARY.md)，详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ---
 
@@ -254,7 +259,7 @@ zero-to-trade 是 **活跃维护** 的开源项目（最近提交见仓库 commi
 
 ## English (short version)
 
-**zero-to-trade** is an open-source operating system for people starting in foreign trade with zero experience. Seven stages, from picking a market to shipping an order, plus three runnable Python scripts that do the boring parts.
+**zero-to-trade** is an open-source operating system for people starting in foreign trade with zero experience. Seven stages, from picking a market to shipping an order, plus four runnable Python scripts (one alpha quoting engine) that do the boring parts.
 
 The premise: **AI does the heavy lifting, you make the calls.** Most tutorials tell you "you should do customer background research" and stop there. This repo tells you which three fields to check, which sites to check them on, and what result makes you drop the lead.
 

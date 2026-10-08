@@ -1,14 +1,14 @@
 # zero-to-trade
 
-**An open-source operating system for selling abroad when you have zero experience. Seven stages, from choosing a market to getting paid — plus three Python scripts you can actually run.**
+**An open-source operating system for selling abroad when you have zero experience. Seven stages, from choosing a market to getting paid — plus four Python scripts (one alpha quoting engine) you can actually run.**
 
 > The premise, in one line: **AI does the heavy lifting, you make the calls.**
 
-> 🔥 **You sent 200 cold emails and got zero replies. It's not your English — it's your order of operations.** This repo breaks "from picking a market to getting paid" into 7 executable steps plus 3 scripts you can run, so each step tells you exactly which site to open, what to type, and what "passed" looks like.
+> 🔥 **You sent 200 cold emails and got zero replies. It's not your English — it's your order of operations.** This repo breaks "from picking a market to getting paid" into 7 executable steps plus four Python scripts (one alpha quoting engine) you can run, so each step tells you exactly which site to open, what to type, and what "passed" looks like.
 
 > 🔓 MIT open source · 🚫 No paid course · ✅ Scripts run with zero deps (CI passing) · 🛡️ Anonymous author — credibility comes from the content
 
-MIT licensed · v0.1.6 · [中文版](README.md)
+MIT licensed · v0.1.5 · [中文版](README.md)
 
 ---
 
@@ -75,28 +75,30 @@ python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv examples/lead
 python scripts/quote_engine.py --cost 28 --freight 6 --margin 15
 ```
 
-Expected output from the first command. The script prints in Chinese; here is the same data translated into English (10 sample leads):
+Expected output from the first command (英文翻译版，便于阅读). The script prints in Chinese; the company names below are the actual sample data (【示例】 = "sample"), and the next-action column is translated to English (10 sample leads):
 
 | Tier | Company | Country | Score | Next action |
 |---|---|---|---|---|
-| T0 | Al-Drees Tyre Co | Saudi Arabia | 95 | contact today, don't wait |
-| T0 | Delta Tyre Group | Saudi Arabia | 92 | contact today, don't wait |
-| T1 | Blue Ocean Trading | Oman | 77 | this week |
-| T1 | East Star Auto | Saudi Arabia | 71 | this week |
-| T1 | Nile Trade Group | Egypt | 67 | this week |
-| T1 | Gulf Rim Trading LLC | UAE | 65 | this week |
-| T1 | Al-Hoda Tires | Saudi Arabia | 64 | this week |
-| T2 | Pioneer Motors Nigeria | Nigeria | 46 | low-freq pool, scan daily |
-| T3 | Levant Auto Supplies | Lebanon | 20 | info insufficient, top up first |
-| T3 | Riyadh Auto Parts | Saudi Arabia | 10 | info insufficient, top up first |
+| T0 | 【示例】海湾轮胎贸易 | Saudi Arabia | 95 | contact today, don't wait |
+| T0 | 【示例】三角洲轮胎 | Saudi Arabia | 92 | contact today, don't wait |
+| T1 | 【示例】阿曼蓝海 | Oman | 77 | this week |
+| T1 | 【示例】半岛汽车 | Saudi Arabia | 71 | this week |
+| T1 | 【示例】尼罗河商贸 | Egypt | 67 | this week |
+| T1 | 【示例】迪拜轮毂行 | UAE | 65 | this week |
+| T1 | 【示例】利雅得汽配 | Saudi Arabia | 60 | this week |
+| T2 | 【示例】尼日利亚先锋 | Nigeria | 46 | low-freq pool, scan daily |
+| T3 | 【示例】黎凡特供配 | Lebanon | 20 | info insufficient, top up first |
+| T3 | 【示例】利雅得零件店 | Saudi Arabia | 10 | info insufficient, top up first |
 
-Summary: **T0:2 / T1:5 / T2:1 / T3:2**. Reply to first: Al-Drees Tyre Co, Delta Tyre Group.
+Summary: **T0:2 / T1:5 / T2:1 / T3:2**. Reply to first: 【示例】海湾轮胎贸易, 【示例】三角洲轮胎.
 
 CSV header:
 
 ```
 company,country,product,source,email,phone,years,contact,note
 ```
+
+Only company is required; missing fields score at the floor. source matters most: referral/trade_show/customs/linkedin/search.
 
 The scripts only handle what a machine can decide: does an email exist, does a website exist, does this lead clear the T0 threshold. Whether a lead is *worth your time* stays in the docs and in your head.
 
@@ -159,7 +161,7 @@ The scripts also deliberately avoid pandas and the OpenAI SDK. Environment setup
 | Version | Status | Contents |
 |---|---|---|
 | **v0.1.5** | Added | Zero-install browser demo (index.html) + v0.2 quoting engine alpha (quote_engine.py) + brand manifesto (MANIFESTO) + launch/promo checklist (GITHUB_LAUNCH) + Fast Path + deal walkthrough |
-| **v0.1** | Shipped | 7 stage docs, 3 stdlib scripts, 27 prompts, bilingual README |
+| **v0.1** | Shipped | 7 stage docs, 4 stdlib scripts, 27 prompts, bilingual README |
 | **v0.2** | 🟡 In progress (alpha) | **AI quoting engine**: `scripts/quote_engine.py` is live in alpha — input costs + market + competitor anchor price → FOB/CIF range + a three-step concession ladder (each step must buy something) |
 | **v0.3** | Planned | **Buyer background-check agent**: input a company name → L1/L2/L3 research draft + red-flag checklist, with source links |
 | **Long term** | — | Industry packs (tyres, building materials, machinery, hardware); outreach copy in Spanish/Arabic/French/Russian; public de-identified lead datasets; wiring v0.2's quoting engine to customs data for automatic competitor anchor pricing |
@@ -175,7 +177,7 @@ The gap in this repo is not a shortage of docs. It's the absence of **country-sp
 Three ways in, ordered by how little you need to know:
 
 1. **Open an issue to fix something.** Typos, outdated facts, judgment calls that read as mush. One sentence beats silence. The template asks three things: which line confused you, which number has no source, which rule doesn't apply to your industry.
-2. **Translate a stage doc.** Spanish, Arabic, Portuguese, Russian, French, Vietnamese — whatever you're fluent in. Keep the six-part structure, swap the language, align terms against the glossary.
+2. **Translate a stage doc.** Spanish, Arabic, Portuguese, Russian, French, Vietnamese — whatever you're fluent in. Keep the six-part structure, swap the language, align terms against the [GLOSSARY.md](GLOSSARY.md).
 3. **Add the stage detail for your industry or country.** This is the missing part. Write what you've actually done, not what you think should be done. Down to field names, document names, channel structure, payment habits, and the reasons buyers refuse to pay.
 
 Code contributions welcome too, with one hard constraint: **Python 3.8+, standard library only.** Reasoning in [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -208,7 +210,7 @@ zero-to-trade is **actively maintained** (recent commits in the repo history). I
 ## Translations
 
 - 🇨🇳 [中文版](README.md) (full, ready)
-- 🇪🇸 🇸🇦 🇵🇹 🇷🇺 🇫🇷 🇻🇳 wanted — translate any stage doc you're fluent in; keep the six-part structure and align terms against the glossary. See [CONTRIBUTING.md](CONTRIBUTING.md). A Spanish starter lives at [README_ES.md](README_ES.md).
+- 🇪🇸 🇸🇦 🇵🇹 🇷🇺 🇫🇷 🇻🇳 wanted — translate any stage doc you're fluent in; keep the six-part structure and align terms against the [GLOSSARY.md](GLOSSARY.md). See [CONTRIBUTING.md](CONTRIBUTING.md). A Spanish starter lives at [README_ES.md](README_ES.md).
 
 ---
 

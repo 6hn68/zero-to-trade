@@ -13,7 +13,10 @@
   1. 装 Python 3.8+（不会装看 [`00-getting-started.md`](00-getting-started.md)）。
   2. 不想装？直接双击 [`index.html`](../index.html) 体验分级 Demo，零安装。
   3. 读 [`README.md`](../README.md) 的「7 环节总览」表一遍，建立全局感。
-- **验收**：能跑 `python scripts/lead_score.py examples/leads_example.csv` 看到 T0-T3 分级。
+  4. 注册 LinkedIn 账号，并准备一个能正常收发消息的 WhatsApp（建议用 WhatsApp Business 商业号，方便后续建联和区分工作/生活）。
+- **验收（二选一）**：
+  - 装了 Python 的：能跑 `python scripts/lead_score.py examples/leads_example.csv` 看到 T0-T3 分级；
+  - 走零安装的：双击打开 `index.html` 把示例 CSV 粘进去点『开始分级』，看到同样的 T0-T3 分级结果。
 
 ---
 
@@ -23,6 +26,7 @@
 - **动作**：
   1. 按 [`01-market-selection.md`](01-market-selection.md) 的三维法（语言 / 需求 / 壁垒）定首站，写 3 条理由。
   2. 按 [`02-find-leads.md`](02-find-leads.md) 四路（海关数据 / 社媒 / 搜索 / 展会）每天找 ≥20 条。
+     - **零基础省钱提示**：海关数据大多要付费，新手先用**免费三路**就够起步——展会官方名录（很多展会有免费参展商清单）、Google Maps 搜「tyre importer / 城市名」、LinkedIn 搜索「procurement / purchasing manager + 国家」。付费海关数据等出第一单再考虑。
   3. 把线索整理成 CSV，表头：`company,country,product,source,email,phone,years,contact,note`。
      - `source` 填 `referral` / `trade_show` / `customs` / `linkedin` / `search` 之一（这项对分数影响最大）。
 - **验收**：一份 ≥20 行的 CSV，每行至少一个邮箱或电话。
@@ -55,7 +59,7 @@
 
 - **目标**：对 Day 3 没回的，按节奏补第 2 次触达，角度换一个。
 - **动作**：
-  1. 跑 `python scripts/followup_plan.py --tier T0 --start 今天 --csv 你的.csv` 生成 7 天 3 触达计划。
+  1. 跑 `python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv 你的.csv` 生成 7 天 3 触达计划（`--start` 格式是 `YYYY-MM-DD`，填你**实际首发当天**的日期，例如 2026-10-08）。
   2. 执行第 1 天（首发后第 1 天）和第 3 天的触达，每次话术不同（补充一个价值点 / 一个案例 / 一个提问）。
   3. 把回复（哪怕「not interested」）记下来，回复本身就是信号。
 - **验收**：跟进计划表生成，且至少完成 2 次差异化的后续触达。
@@ -82,3 +86,13 @@
 3. **信号**：每条都带具体钩子，不是「希望和您合作」。
 
 做到这三点，第一封回复不是运气，是数学。
+
+---
+
+## 跑通了？帮它跑通更多人
+
+如果你照这条路径拿到了第一封回复，说明这套方法对新手真的有效——那它值得被更多人看到：
+
+- **点 ⭐**：去 GitHub 仓库主页点右上角的 Star。Star 越多，项目越容易被其他外贸新手搜到，也算给作者继续维护的动力。
+- **提 PR / 反馈**：遇到写错、跑不通、或想补一段对新手更友好的内容，看仓库里的 `CONTRIBUTING.md` 和 `STAR-GROWTH.md`，按格式提 Issue 或 Pull Request。哪怕只改一个错别字，对下一个零基础用户都是帮助。
+- **分享**：把项目转发给同样想做外贸、但卡在「不会写开发信 / 不懂怎么找客户」的朋友，比单纯收藏更有用。
