@@ -1,125 +1,297 @@
-# STAR-GROWTH · 涨星作战手册（20-agent 审计合成）
+# STAR-GROWTH · 涨星手册
 
-> 由 20 个并行 agent 分别从 Show HN / PH / Reddit / LinkedIn / 中文社媒 / YouTube / awesome 列表 / GitHub SEO / 博客 / 社群 / KOL / 落地页 CRO / 本地化 / 开发者吸引力 / 发布节奏 / 竞品复盘 / 匿名定位 / 贡献钩子 / 信任素材 / 数据归因 角度审计合成。全部为研究结论，待执行。
-
----
-
-## 一、核心判断（共识）
-
-1. **真实受众在中文外贸圈**，不在 Product Hunt / HN。视频号（微信社交图谱=精准 B2B）> 小红书 > 知乎长尾。这是你 0→1 的主战场。
-2. **技术背书靠 Show HN**：同类教程仓（the-art-of-command-line 162k★、developer-roadmap 369k★）的口碑来自 Show HN 的外链与 SEO 加权，但它只是「技术背书 / 外链」渠道（P1），不是 0→1 主引擎。真正的主战场见一.1：中文外贸圈。
-3. **站内被发现靠元数据**：GitHub 搜索只索引 仓库名 / About / Topics（README 需 `in:readme`）。现在 Topics 只用了 10/20，About 关键词被埋。
-4. **转化靠视觉信任资产**：Social Preview 图、30 秒 Demo GIF、首屏「不卖课·MIT·可信度来自内容」信任条，现在全缺。
-5. **「你可以是第一个 star」是负向社交证明**——等于公开承认 0 star，触发从众反向心理。要换成「活跃项目 / 最近更新」信号。
-6. **节奏 > 爆发**：稳定双周 Release + changelog，曲线缓慢上涨比单日爆发更可信、更吸跟风 star。
+> 内部文档，不外发。里面的判断**全都没被验证过**，边做边改。任何一句写着"有用"的地方，请自动读成"没试过，可以去试"。
 
 ---
 
-## 二、涨星渠道优先级（去重后）
+## 一、先把难听的话说了
 
-| 优先级 | 渠道 | 受众/形式 | 工作量 | 预期 star | 谁来做 |
-|---|---|---|---|---|---|
-| **P0** | 中文内容平台（视频号首选 / 小红书 / 知乎） | 中文外贸新手，精准 B2B | 中 | 主引擎，月增 80–200 | **你**（需账号） |
-| **P0** | 中腰部外贸 KOL（3–5 个抖音/小红书） | 垂直粉丝=精准用户 | 低 | 单条口播留存 star 高 | **你发私信，我备模板** |
-| **P1** | Show HN | 技术背书 + 外链（非主引擎） | 低 | 单帖可能 50–500（外链加权） | **你发帖，我备文案** |
-| **P1** | GitHub 站内 SEO | 搜 "foreign trade/export/b2b" 的人 | 极低 | 被动曝光基线 | **我直接做** |
-| **P1** | 博客「开发信 0 回复的真相」 | dev.to+掘金+知乎 SEO | 中 | 长尾 50–200 | 你写/我起草 |
-| **P2** | YouTube 7 集「跟着做」 | 搜索+Google 视频索引 | 高 | 长尾 6–12 月持续 | 你录/我用示例素材 |
-| **P2** | 西/葡语 README | 拉美+巴西开发者+外贸 | 中($60 校对) | 增量大 | **我可做西语，葡语需校对费** |
-| **P2** | 提 PR 到 awesome-waimao-* | 中文外贸导航，活跃 | 低 | 外链流量 | **我来做** |
-| **P2** | Product Hunt | 仅 SEO 反链(Domain Rating 91) | 低 | 非主引擎 | 你发/我备 |
-| **P3** | 社群（微信+Discord） | 晒单→贡献→star 闭环 | 中 | 长期 | 你建群/我配模板 |
-| **P3** | 贡献钩子 | good first issue 翻译任务 | 低 | 增贡献者 | **我来做** |
-
-> **优先级统一说明**：0→1 主引擎是 **中文社媒 + 中腰部 KOL（P0）**，真实受众在中文外贸圈（见一.1）。Show HN 降为 **P1**，仅作技术背书与外链，不再当主战场。本表与 GITHUB_LAUNCH 的渠道优先级已对齐。
+1. **这项目大概率不会火。** 那些教程类仓库的星是攒了好几年的，不是发一次帖能追上的。所以这份文档里没有"预期涨多少星"这一栏——写了也是编的。
+2. **真实受众大概率在中文外贸圈**，不在 Product Hunt / HN。排序：视频号 > 小红书 > 知乎。理由是这些人真的在做外贸，而 HN 上的人大概率这辈子不会发一封开发信。但这也是猜的，30 天后拿数据说话（见 3.1）。
+3. **Show HN 是 P1，不是主引擎。** 发一次，成本 20 分钟，石沉大海也不亏。就是别把希望全押上。
+4. **GitHub 站内搜索只认三个地方**：仓库名、About、Topics。README 要加 `in:readme` 才搜得到。这三个都填好了，剩下靠运气。
+5. **首屏别自嘲。** "你可以是第一个 star" 这种话等于当众说自己 0 星，没人想当第一个。换成"最近更新"就行。
+6. **稳定发 Release 比憋一个大版本强。** 不是为了什么曲线好看，是因为仓库页上"最近更新：3 天前"和"最近更新：4 个月前"是两种东西。
 
 ---
 
-## 三、仓库内现状（CRO/SEO/信任底座 · 已落地核对表）
+## 二、渠道优先级（P0 先做完，别的 30 天内别碰）
 
-这些是所有渠道的转化底座——渠道把人引来，仓库页决定他点不点 star。下面逐项核对**真实现状**（不是待办清单）：
+| 优先级 | 渠道 | 凭什么觉得它可能有用 | 一次要多久 | 谁做 |
+|---|---|---|---|---|
+| **P0** | 视频号 | 做外贸的人真的在微信里刷这个 | 1 小时/条 | 你 |
+| **P0** | 小红书 | 同上，图文形式，搜索长尾 | 30 分钟/条 | 你 |
+| **P0** | 知乎 | 搜"怎么做外贸"的人会翻到，且能留很久 | 40 分钟/篇 | 你 |
+| **P0** | 中腰部外贸博主私信 | 他们的粉丝就是目标用户 | 10 分钟/个 | 你发，模板在 4.5 |
+| **P1** | Show HN | 万一上了，能带外链和技术背书 | 20 分钟，一次就够 | 你发，文案在 4.4 |
+| **P1** | GitHub 站内 SEO | 纯被动，改一次管很久 | 已做完 | 已做完 |
+| **P2** | 提 PR 到中文外贸 awesome 列表 | 顺手，外链 | 15 分钟 | 见 GITHUB_LAUNCH |
+| **P2** | Product Hunt | 不是主引擎，就是个反链 | 20 分钟 | 你 |
+| **P3** | YouTube 系列 / 西语葡语 README / 建社群 / good first issue | 都可能是好事，但现在做就是拿唯一的注意力去赌 | 别碰 | 30 天后再说 |
+
+> **诚实说明**：上面每一行"凭什么觉得它可能有用"，都是理由，**不是数据**。这些渠道哪一个都不保证有用，包括排在 P0 的那四个。它们排 P0 只有一个原因——试错成本低、你能自己做、失败了也不丢人。30 天后见 3.1 的闸门。
+
+---
+
+## 三、仓库内现状（已落地核对表）
+
+渠道把人引来，仓库页决定他点不点 star。下面逐项核对**真实现状**（不是待办清单）：
 
 | # | 项 | 现状 |
 |---|---|---|
 | 1 | 补满 Topics + 重写 About（关键词前置） | ✅ 已完成（见 GITHUB_LAUNCH step 1） |
-| 2 | Social Preview 图（1280×640） | ✅ 已完成（`assets/social-preview.png` 已存在；需在 GitHub Settings 上传并引用） |
+| 2 | Social Preview 图（1280×640） | ⚠️ 图在仓库里（`assets/social-preview.png`），但**还没上传到 GitHub Settings**——得手动传，见 `GITHUB_LAUNCH.md` 第 5 步 |
 | 3 | README 首屏 Demo GIF + 信任条三行 | ✅ 已完成（信任条已上线；Demo GIF 以仓库实际为准） |
 | 4 | 删掉「你可以是第一个 star」→ 活跃信号 | ✅ 已完成 |
-| 5 | 发 v0.1 Release（带 changelog） | ❌ **唯一未做**：本地 `git tag` 为空，未在 GitHub 发 Release |
+| 5 | 发 v0.1 Release（带 changelog） | ❌ **未做**：本地 `git tag` 为空，还没在 GitHub 发 Release。命令见 `GITHUB_LAUNCH.md` 第 6 步 |
 | 6 | For Developers / Hackable 区块（中英双语） | ✅ 已完成 |
 | 7 | KOL 私信模板 + UTM 分渠道链接清单 | ✅ 已完成（见第四节） |
 | 8 | UTM 归因看板说明（飞书多维表字段） | ✅ 已完成（见第五节） |
 
-> **结论**：仓库内 CRO/SEO/信任底座**几乎全部落地**。唯一确定未做的是 **GitHub Release v0.1（本地 `git tag` 为空，未发布）**——这是当前最高优先级的仓库内动作：发一个带 changelog 的 v0.1，既被 Google 收录、也显成熟度。
+> **结论**：仓库内的活儿还剩两件——**发 v0.1 Release** 和 **上传 social preview 图**，都在 `GITHUB_LAUNCH.md` 里（第 5、6 步），加起来大概 10 分钟。剩下的都是往外发内容，那部分没人能替你做。
 
-### 3.1 已采纳文案（OS 口径已改）
+### 3.1 30 天判定闸门（到那天只看这几个数）
 
-- About（已统一为 workflow 口径，不用 operating system / OS）：`Foreign-trade workflow for beginners — 7 stages + 4 stdlib-only Python scripts (quoting engine is alpha). B2B cold-email & lead-gen. Anonymous, no course.`
+先定一个日子：**发第一条视频号的那天 + 30 天**。写进日历，别凭感觉。
 
----
+到那天只看这四处：
 
-## 四、执行包（可直接复制）
+| 看什么 | 在哪看 | 注意 |
+|---|---|---|
+| 累计 star | 仓库页右上角 | 就一个数，别看曲线形状 |
+| 访客 / clone 数 | Insights → Traffic | **GitHub 只留 14 天**，过期就永远没了，记得每周一顺手截一次 |
+| 各渠道短链点击 | 你那张表（见第五节） | UTM 只是辅助，很多人是搜仓库名进来的 |
+| 有没有人开 issue / 提 PR | Issues / Pull requests | 哪怕只有 1 个，也比 50 个 star 值钱 |
 
-### 4.1 Show HN（周日 12–14 UTC 发，美东号蹲守首评）
-- **标题**：`Show HN: zero-to-trade – an open-source playbook + scripts for beginners doing cross-border B2B outreach`
-- **正文**：一句话功能 → 为什么做（痛点："你发 200 封开发信 0 回复，不是英语差，是顺序错了"）→ 怎么跑（浏览器 Demo 零安装）→ 还粗糙在哪（v0.2 报价引擎 alpha）→ 一个求反馈问题（"新手最先卡在哪一步？"）。**禁注册墙/禁拉票/禁 AI 代写正文**。
-- **首发评论**：自曝背景（匿名做、不卖课）+ 脚本怎么跑 + 哪一环最弱 + 问"新手最先卡在哪"。发完蹲守 2–6 小时回每一条，包括差评（像工程师一样认"常识"但给数据）。
+**判定**
 
-### 4.2 视频号 60 秒脚本（首推渠道）
-前 3 秒冲突钩子 → "我发了 200 封开发信 0 回复，直到改了这一步"；中段展示 `index.html` Demo 录屏 + 真实模板对比；结尾"GitHub 搜 zero-to-trade，浏览器打开就能给客户做 T0-T3 分级，免费不卖课"。**视频号可挂公众号链接 → 公众号文章放 GitHub 链接，合规闭环**。
+- **≥50 星**：模型成立。有效渠道从每周 1 条加到 2–3 条，然后开始认真谈博主合作。
+- **10–49 星**：方向没死，内容错了。**别加渠道**，回头改钩子——九成的情况是前 3 秒或者标题没人想点。
+- **<10 星**：渠道错了，或者根本没这个需求。停掉社媒，回去改 README 首屏和 Demo 的前 30 秒体验；再发两周还是 <10，就别追了，直接当作品集用（见第七节）。
 
-### 4.3 小红书图文
-"工具型图文 + 对比表（本项目 vs 卖课营 vs 通用 AI）"，强调"匿名/免费/可跑脚本"三项差异。禁外链/二维码/水印，改用"GitHub 搜 zero-to-trade"口播。
+不管落在哪一档，**别在当天做决定**。隔一天再看一遍，当天的心情会骗人。
 
-### 4.4 KOL 私信模板（给 3–5 个外贸实操中腰部博主）
-> 老师好，关注你很久了，那期「开发信怎么写」对我启发很大。最近看到一个匿名开源项目 zero-to-trade，把「从选市场到收钱」拆成 7 步 + 能跑的脚本，浏览器打开就能给客户做 T0-T3 分级，完全免费不卖课。觉得和你粉丝很对口，想顺手发你看看（Demo：<UTM 链接>）。如果觉得有用，随便提一句都行，不强求～
+### 3.2 已采纳文案（口径已统一）
 
-筛选标准：近 30 条含「开发信/海关数据/找客户/背调/报价」关键词；评论区有人问"具体怎么做"。**先评论暖 3–5 天再私信**。
-
-### 4.5 UTM 分渠道链接清单（每个渠道专属，便于归因）
-基础：`https://github.com/6hn68/zero-to-trade?utm_campaign=launch`
-- Show HN：`&utm_source=news&utm_medium=hn`
-- Reddit：`&utm_source=reddit&utm_medium=community`
-- LinkedIn：`&utm_source=linkedin&utm_medium=social`
-- 视频号：`&utm_source=weixin_channels&utm_medium=shortvideo`
-- 小红书：`&utm_source=xiaohongshu&utm_medium=image`
-- 抖音：`&utm_source=douyin&utm_medium=shortvideo`
-- 某博主：`&utm_source=kol_名字&utm_medium=influencer`
-（建议用短链服务收敛成 `z2t.link/hn` 之类，便于记忆与统计）
+- About（统一用 workflow，不用 operating system / OS）：`Foreign-trade workflow for beginners — 7 stages + 4 stdlib-only Python scripts (quoting engine is alpha). B2B cold-email & lead-gen. Anonymous, no course.`
 
 ---
 
-## 五、归因看板（飞书多维表字段）
+## 四、执行包（照抄就能发）
+
+### 4.1 视频号（P0，先做这个）
+
+- **什么时候发**：工作日 **12:00–13:00** 或 **20:00–22:00**，周三周四优先。
+- **多长**：45–70 秒。超过 90 秒完播率会掉得很明显。
+- **标题**（挂在视频下面，20 字以内，三选一）：
+  - `我发了 200 封开发信 0 回复，问题出在顺序上`
+  - `外贸 0 基础别先学英语，先把这 7 步走完`
+  - `免费、不卖课，浏览器打开就能给客户分级`
+
+**口播逐句稿（照读就行）**
+
+```
+前 3 秒：
+我发了 200 封开发信，一封都没回。
+后来发现不是英语差，是顺序错了。
+
+中段：
+我把从选市场到收钱拆成了 7 步，
+还写了 4 个不用装环境的 Python 小脚本。
+（这里切录屏：打开 index.html，粘一段客户名单，出来 T0-T3 分级）
+
+结尾：
+GitHub 搜 zero-to-trade，免费的，MIT，不卖课。
+有用就点个 star，没用就骂我。
+```
+
+**发完之后**：自己抢第一条评论，把 GitHub 链接挂在评论区。视频号能挂公众号链接的话，就走"视频 → 公众号文章 → GitHub 链接"这条路，比直接放外链稳。
+
+**节奏**：每周 1 条，连发 4 周再判断。别发两天没动静就换方向。
+
+---
+
+### 4.2 小红书（P0）
+
+- **什么时候发**：周二 / 周四 **19:00–22:00**。
+- **形式**：6–9 张图的图文，第 1 张是封面，封面上只写一句大字。
+- **话题标签**（5 个以内，多了容易被判营销）：`#外贸` `#外贸人` `#跨境电商` `#副业` `#干货分享`
+
+**封面大字**（二选一）
+- `外贸 0 基础，我把它拆成了 7 步`
+- `不卖课。免费。能跑。`
+
+**正文模板（改数字就能发）**
+
+```
+做外贸第 X 个月，我最想不通的一件事：
+为什么开发信发了 XXX 封，一封都没回。
+
+后来发现不是英语的问题，是顺序的问题——
+我一直在写邮件，可前面该做的事一件都没做。
+
+于是我把整个流程拆成了 7 步，
+从选市场一直到收钱，每一步写成能照做的清单，
+还配了 4 个 Python 小脚本
+（不用装环境，浏览器打开就能给客户分级）。
+
+匿名做的，MIT，不卖课，也不留联系方式。
+觉得有用，GitHub 搜 zero-to-trade。
+```
+
+**红线**：别放二维码、别放外链、别加水印。链接只能靠口述"GitHub 搜 zero-to-trade"，图文里写了会被限流。
+
+---
+
+### 4.3 知乎（P0，长尾用，发一次管很久）
+
+- **什么时候发**：工作日 **21:00–23:00**。
+- **发哪儿**：搜 `怎么开始做外贸` / `外贸开发信` / `外贸小白` 这几个问题，**挑回答数 <20、关注数 >500 的去答**。竞争小、还有人看。
+- **别自己开问题**，自问自答没人看。
+
+**回答结构（500–800 字）**
+
+1. 第一句直接给结论：`先别写开发信。`
+2. 讲自己踩的坑（上面那 200 封 0 回复的事）。
+3. 把 7 步清单的骨架列出来，每步一行。
+4. 结尾一句：`完整版和 4 个能跑的脚本我放在 GitHub 了，搜 zero-to-trade，免费不卖课。`
+
+**红线**：硬广会被折叠到最底下。正文里不要出现链接，只在结尾提一句仓库名，需要的人自己会去搜。
+
+---
+
+### 4.4 Show HN（P1，发一次就行）
+
+- **什么时候发**：**周日 12:00–14:00 UTC**。发完**蹲 2–6 小时**，每条评论都回，包括骂你的。
+- **心理准备**：**大概率石沉大海。** 这不影响什么——它就是个 20 分钟的尝试，别把希望全押上。
+
+**标题（照抄，别自己改）**
+
+```
+Show HN: zero-to-trade - an open-source playbook + scripts for beginners doing cross-border B2B outreach
+```
+
+**正文（照抄）**
+
+```
+Most "how to start exporting" content tells you to "do background research" and stops there.
+
+This repo takes one task and breaks it down until it's an action: which 3 fields to check,
+which sites to open, what result kills the lead. Seven stages, from picking a market to
+getting paid. Plus 4 stdlib-only Python scripts - Python 3.8+, no pip install, run in ~30s.
+
+What's still rough: the quoting engine is alpha, and the sample data in the docs is made up.
+
+Question for anyone who's actually done this: where do beginners get stuck first?
+```
+
+**首发评论（提交后立刻自己发，别等人问）**
+
+```
+Follow-up with the two things people usually ask:
+
+- No install needed: open index.html in a browser, paste a CSV, get T0-T3 tiering. No backend.
+- I'm anonymous and there's no paid course. MIT. The credibility is supposed to come from
+  the content itself - if it doesn't, say so.
+
+Happy to take feedback, especially from people selling into markets the docs don't cover yet.
+```
+
+**三条红线**：别搞注册墙、别求票、别让 AI 代写正文。HN 对这三件事特别敏感，被抓到就沉。
+
+---
+
+### 4.5 KOL 私信（P0，10 分钟一个）
+
+- **找谁**：抖音 / 小红书 / 视频号上 **几万粉**的外贸实操博主，3–5 个。别找大 V，人家不看私信。
+- **怎么筛**：近 30 条内容里出现过「开发信 / 海关数据 / 找客户 / 背调 / 报价」任意一个词，且评论区有人问"具体怎么做"。
+- **节奏**：**先在他评论区认真留 3–5 天言，然后才私信**。上来就私信 = 广告 = 不回。
+
+**模板（改第一句就行）**
+
+```
+老师好，你那期讲开发信的我看了三遍。
+我自己是零基础开始做外贸的，把从选市场到收钱拆成了 7 步，
+配了 4 个不用装环境的 Python 小脚本，浏览器打开就能给客户分级。
+匿名做的，MIT，不卖课。
+觉得跟你粉丝挺对口，Demo 在这：<UTM 链接>
+有用就顺手提一句，没用就当我没发，不回也没关系。
+```
+
+---
+
+### 4.6 UTM 链接（每个渠道一条，别混用）
+
+统一格式，两篇文档里都按这个来：
+
+```
+https://github.com/6hn68/zero-to-trade?utm_source=<SOURCE>&utm_medium=<MEDIUM>&utm_campaign=launch
+```
+
+| 渠道 | utm_source | utm_medium |
+|---|---|---|
+| Show HN | `hn` | `news` |
+| 视频号 | `weixin_channels` | `shortvideo` |
+| 小红书 | `xiaohongshu` | `image` |
+| 知乎 | `zhihu` | `answer` |
+| 抖音 | `douyin` | `shortvideo` |
+| 某个博主 | `kol_<昵称拼音>` | `influencer` |
+
+GitHub 自己不解析 UTM，光加参数没用——必须自己记一张表（第五节），不然白加。
+
+---
+
+## 五、就记这 8 个字段（飞书多维表 / Google Sheet 都行）
 
 | 字段 | 说明 |
 |---|---|
-| 日期 | 发帖/动作日 |
-| 渠道(UTM source) | 哪个平台 |
-| 动作 | 发帖 / 直播 / KOL 转发 |
-| 当日新增 star | 当日净增 |
+| 日期 | 动作发生那天 |
+| 渠道 | 填 UTM source，或手写"视频号" |
+| 动作 | 发了什么：视频 / 图文 / 回答 / 私信 / Release |
+| 当日新增 star | 净增，别写累计 |
 | 累计 star | 累计 |
-| CTR | 短链点击率（短链后台） |
-| 单 star 成本 | 投放/时间 ÷ 新增 |
-| 备注 | 是否爆文 |
+| 访客数 | 周一从 Insights → Traffic 抄一次（只留 14 天） |
+| 花了多久 | 分钟数，回头算"这渠道值不值"用 |
+| 备注 | 有没有人评论、有没有人开 issue |
 
-- 预警：某渠道连续 3 天新增为 0 则降权；单渠道周增 <5 则暂停。
-- 达到 100 star 做**来源集中度**复盘：Top1 渠道占比 >50% 即高度集中，加码；分散则维持矩阵。
-- 建议接 GitHub API 每日拉 star 数（`gh api repos/6hn68/zero-to-trade`）入库，配合 star-history.com 对齐 spike 与发布日历。GitHub 流量数据仅保留 14 天，必须自建。
-
----
-
-## 六、执行顺序建议
-
-1. **并行启动**：我先把「第三节」仓库内 CRO/SEO/信任 7 项全落地（1–2 天，零风险）；你同步发出 Show HN + 视频号第一条 + 第一批 KOL 私信。
-2. **仓库改完 = 引流效率立刻翻倍**：所有渠道来的人，落地页从"灰图+0 star 自嘲"变成"Demo GIF+信任条+活跃徽章"。
-3. **稳定节奏**：双周一 Release + changelog，旧访客回访，Trending 加权。
-4. **归因驱动**：满 100 star 看来源集中度，把钱/时间压到高效渠道。
+- 想省事就每天拉一次数：`gh api repos/6hn68/zero-to-trade | grep stargazers_count`
+- 单渠道连发 4 次、带 UTM 点击有几十次但 star 是 0，就说明"人来了但不想点"，问题在仓库页不在渠道。
+- 别为了填表而填表。这张表唯一的作用，是 30 天后回答"哪个渠道该停"。
 
 ---
 
-## 七、关键更正 / 风险提示
+## 六、每周就干这 6 件事（多了别做）
 
-- 🔎 **awesome 列表：提 PR 前先搜活的**：先 `topic:foreign-trade` / `topic:export` 搜一遍，确认列表还活跃（近期有提交、带 Topic）再提，否则白费功夫。当前对口且长期更新的可选 **`sasharun/awesome-waimao-dulizhan` / `awesome-waimao-seo`** 系列（中文、长期更新、带 Topic）。
-- ⚠️ Product Hunt 非主引擎，仅作 SEO 反链（Domain Rating 91），顺手做即可。
-- 🔴 **令牌安全**：之前给的 classic PAT（repo 范围）用完即焚，务必去 GitHub Settings → Developer settings → PAT 点 Revoke。
-- ✅ 匿名定位本身不扣分（OSS 约 38% 贡献者匿名），关键是首屏用"活跃信号 + 不卖课"替代"身份背书"。
+| 什么时候 | 干什么 | 上限 |
+|---|---|---|
+| 周一 | 看一眼 star 和 Traffic，抄进表里 | 5 分钟 |
+| 周三 | 发 1 条视频号 | 1 小时 |
+| 周四 | 发 1 篇小红书 | 30 分钟 |
+| 周五 | 给 1 个新博主留言（攒够一周再私信） | 10 分钟 |
+| 随时 | 有人开 issue 就当天回，别拖过 48 小时 | — |
+| 隔一个周五 | 发一次小 Release，哪怕只改了错别字 | 15 分钟 |
+
+不在表里的（YouTube、西语翻译、Product Hunt、建群）——**这 30 天全部别碰**。它们都不是坏事，只是现在做，等于拿你唯一的注意力去赌一个不知道有没有用的东西。30 天过完，如果 ≥50 星，再考虑。
+
+---
+
+## 七、如果它就是不火
+
+说句难听的：最可能的结果是没什么人 star。**头 30 天如果只有 7 个 star，那不是失败，那是一个诚实的数据点。** 而且下面这些比 star 实在：
+
+1. **作品集价值**：申请的时候，"我把一套外贸流程拆成 7 步，写了 4 个能跑的脚本，做成开源项目"——这句话比"我有 200 个 star"有说服力。看材料的人看得懂过程，看不懂 star 数。
+2. **简历价值**：`scripts/` 下那 4 个纯标准库脚本是能当场演示的代码。面试时让人打开 `index.html` 跑一遍，比写"熟悉 Python"强。
+3. **自己真用**：这东西本来就是给自己跑单用的。真拿它谈成一单，比 1000 个 star 值钱。
+4. **写作素材**：`docs/` 下那 7 步文档加 `prompts/AI_PROMPTS.md` 里的 27 条，拆开改改就是一整套内容，够一个外贸号发半年。
+5. **最坏情况**：仓库安静躺着，README 写得清楚，三年后有个人搜到它觉得有用。这也算成了。
+
+**真落到 <10 星，就停。** 别加渠道、别买推广、别到处求人点 star——那只会让你讨厌这个项目。把时间拿去做上面 1–4 条。
+
+---
+
+## 八、几件别踩的事
+
+- 🔎 **awesome 列表先搜再提**：先拿 `topic:foreign-trade` / `topic:export` 搜一遍，确认那个列表最近还有提交、还带 Topic，再去提 PR。不然白费功夫。
+- ⚠️ **Product Hunt 不是主引擎**，就是个反链。顺手做，别为它准备一周。
+- 🔴 **推代码的 token**：只给这一个仓库、只开 Contents 读写、设 90 天过期。具体怎么生成、以及"绝对不要把 token 写进文件里"，见 `GITHUB_LAUNCH.md` 第 2 步。
+- ✅ **匿名不扣分**。真正让人犹豫的是"这人是来卖课的"，所以首屏给"最近更新 + 不卖课"，别给"我是谁"。

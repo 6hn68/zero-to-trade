@@ -1,37 +1,351 @@
 name: CI
 
+# 这个文件守着两条命根子：
+#   ① 脚本只用 Python 标准库 —— 所以全文件没有一行装包的命令，第 5 步还会反过来查这一点；
+#   ② 仓库里不许混进真实客户数据 —— 脱敏检查在 repo 那组。
+# 顺带守住一样：新人把脚本跑挂时，它说的是人话，不是一屏 traceback。
+#
+# 没有 pip 依赖缓存：这项目零第三方依赖，没东西可缓存，加了只是缓存一个空目录。
+# 想加速的话，把脚本跑快点比什么都实在。
+
 on:
   push:
     branches: [main, master]
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  test:
+  scripts:
+    name: 四个脚本 / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: false  # 一个版本红了别掐掉其他版本，新人要看的是"到底哪个版本不行"
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: 装 Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Compile scripts (stdlib-only guard)
+      - name: 四个脚本能不能编译（别让新人第一步就崩）
         run: python -m py_compile scripts/*.py
 
-      - name: Smoke test lead_score
-        run: python scripts/lead_score.py examples/leads_example.csv
+      - name: 3.8 语法门禁：list[str]、dict | dict、match 这些不许偷渡进来
+        run: |
+          python - <<'PY'
+          import ast, glob, sys
 
-      - name: Smoke test quote_engine
-        run: python scripts/quote_engine.py --cost 28 --freight 6 --margin 15 --format json
+          bad = []
+          for f in sorted(glob.glob('scripts/*.py')):
+              src = open(f, encoding='utf-8').read()
+              try:
+                  ast.parse(src, feature_version=(3, 8))
+              except SyntaxError as e:
+                  bad.append('%s -> %s' % (f, e))
+          if bad:
+              sys.exit('✗ 有脚本用了 3.8 不认的语法。最低版本是 3.8，'
+                       '写成 dict[str, int] 而不是 dict | dict：\n  '
+                       + '\n  '.join(bad))
+          print('  四个脚本在 3.8 的语法下都能解析 ✓')
+          PY
 
-      - name: Smoke test outreach_gen
-        run: python scripts/outreach_gen.py examples/leads_example.csv --tier T0 --lang en
+      - name: 只许标准库：谁 import 了第三方包，这关就过不去
+        run: |
+          python - <<'PY'
+          import ast, glob, sys
 
-      - name: Smoke test followup_plan
-        run: python scripts/followup_plan.py --start 2026-10-08 --tier T0 --csv examples/leads_example.csv --format table
+          ALLOWED = {'argparse', 'csv', 'io', 'json', 'os', 're', 'sys',
+                     'unicodedata', 'datetime', 'decimal', 'typing', 'math',
+                     'textwrap', 'collections', 'itertools', 'string'}
+          LOCAL = {'lead_score', 'outreach_gen', 'followup_plan', 'quote_engine'}
+
+          bad = []
+          for f in sorted(glob.glob('scripts/*.py')):
+              tree = ast.parse(open(f, encoding='utf-8').read())
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Import):
+                      for a in node.names:
+                          if a.name.split('.')[0] not in (ALLOWED | LOCAL):
+                              bad.append('%s: import %s' % (f, a.name))
+                  elif isinstance(node, ast.ImportFrom) and not node.level:
+                      top = (node.module or '').split('.')[0]
+                      if top not in (ALLOWED | LOCAL):
+                          bad.append('%s: from %s import ...' % (f, node.module))
+          if bad:
+              sys.exit('✗ 混进非标准库依赖了。"零安装"是这个项目的卖点，'
+                       '加一个 requests 就全废了：\n  ' + '\n  '.join(bad))
+          print('  四个脚本只 import 标准库和彼此 ✓')
+          PY
+
+      - name: 铁律复查：CI 里不许出现任何装包命令
+        run: |
+          # 正则写成 pi[p] 是为了让它匹配不到自己这一行
+          hits=$(grep -rn -E 'pi[p]3?[[:space:]]+install' .github/workflows/ || true)
+          if [ -n "$hits" ]; then
+            echo "✗ 有人在 CI 里装包了："
+            printf '%s\n' "$hits"
+            exit 1
+          fi
+          echo "  workflows 里一行装包的都没有 ✓"
+
+      - name: lead_score：四种输出格式 + 落盘 + 国家/品类筛选
+        run: |
+          TMP="${RUNNER_TEMP:-/tmp}/ztt-out"
+          mkdir -p "$TMP"
+          echo "· table（默认：今天该打谁）"
+          python scripts/lead_score.py examples/leads_example.csv > /dev/null
+          echo "· detail（分数是怎么算出来的，新人最爱问这个）"
+          python scripts/lead_score.py examples/leads_example.csv --format detail > /dev/null
+          echo "· csv 落盘（要能真的写进文件，不是只在屏幕上好看）"
+          python scripts/lead_score.py examples/leads_example.csv --format csv --out "$TMP/leads.csv" | tail -1
+          echo "· json 落盘 + 回头能 json.load 回来"
+          python scripts/lead_score.py examples/leads_example.csv --format json --out "$TMP/leads.json" | tail -1
+          python -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); print('   json 里共 %d 条线索' % d['total'])" "$TMP/leads.json"
+          echo "· --country + --product 一起筛"
+          python scripts/lead_score.py examples/leads_example.csv --country Saudi --product tyres --format json > /dev/null
+          echo "· 只给 --country"
+          python scripts/lead_score.py examples/leads_example.csv --country Saudi --format csv --out "$TMP/saudi.csv" | tail -1
+          test -s "$TMP/leads.csv" && test -s "$TMP/leads.json" && test -s "$TMP/saudi.csv"
+          echo "  三个文件都落盘成功且不是空的 ✓"
+
+      - name: outreach_gen：T0~T3 与 all × 中英双语 × 落盘
+        run: |
+          TMP="${RUNNER_TEMP:-/tmp}/ztt-out"
+          mkdir -p "$TMP"
+          echo "· 五个 --tier（T0/T1/T2/T3/all）× 双语"
+          for t in T0 T1 T2 T3 all; do
+            python scripts/outreach_gen.py examples/leads_example.csv --tier "$t" --lang both > /dev/null
+            echo "   $t ok"
+          done
+          echo "· 单语：en / zh"
+          python scripts/outreach_gen.py examples/leads_example.csv --tier T0 --lang en > /dev/null
+          python scripts/outreach_gen.py examples/leads_example.csv --tier T1 --lang zh > /dev/null
+          echo "· --sender 自定义落款 + 落盘"
+          python scripts/outreach_gen.py examples/leads_example.csv --tier all --lang both \
+            --sender "Zhang | YUSTA" --out "$TMP/outreach.md" | tail -1
+          test -s "$TMP/outreach.md"
+          echo "  落盘成功 ✓"
+
+      - name: followup_plan：四档层级 × 三种格式 × 中东周末顺延 × 落盘
+        run: |
+          TMP="${RUNNER_TEMP:-/tmp}/ztt-out"
+          mkdir -p "$TMP"
+          echo "· T0 带线索 CSV 排期（table）"
+          python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv examples/leads_example.csv --format table > /dev/null
+          echo "· T1 → csv 落盘"
+          python scripts/followup_plan.py --tier T1 --start 2026-10-08 --csv examples/leads_example.csv --format csv --out "$TMP/f1.csv" | tail -1
+          echo "· T2 → json 落盘 + 能 json.load"
+          python scripts/followup_plan.py --tier T2 --start 2026-10-08 --csv examples/leads_example.csv --format json --out "$TMP/f2.json" | tail -1
+          python -c "import json,sys; json.load(open(sys.argv[1],encoding='utf-8')); print('   json ok')" "$TMP/f2.json"
+          echo "· T3（止损线，本来就不该排出触达）"
+          python scripts/followup_plan.py --tier T3 --start 2026-10-08 --csv examples/leads_example.csv > /dev/null
+          echo "· --market gcc + --avoid-weekend（海湾周末是周五周六）"
+          python scripts/followup_plan.py --tier T0 --start 2026-01-01 --market gcc --avoid-weekend --format csv --out "$TMP/f3.csv" | tail -1
+          echo "· --market generic + --avoid-weekend"
+          python scripts/followup_plan.py --tier T0 --start 2026-01-01 --market generic --avoid-weekend > /dev/null
+          echo "· --company 只给一家排 + 不带 --csv 空跑"
+          python scripts/followup_plan.py --tier T0 --start 2026-10-08 --company "【示例】海湾轮胎贸易" > /dev/null
+          python scripts/followup_plan.py --tier T0 --start 2026-10-08 > /dev/null
+          test -s "$TMP/f1.csv" && test -s "$TMP/f2.json" && test -s "$TMP/f3.csv"
+          echo "  三个文件都落盘成功 ✓"
+
+      - name: quote_engine：内部价/客户价 × 汇率换算 × 落盘
+        run: |
+          TMP="${RUNNER_TEMP:-/tmp}/ztt-out"
+          mkdir -p "$TMP"
+          echo "· 最简用法（json）"
+          python scripts/quote_engine.py --cost 28 --freight 6 --margin 15 --format json > /dev/null
+          echo "· 客户视图（--audience client）"
+          python scripts/quote_engine.py --cost 28 --freight 6 --audience client > /dev/null
+          echo "· --fx 汇率 + --currency + --moq + --lead-time（人民币成本报美元价）"
+          python scripts/quote_engine.py --cost 200 --freight 12 --fx 0.14 --currency USD \
+            --moq 500 --lead-time "25天" --audience client --format json > /dev/null
+          echo "· json 落盘 + 能 json.load"
+          python scripts/quote_engine.py --cost 28 --freight 6 --format json --out "$TMP/q.json" > /dev/null
+          python -c "import json,sys; d=json.load(open(sys.argv[1],encoding='utf-8')); print('   FOB=%s' % d['quote']['fob_list'])" "$TMP/q.json"
+          echo "· 高级参数：--insurance-rate / --anchor / --local / --contingency"
+          python scripts/quote_engine.py --cost 28 --freight 6 --insurance-rate 0.002 --anchor 42 \
+            --local 3 --contingency 0.05 > /dev/null
+          echo "· --fx 0 必须报错，不能悄悄算出个 0 报价"
+          set +e
+          msg=$(python scripts/quote_engine.py --cost 28 --fx 0 2>&1); code=$?
+          set -e
+          [ "$code" -ne 0 ] || { echo "✗ --fx 0 竟然跑通了"; exit 1; }
+          echo "   $msg"
+          test -s "$TMP/q.json"
+          echo "  落盘成功 ✓"
+
+      - name: 新人最常撞的四种烂 CSV：空文件 / 只有表头 / 缺 company 列 / GBK
+        run: |
+          TMP="${RUNNER_TEMP:-/tmp}/ztt-bad"
+          rm -rf "$TMP"; mkdir -p "$TMP"
+          : > "$TMP/empty.csv"
+          printf '%s\n' 'company,country,product' > "$TMP/header_only.csv"
+          printf '%s\n' 'name,country' 'Acme,Saudi' > "$TMP/no_company.csv"
+          printf '%s\n' 'company,country,product' '【示例】海湾轮胎,Saudi Arabia,"TBR 12.00R20"' \
+            | iconv -f UTF-8 -t GB18030 > "$TMP/gbk.csv"
+
+          check() {
+            label="$1"; shift
+            set +e
+            out=$("$@" 2>&1); code=$?
+            set -e
+            if [ "$code" -eq 0 ]; then
+              echo "✗ $label：这种输入本该报错，它却跑通了（跑通 = 新人拿到一份假结果还当真）"
+              exit 1
+            fi
+            case "$out" in
+              *Traceback*) echo "  · $label：退出码 $code，但甩的是 traceback（还没修，见 README 的已知问题）" ;;
+              *) echo "  ✓ $label：退出码 $code，说的是人话" ;;
+            esac
+          }
+
+          check "lead_score × 空文件" python scripts/lead_score.py "$TMP/empty.csv"
+          check "lead_score × 只有表头" python scripts/lead_score.py "$TMP/header_only.csv"
+          check "lead_score × 缺 company 列" python scripts/lead_score.py "$TMP/no_company.csv"
+          check "outreach_gen × 空文件" python scripts/outreach_gen.py "$TMP/empty.csv" --tier T0 --lang en
+          check "outreach_gen × 缺 company 列" python scripts/outreach_gen.py "$TMP/no_company.csv" --tier T0 --lang en
+          check "followup_plan × 空文件" python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv "$TMP/empty.csv"
+          check "followup_plan × 缺 company 列" python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv "$TMP/no_company.csv"
+
+          echo "· GBK：Excel 默认存出来的编码，必须能读，而且要告诉用户它是怎么读的"
+          set +e
+          out=$(python scripts/lead_score.py "$TMP/gbk.csv" --format json 2>&1); code=$?
+          set -e
+          [ "$code" -eq 0 ] || { echo "✗ GBK 编码的 CSV 跑挂了：$out"; exit 1; }
+          case "$out" in
+            *gb18030*) echo "  ✓ 读进来了，还提醒了一句 ✓" ;;
+            *) echo "✗ 没崩，但没告诉用户它是按什么编码读的"; exit 1 ;;
+          esac
+          python scripts/outreach_gen.py "$TMP/gbk.csv" --tier T3 --lang zh > /dev/null
+          python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv "$TMP/gbk.csv" > /dev/null
+          echo "  ✓ GBK 在另外两个脚本上也不崩 ✓"
+
+      - name: 红了的看这里（先读这段再动手改）
+        if: failure()
+        run: |
+          echo ""
+          echo "==================== 这盏红灯在说什么 ===================="
+          echo "1. 先看是哪一步红的，上面每一步都写了它在测什么。"
+          echo "2. 脚本自己的报错是中文的，那句人话基本就是原因，先照它改。"
+          echo "3. 只有一个 Python 版本红 → 多半是用了新版本才有的写法，"
+          echo "   看『3.8 语法门禁』那一步的输出。"
+          echo "4. 本地 Windows 上跑不通、这里却是绿的 → 那是路径或编码问题，"
+          echo "   不是 CI 的问题，照报错里那句提示改。"
+          echo "5. 加新脚本记得：只用标准库、报错说人话、别往仓库里塞真实客户数据。"
+          echo "6. 还是看不懂？开个 issue，把这段日志整段贴进去就行。"
+          echo "=========================================================="
+
+  repo:
+    name: 仓库承诺（单文件 Demo / 脱敏 / 文档链接）
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 装 Python（这组只做仓库体检，一个版本够了）
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: index.html 是不是真的单文件零依赖（离线可用这条承诺）
+        run: |
+          echo "· 有没有外链 <script src=...>"
+          ext=$(grep -c -E '<script[^>]*[[:space:]]src=' index.html || true)
+          echo "· 有没有外链 stylesheet"
+          css=$(grep -c -E '<link[^>]*rel="stylesheet"' index.html || true)
+          echo "  外链 script=$ext  外链 css=$css"
+          [ "$ext" = "0" ] || { echo "✗ index.html 引用了外部 JS，离线就废了"; exit 1; }
+          [ "$css" = "0" ] || { echo "✗ index.html 引用了外部 CSS，离线就废了"; exit 1; }
+          echo "· 有没有会真的发起请求的地址（SVG 的 xmlns 不算，它不联网）"
+          net=$(grep -o -E 'https?://[^"'"'"' <)]*' index.html || true)
+          net=$(printf '%s\n' "$net" | grep -v -E '^http://www\.w3\.org/' || true)
+          if [ -n "$net" ]; then
+            echo "✗ 里面有会联网的地址："
+            printf '%s\n' "$net"
+            exit 1
+          fi
+          echo "  除了一个 data: URI 的 favicon，一个字节都不外取 ✓"
+
+      - name: 脱敏铁律：仓库里不许出现真实邮箱域名
+        run: |
+          python - <<'PY'
+          import os, re, sys
+
+          # 白名单 = RFC 2606 保留域名 + 本项目约定的示例域名
+          OK = {'sample.example', 'example.com', 'example.org', 'example.net'}
+          pat = re.compile(r'[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})')
+
+          seen, bad = set(), []
+          for root, dirs, files in os.walk('.'):
+              dirs[:] = [d for d in dirs if d not in {'.git', '__pycache__'}]
+              for fn in files:
+                  if not fn.endswith(('.md', '.csv', '.html', '.py', '.txt', '.json', '.yml')):
+                      continue
+                  p = os.path.join(root, fn)
+                  try:
+                      text = open(p, encoding='utf-8', errors='ignore').read()
+                  except OSError:
+                      continue
+                  for dom in pat.findall(text):
+                      d = dom.lower()
+                      seen.add(d)
+                      if d not in OK:
+                          bad.append((p, d))
+          print('  扫到的邮箱域名：%s' % sorted(seen))
+          if bad:
+              for p, d in bad:
+                  print('  ✗ %s 里出现了 %s' % (p, d))
+              sys.exit('✗ 仓库里不能有真实客户域名。示例数据一律用 '
+                       'sample.example（本项目约定）或 example.com（RFC 2606 保留域名）。')
+          print('  干净 ✓ 这条能挡住以后 PR 里夹带真实客户数据')
+          PY
+
+      - name: 文档里的相对链接有没有断（新人照着点，点空了很劝退）
+        run: |
+          python - <<'PY'
+          import os, re, sys
+
+          link = re.compile(r'\[[^\]]*\]\(([^)]+)\)')
+          broken, total = [], 0
+          for root, dirs, files in os.walk('.'):
+              dirs[:] = [d for d in dirs if d not in {'.git', '__pycache__'}]
+              for fn in files:
+                  if not fn.endswith('.md'):
+                      continue
+                  p = os.path.join(root, fn)
+                  text = open(p, encoding='utf-8', errors='ignore').read()
+                  for m in link.finditer(text):
+                      u = m.group(1).strip()
+                      if not u or u.startswith(('http://', 'https://', '#', 'mailto:')):
+                          continue
+                      tgt = u.split('#')[0].split('?')[0]
+                      if not tgt:
+                          continue
+                      total += 1
+                      real = os.path.normpath(os.path.join(os.path.dirname(p), tgt))
+                      if not os.path.exists(real):
+                          broken.append((p, u))
+          print('  检查了 %d 条相对链接' % total)
+          if broken:
+              for p, u in broken:
+                  print('  ✗ %s 里的 %s 指向的文件不存在' % (p, u))
+              sys.exit(1)
+          print('  全通 ✓')
+          PY
+
+      - name: 红了的看这里
+        if: failure()
+        run: |
+          echo ""
+          echo "这一组查的是三件事，都很机械，照报错改就行："
+          echo "  · index.html 那条：删掉外链，或者把它内联进 HTML。"
+          echo "  · 脱敏那条：把真实邮箱域名换成 sample.example。"
+          echo "  · 链接那条：改对的路径，或者把文档补上。"

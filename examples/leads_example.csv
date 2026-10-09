@@ -1,12 +1,15 @@
-# 本文件全部为虚构示例数据（仅用于教学演示）。公司名带「【示例】」前缀、邮箱统一使用 sample.example 保留域名，均不对应任何真实企业或真实联系人。请勿据此联系。
+# 本文件全部为虚构示例数据（仅用于教学演示）。公司名带「【示例】」前缀、邮箱统一用 IANA 保留域 sample.example、电话统一用占位符 +000 00 000 0000，均不对应任何真实企业 / 联系人 / 号码。双击打开本文件也不会泄露任何真实信息。请勿据此联系。
+# 照这个格式填你自己的客户表：company 必填（第 1 列），其余 8 列选填——有就加分，没有也能跑。脚本按列名认列，顺序随便调，多写几列它也会忽略。
+# 这 9 列分别是：company(公司名,必填) / country(国家) / product(意向产品) / source(来源) / email(邮箱) / phone(电话) / years(成立年数) / contact(对接人角色) / note(背调备注)。source 只能填 referral / trade_show / customs / linkedin / search 之一，填错会按最泛的 search 记并标出来。
+# 填你自己客户时：去掉【示例】前缀；邮箱只能用 sample.example（真实域名、免费邮箱 gmail/qq 一律不准，写了也不算分）；电话全填 +000 00 000 0000，WhatsApp 就在末尾加「 WA」（如 +000 00 000 0000 WA）；note 里若含逗号，整段用双引号包起来，否则逗号后面会被截断。
 company,country,product,source,email,phone,years,contact,note
-【示例】海湾轮胎贸易,Saudi Arabia,"TBR 12.00R20, PCR tubes",referral,demo01@sample.example,+966 11 234 5678,18,purchasing manager,"Annual RFQ for truck tyres, looking for supplier, 40HQ container regular"
-【示例】迪拜轮毂行,UAE,"PCR 195/65R15, alloy rims",trade_show,,+971 4 220 3344,9,buyer,"Met at Gulf Oil Show, asked for quotation, 20GP trial order"
-【示例】利雅得汽配,Saudi Arabia,"TBR 315/80R22.5",customs,purchase@sample.example,,12,,,Importer record: 6 shipments/year from Asia
-【示例】尼罗河商贸,Egypt,"PCR tubes, motorcycle tyres",search,contact@sample.example,+20 2 2519 7788,6,procurement,"Requesting quotation for 20GP mixed container"
-【示例】半岛汽车,Saudi Arabia,"PCR, alloy wheels",linkedin,info@sample.example,+966 55 118 2233,4,sourcing manager,"LinkedIn message, interested but timing unclear"
-【示例】利雅得零件店,Saudi Arabia,"spare parts",search,,,,3,,Retail shop, no import record
-【示例】阿曼蓝海,Oman,"TBR 12.00R20",customs,sales@sample.example,+968 24 112233,25,,"Tender invitation issued by Oman municipality"
-【示例】黎凡特供配,Lebanon,"PCR tubes",linkedin,,,,2,,Small distributor, no evidence of import
-【示例】三角洲轮胎,Saudi Arabia,"TBR, PCR, OTR",referral,procurement@sample.example,+966 13 887 7665,15,purchasing manager,"Strategic supplier RFQ, tender, 3 years contract, needs SASO compliance"
-【示例】尼日利亚先锋,Nigeria,"PCR tubes",search,,+234 803 123 4567,7,buyer,"Asked about FOB pricing, no quantity confirmed"
+【示例】海湾轮胎贸易,Saudi Arabia,"TBR 12.00R20, PCR tubes",referral,demo01@sample.example,+000 00 000 0000,18,purchasing manager,"Annual RFQ for truck tyres, looking for supplier, 40HQ container regular"
+【示例】迪拜轮毂行,UAE,"PCR 195/65R15, alloy rims",trade_show,,+000 00 000 0000,9,buyer,"Met at Gulf Oil Show, asked for quotation, 20GP trial order"
+【示例】利雅得汽配,Saudi Arabia,"TBR 315/80R22.5",customs,purchase@sample.example,,12,,"Importer record: 6 shipments/year from Asia"
+【示例】尼罗河商贸,Egypt,"PCR tubes, motorcycle tyres",search,contact@sample.example,+000 00 000 0000,6,procurement,"Requesting quotation for 20GP mixed container"
+【示例】半岛汽车,Saudi Arabia,"PCR, alloy wheels",linkedin,info@sample.example,+000 00 000 0000,4,sourcing manager,"LinkedIn message, interested but timing unclear"
+【示例】利雅得零件店,Saudi Arabia,"spare parts",search,,,3,,"Retail shop, no import record"
+【示例】阿曼蓝海,Oman,"TBR 12.00R20",customs,sales@sample.example,+000 00 000 0000,25,,"Tender invitation issued by Oman municipality"
+【示例】黎凡特供配,Lebanon,"PCR tubes",linkedin,,,2,"Small distributor, no evidence of import"
+【示例】三角洲轮胎,Saudi Arabia,"TBR, PCR, OTR",referral,procurement@sample.example,+000 00 000 0000,15,purchasing manager,"Strategic supplier RFQ, tender, 3 years contract, needs SASO compliance"
+【示例】尼日利亚先锋,Nigeria,"PCR tubes",search,,+000 00 000 0000 WA,7,buyer,"Asked about FOB pricing, no quantity confirmed"

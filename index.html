@@ -3,11 +3,18 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>zero-to-trade · 线索分级 Demo（零安装）</title>
+<title>客户名单丢进来，先打哪几家我帮你排 · zero-to-trade 线索分级（零安装）</title>
+<meta name="description" content="把客户名单（CSV）塞进来，按「多快能成交」排出 T0–T3，告诉你今天先联系谁。计算全在你自己电脑里跑，名单不出本机。" />
+<meta name="theme-color" content="#1f6feb" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="客户名单丢进来，先打哪几家帮你排好（零安装）" />
+  <meta property="og:description" content="外贸零基础也能用：把客户名单放进来，排出 T0-T3，告诉你今天先联系谁。单文件 HTML，双击就能跑，名单不出本机。" />
+<meta property="og:image" content="assets/social-preview.png" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Ctext%20y%3D%2226%22%20font-size%3D%2226%22%3E%F0%9F%93%8B%3C%2Ftext%3E%3C%2Fsvg%3E" />
 <style>
   :root{
     --bg:#f6f8fb; --card:#ffffff; --ink:#15233b; --muted:#5b6b85;
-    --line:#e3e9f2; --blue:#1f6feb; --t0:#d93025; --t1:#e8830c; --t2:#1f7a3d; --t3:#6b7280;
+    --line:#e3e9f2; --blue:#1f6feb; --t0:#d93025; --t1:#b45309; --t2:#1a6b36; --t3:#5b6472;
     --shadow:0 1px 3px rgba(20,35,59,.08),0 8px 24px rgba(20,35,59,.06);
   }
   *{box-sizing:border-box}
@@ -51,60 +58,133 @@
     font-size:13px;color:var(--muted)}
   .subrow td{background:#fafbfd}
   .subdetail{color:var(--muted);font-size:12px;padding-top:0!important}
+  /* —— 本轮新增：首屏 / 容错 / 可行动 / 移动端 / 无障碍 —— */
+  h2{font-size:17px;margin:0 0 8px}
+  .kicker{display:inline-block;background:#e8f1ff;color:#12459e;border:1px solid #c7dcff;
+    border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;margin:0 0 10px}
+  .err{display:none;background:#fdecec;border:1px solid #f3b0b0;color:#7f1d1d;
+    border-radius:10px;padding:10px 12px;margin:0 0 12px;font-size:14px;line-height:1.6}
+  .err b{display:block;margin:0 0 2px}
+  .notice{display:none;background:#fff8e6;border:1px solid #f2d79a;color:#7a4a06;
+    border-radius:10px;padding:10px 12px;margin:0 0 12px;font-size:13.5px;line-height:1.6}
+  .notice ul{margin:4px 0 0;padding-left:18px}
+  input[type=file]{width:100%;font-size:13px;padding:8px;border:1px dashed var(--line);
+    border-radius:10px;background:#fbfcfe;color:var(--muted)}
+  textarea.drop{border-color:var(--blue);background:#f2f7ff}
+  .tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 12px;
+    font-size:13px;font-weight:600;color:var(--muted)}
+  .chip[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+  .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:12px}
+  th.sortable{padding:0}
+  th.sortable button{width:100%;background:none;border:none;border-radius:0;color:var(--ink);
+    font:inherit;font-weight:600;padding:8px 10px;text-align:left}
+  th.sortable button:hover{background:#e6eefb}
+  .actbtn{background:#eef3fb;color:var(--blue);padding:6px 10px;font-size:12px;border-radius:8px;white-space:nowrap}
+  .next{background:#f0f6ff;border:1px solid #cfe0fb;border-radius:10px;padding:10px 12px;
+    font-size:13.5px;line-height:1.7;margin:12px 0 0}
+  .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#15233b;
+    color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;max-width:88%;text-align:center;
+    box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+  .toast.on{opacity:1}
+  a:focus-visible,button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+  .foot{color:var(--muted);font-size:12.5px;line-height:1.7;margin-top:14px}
+  @media(max-width:680px){
+    .wrap{padding:16px 12px 44px}
+    h1{font-size:20px;line-height:1.35}
+    .grid{grid-template-columns:1fr;gap:14px}
+    #run,#load{width:100%;min-height:46px;font-size:15px}
+    input[type=file]{min-height:46px}
+    .steps{font-size:12px;gap:3px;padding:8px 9px}
+    .steps .step{padding:3px 8px}
+    table{min-width:640px;font-size:12.5px}
+    .tools{gap:6px}
+    .chip{padding:6px 12px;min-height:36px}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="steps">
-    <span class="step">① 选市场</span><span class="arrow">→</span>
-    <span class="step">② 找客户</span><span class="arrow">→</span>
-    <span class="step">③ 背调</span><span class="arrow">→</span>
-    <span class="step cur">④ 线索分级</span><span class="arrow">→</span>
-    <span class="step">⑤ 建联文案</span><span class="arrow">→</span>
-    <span class="step">⑥ 跟进</span><span class="arrow">→</span>
+  <div class="steps" role="navigation" aria-label="外贸 7 步流程">
+    <span class="step">① 选市场</span><span class="arrow" aria-hidden="true">→</span>
+    <span class="step">② 找客户</span><span class="arrow" aria-hidden="true">→</span>
+    <span class="step">③ 背调</span><span class="arrow" aria-hidden="true">→</span>
+    <span class="step cur" aria-current="step">④ 线索分级</span><span class="arrow" aria-hidden="true">→</span>
+    <span class="step">⑤ 建联文案</span><span class="arrow" aria-hidden="true">→</span>
+    <span class="step">⑥ 跟进</span><span class="arrow" aria-hidden="true">→</span>
     <span class="step">⑦ 报价成交</span>
   </div>
-  <p class="lead">这是「零基础跑通外贸」7 步里的第 4 步：把客户名单按多快能成交排个队。你现在在这页，只做分级这一件事。</p>
+  <p class="lead">这是「零基础跑通外贸」7 步里的第 4 步：<b>线索分级</b>，夹在「找客户」和「发开发信」中间。活儿就一件：把名单排个队，定下先打谁。这页你只管分级，别的先别操心。</p>
 
-  <h1>zero-to-trade · 线索分级 Demo</h1>
-  <p class="guide">把你的潜在客户（<b>线索</b>）名单粘进来，我帮你算出「先回谁」。<b>线索</b>＝可能买你东西的公司联系人，一个名字、一张名片都算一条。</p>
-  <p class="sub">零安装、纯浏览器跑。逻辑和 <code>scripts/lead_score.py</code> 完全一致（满分 100：联系40 / 来源30 / 采购信号20 / 成熟度10）。</p>
+  <p class="kicker">不用装 Python，双击就能开 · 名单只在你自己电脑里算，跑不到网上去</p>
+  <h1>客户名单丢进来，先打哪几家我给你排好队</h1>
+  <p class="sub">你手上有一份客户名单（名片、展会登记表、Excel 都行），却卡在"先联系谁"上。放进来，我按"多快能成交"给它打个分排队：分高的今天就得发，分低的先搁着。别一上来就群发——把人都吓跑了，名单再长也白搭。<b>线索</b>这词听着玄，其实就是个可能买你东西的联系人：有个名字、一张名片，都算一条。</p>
 
   <div class="card">
+    <p class="guide">用法就三步：选文件（或把名单直接粘进框）→ 点「开始分级」→ 看下面排好的队。头回来？点「载入示例」，外贸黑话一个不用懂。</p>
+    <div class="err" id="err" role="alert" aria-live="assertive" tabindex="-1"></div>
+    <div class="notice" id="notice" role="status" aria-live="polite" style="display:none"></div>
     <div class="grid">
       <div>
-        <label>① 粘贴你的 CSV（表头：company,country,product,source,email,phone,years,contact,note）</label>
-        <textarea id="csv" placeholder="【示例】海湾轮胎贸易,Saudi Arabia,TBR 12.00R20,referral,demo01@sample.example,+966 00 000 0000,18,purchasing manager,Annual RFQ"></textarea>
+        <label for="csv">① 把客户名单贴这儿（CSV 就行：Excel 里「另存为 → CSV UTF-8」）</label>
+        <textarea id="csv" aria-describedby="csvfmt" placeholder="company,country,product,source,email,phone,years,contact,note&#10;【示例】海湾轮胎贸易,Saudi Arabia,TBR 12.00R20,referral,demo01@sample.example,+966 00 000 0000,18,purchasing manager,Annual RFQ"></textarea>
+        <p class="hint" id="csvfmt">第一行写列名：<code>company,country,product,source,email,phone,years,contact,note</code>。<code>company</code>（公司名）是唯一必填的，别的空着也能跑，缺哪项就少拿哪项的分。文件也能<b>直接拖</b>进上面的框。</p>
       </div>
       <div>
-        <label>② 或一键载入示例（10 条虚构数据）</label>
+        <label for="file">①b 嫌粘麻烦？直接选文件（.csv / .txt，传到哪都不可能，只在你电脑里）</label>
+        <input id="file" type="file" accept=".csv,.txt,text/csv,text/plain" aria-describedby="srchelp" />
         <div class="row">
-          <button class="ghost" id="load">载入示例</button>
-          <button id="run">开始分级</button>
+          <button class="ghost" id="load" type="button">载入示例（10 条假数据，纯练手）</button>
+          <button id="run" type="button">开始分级</button>
         </div>
-        <p class="hint" style="margin-top:14px">
-          source 填：<code>referral</code> / <code>trade_show</code> / <code>customs</code> / <code>linkedin</code> / <code>search</code>（影响最大）。<br>
-          只有 company 必填，其余缺省也能跑（缺项按最低分算）。
+        <p class="hint" id="srchelp" style="margin-top:14px">
+          source 填：<code>referral</code>（朋友介绍，分最高）/ <code>trade_show</code>（展会）/ <code>customs</code>（海关数据）/ <code>linkedin</code> / <code>search</code>（网上搜的，分最低）。<br>
+          中文变乱码？在 Excel 里另存为「<b>CSV UTF-8</b>」再传；GBK 也能自动识别。
         </p>
       </div>
     </div>
   </div>
 
-  <div class="card" id="out" style="display:none">
+  <div class="card" id="out" style="display:none" aria-live="polite">
+    <h2 id="outh">排好队了</h2>
     <div class="counts" id="counts"></div>
-    <p class="legend">分级含义：<span class="badge b-T0">T0</span> 今天立刻打 · <span class="badge b-T1">T1</span> 排进本周 · <span class="badge b-T2">T2</span> 排期扫一遍 · <span class="badge b-T3">T3</span> 先补信息再打</p>
+    <p class="legend">分数咋看：<span class="badge b-T0">T0</span> 80 分以上，今天就得打 · <span class="badge b-T1">T1</span> 60–79，排进本周 · <span class="badge b-T2">T2</span> 40–59，有空扫一眼 · <span class="badge b-T3">T3</span> 40 以下，信息太少，先补再说</p>
     <div class="first" id="first"></div>
-    <div style="overflow:auto;margin-top:12px">
+    <div class="tools">
+      <span class="hint">只看：</span>
+      <span id="filters" role="group" aria-label="按分级筛选结果"></span>
+    </div>
+    <div class="tools">
+      <button class="ghost" id="exp" type="button">导出 CSV（拿去存档）</button>
+      <button class="ghost" id="copytop" type="button">复制优先名单</button>
+      <span class="hint">（点表头「分级 / 公司 / 国家 / 得分」能换排序）</span>
+    </div>
+    <div class="tablewrap">
       <table id="tbl">
-        <thead><tr><th>分级</th><th>公司</th><th>国家</th><th>得分</th><th>下一步</th></tr></thead>
+        <caption class="hint" style="text-align:left;padding:0 0 6px">每行下面那行小字是它的得分明细，想提分就照着补。</caption>
+        <thead><tr>
+          <th scope="col" class="sortable"><button type="button" data-k="tier">分级 <span aria-hidden="true">↕</span></button></th>
+          <th scope="col" class="sortable"><button type="button" data-k="company">公司 <span aria-hidden="true">↕</span></button></th>
+          <th scope="col" class="sortable"><button type="button" data-k="country">国家 <span aria-hidden="true">↕</span></button></th>
+          <th scope="col" class="sortable"><button type="button" data-k="total">得分 <span aria-hidden="true">↕</span></button></th>
+          <th scope="col">下一步</th>
+          <th scope="col">动作</th>
+        </tr></thead>
         <tbody></tbody>
       </table>
     </div>
+    <p class="next">下一步怎么走：<br>
+      · <a href="docs/04-outreach.md">《04 建联》——照着抄首触邮件 / WhatsApp 话术（上面每行的「复制邮件」就是它）</a><br>
+      · <a href="docs/03-due-diligence.md">《03 背调》——先查清对方是不是皮包公司，再发信</a><br>
+      · <a href="docs/00-getting-started.md">《00 从零开始》——完全没头绪就从这页看</a> · <a href="README.md">README（完整 7 步）</a>
+    </p>
     <p class="hint" id="detail" style="margin-top:10px"></p>
   </div>
 
-  <p class="hint">想本地跑同款 Python 脚本、生成建联文案和跟进计划？看仓库 <a href="README.md">README</a>。</p>
+  <p class="foot">就这样，名单不会被上传到任何服务器——整个计算都在这个 HTML 文件里、在你自己的浏览器里跑完，断网也能用。<br>
+    想跑更大批量、或把结果存成 JSON，仓库里有同款 Python 脚本：<code>python scripts/lead_score.py examples/leads_example.csv --format detail</code>（计分规则与本页完全一致：联系 40 / 来源 30 / 采购信号 20 / 成熟度 10 = 100 分）。</p>
 </div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 const SOURCE_SCORE={referral:30,trade_show:26,customs:22,linkedin:16,search:10};
@@ -117,7 +197,113 @@ const BUYING=[
 const TIER_NEXT={T0:"今天就发首触，别等",T1:"排进本周，今天准备文案",T2:"进 B 池，每天固定时段扫一遍",T3:"信息不足，先补联系方式/需求再打"};
 const EMAIL_RE=/^[^@\s]+@[^@\s]+\.[a-zA-Z]{2,}$/;
 
-function parseCSV(text){
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.classList.add("on");
+  clearTimeout(t._tm);t._tm=setTimeout(()=>t.classList.remove("on"),2600);
+}
+function setErr(title,body){
+  const e=document.getElementById("err");
+  if(!title){e.style.display="none";e.innerHTML="";return;}
+  e.innerHTML="<b>"+esc(title)+"</b>"+esc(body);
+  e.style.display="block";
+  document.getElementById("out").style.display="none";
+  try{e.focus();}catch(_){}
+}
+function setNotice(items){
+  const n=document.getElementById("notice");
+  if(!items||!items.length){n.style.display="none";n.innerHTML="";return;}
+  n.innerHTML="顺带提醒："+"<ul>"+items.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>";
+  n.style.display="block";
+}
+// 猜分隔符：支持逗号 / 分号 / 制表符（欧洲版 Excel 常导出分号，直接粘贴表格常是制表符）
+function sniffDelim(line){
+  let best=null,bestN=0;
+  [",",";","\t","|"].forEach(d=>{
+    const n=line.split(d).length-1;
+    if(n>bestN){bestN=n;best=d;}
+  });
+  return bestN>0?best:null;
+}
+// 读本地文件：UTF-8 优先，出现替换字符（乱码）时自动按 GBK 再解一次
+function readFile(file,cb){
+  const fr=new FileReader();
+  fr.onerror=function(){cb(null,"这个文件读不出来（可能是空文件，或浏览器不让读）。试试直接把内容复制粘贴到上面的框里。");};
+  fr.onload=function(){
+    const txt=String(fr.result||"");
+    if(/\uFFFD/.test(txt)){
+      try{
+        const fr2=new FileReader();
+        fr2.onload=function(){cb(String(fr2.result||""),null,true);};
+        fr2.onerror=function(){cb(txt,null,false);};
+        fr2.readAsText(file,"gbk");
+        return;
+      }catch(_){/* 浏览器不支持 gbk 标签，沿用 utf-8 结果 */}
+    }
+    cb(txt,null,false);
+  };
+  fr.readAsText(file,"utf-8");
+}
+function handleFile(f){
+  if(!f) return;
+  if(/\.xlsx?$|\.xls$/i.test(f.name)){
+    setErr("这是 Excel 文件，我读不了","浏览器版只认 CSV（纯文本表格）。请在 Excel / WPS 里：文件 → 另存为 → 文件类型选「CSV UTF-8（逗号分隔）」→ 保存，然后上传那个 .csv 文件。");
+    return;
+  }
+  if(f.size>5*1024*1024){
+    setErr("文件有点大（超过 5MB）","这个页面是给几十到几百条名单用的。请先拆成小文件，或者用仓库里的 Python 脚本跑大批量：python scripts/lead_score.py 你的名单.csv");
+    return;
+  }
+  readFile(f,function(txt,err,wasGbk){
+    if(err){setErr("文件读不出来",err);return;}
+    document.getElementById("csv").value=(txt||"").replace(/^\uFEFF/,"").trim();
+    if(wasGbk) toast("检测到中文编码问题，已按 GBK 重新解码");
+    run(true);
+  });
+}
+function copyText(txt,okMsg){
+  const done=function(){toast(okMsg||"已复制");};
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(function(){fallbackCopy(txt,done);});
+  }else fallbackCopy(txt,done);
+}
+function fallbackCopy(txt,done){
+  const ta=document.createElement("textarea");
+  ta.value=txt;ta.setAttribute("readonly","");
+  ta.style.position="fixed";ta.style.top="0";ta.style.opacity="0";
+  document.body.appendChild(ta);ta.select();
+  let ok=false;try{ok=document.execCommand("copy");}catch(_){}
+  ta.remove();
+  if(ok)done();
+  else window.prompt("自动复制被浏览器拦了，请手动复制下面的内容：",txt);
+}
+// 首触开发信草稿（不含任何真实公司/人名；带 [ ] 的替换成你自己的信息）
+function outreachText(d){
+  const who=d.company||"（公司名）";
+  const what=(d.product||"your products").trim();
+  const to=(d.contact||(d.email?d.email.split("@")[0]:"there")).trim();
+  return [
+    "主题："+who+" · "+what+" 报价与产能确认",
+    "",
+    "Hi "+to+",",
+    "",
+    "I came across "+who+(d.country? " in "+d.country:"")+" and noticed you are working with "+what+".",
+    "We supply the same range with stable monthly capacity, and can send a full quotation within 24 hours.",
+    "",
+    "Two quick questions so I can quote accurately:",
+    "1) What is your current monthly quantity (and target size, e.g. 20GP / 40HQ)?",
+    "2) Any certificate or market requirement I should follow (e.g. SASO, ECE, DOT)?",
+    "",
+    "If it is easier, just reply with your last purchase order and I will match the specs.",
+    "",
+    "Best regards,",
+    "[你的名字] / [你的公司] / [你的 WhatsApp]"
+  ].join("\n");
+}
+
+function parseCSV(text,d){
+  d=d||",";
   const rows=[];
   let i=0,field="",row=[],inQ=false,comment=false;
   while(i<text.length){
@@ -131,7 +317,7 @@ function parseCSV(text){
       // \r 及其它字符在注释行内一律忽略
     }else{
       if(c==='"') inQ=true;
-      else if(c===',') {row.push(field);field="";}
+      else if(c===d) {row.push(field);field="";}
       else if(c==='\n'){row.push(field);rows.push(row);row=[];field="";}
       else if(c==='\r'){}
       else if(c==='#'){
@@ -152,8 +338,9 @@ function scoreLead(r){
   let contact=0,clabel="none";
   if(email&&phone){contact=40;clabel="email+phone";}
   else if(email){contact=28;clabel="email";}
-  else if(phone){contact=22;clabel="phone";}
-  else if(/wa|whatsapp/i.test(phone)){contact=10;clabel="wa";}
+  else if(phone){contact=22;clabel="电话";}
+  // 原逻辑里这一分支写在 phone 为空之后，永远走不到；改为在备注/联系人里找社媒账号
+  else if(/whatsapp|\bwa\b|wechat|微信/i.test((r.note||"")+" "+(r.contact||""))){contact=10;clabel="仅社媒账号";}
   if(email&&!EMAIL_RE.test(email)&&(clabel==="email"||clabel==="email+phone")){
     contact=Math.max(0,contact-18);clabel+="(格式存疑)";
   }
@@ -173,53 +360,180 @@ function scoreLead(r){
   return {total,tier,contact,clabel,source,src,buying,maturity,mlabel};
 }
 
-function run(){
-  const txt=document.getElementById("csv").value;
-  const rows=parseCSV(txt);
-  if(rows.length<2){alert("没读到数据，确认 CSV 表头和至少一行数据。");return;}
-  const header=rows[0].map(h=>h.trim().toLowerCase());
+const STATE={list:[],filter:"ALL",sortKey:"total",sortDir:-1};
+const FILTERS=[["ALL","全部"],["T0","只要 T0"],["T1","T1"],["T2","T2"],["T3","T3"],
+  ["HAS","有联系方式"],["NOC","缺联系方式"],["MAIL","邮箱存疑"]];
+
+function run(scroll){
+  setErr(null);setNotice([]);
+  const raw=(document.getElementById("csv").value||"").replace(/^\uFEFF/,"");
+  if(!raw.trim()){
+    setErr("还没放数据进来","先在框里粘贴你的客户名单，或点「选择文件」上传一个 CSV。不确定格式长什么样？直接点「载入示例」看一眼。");
+    return;
+  }
+  const lines=raw.split(/\r?\n/);
+  const firstLine=(lines.filter(l=>l.trim()&&l.trim().charAt(0)!=="#")[0]||"");
+  const delim=sniffDelim(firstLine);
+  if(!delim){
+    setErr("这看起来不是 CSV（我没找到分隔符）","CSV 就是「用逗号隔开的表格」。你放进去的内容里没有逗号、分号或制表符。做法：用 Excel / WPS 打开你的名单 → 文件 → 另存为 → 文件类型选「CSV UTF-8（逗号分隔）」→ 保存后再上传。也可以先点「载入示例」看看正确的样子。");
+    return;
+  }
+  const rows=parseCSV(raw,delim);
+  if(rows.length===0){
+    setErr("读出来是空的","文件里好像只有空行或全是 # 开头的注释。打开看看是不是导出时出了问题；或者先点「载入示例」。");
+    return;
+  }
+  if(rows.length===1){
+    setErr("只有表头，没有客户行","我读到了第一行（列名），但下面一行客户数据都没有。请在表头下面至少加一行客户信息——只有一行的话没法排优先级。");
+    return;
+  }
+  const header=rows[0].map(h=>(h||"").trim().toLowerCase());
+  if(header.length<2){
+    setErr("只认出 1 列","整行都被当成一列了，通常是分隔符不对（比如用了中文逗号「，」或空格）。请在 Excel 里另存为「CSV UTF-8（逗号分隔）」再来。");
+    return;
+  }
   if(header.indexOf("company")<0){
-    alert("CSV 表头缺少 company 列，所有字段会读成空、整页结果全变 T3。\n请确认第一行为：\ncompany,country,product,source,email,phone,years,contact,note\n（表头不区分大小写，但 company 必填，其余缺省也能跑）");
+    setErr("表头里没有 company（公司名）这一列","company 是唯一必填列，没有它，所有公司都会显示成「(未命名)」并且全部掉到 T3。第一行请写成：company,country,product,source,email,phone,years,contact,note —— 大小写、列顺序都无所谓，缺几列也能跑。");
     return;
   }
   const idx=k=>header.indexOf(k);
   const data=rows.slice(1).map(cells=>{
-    const get=k=>{const j=idx(k);return j>=0?cells[j]:"";};
+    const get=k=>{const j=idx(k);return j>=0?(cells[j]||"").trim():"";};
     const rec={company:get("company"),country:get("country"),product:get("product"),
       source:get("source"),email:get("email"),phone:get("phone"),years:get("years"),
       contact:get("contact"),note:get("note")};
     const s=scoreLead(rec);
-    return {...rec,...s};
-  }).sort((a,b)=>b.total-a.total||a.company.localeCompare(b.company));
+    return Object.assign({},rec,s);
+  }).filter(d=>d.company||d.email||d.phone||d.note);
 
-  const counts={T0:0,T1:0,T2:0,T3:0};
-  data.forEach(d=>counts[d.tier]++);
-  const c=document.getElementById("counts");
-  c.innerHTML=["T0","T1","T2","T3"].map(t=>
-    `<span class="pill"><span class="badge b-${t}">${t}</span> ${counts[t]}</span>`).join("");
-  document.getElementById("first").innerHTML=
-    "先回谁：<b>"+(data.filter(d=>d.tier==="T0").map(d=>d.company).join("、")||"无")+"</b>";
-
-  const tb=document.querySelector("#tbl tbody");tb.innerHTML="";
+  // 去重：公司名 + 邮箱 + 电话 完全相同的行只保留第一条
+  const seen={},list=[];let dup=0;
   data.forEach(d=>{
+    const k=[d.company,d.email,d.phone].join("|").toLowerCase();
+    if(!k.replace(/\|/g,"")){list.push(d);return;}
+    if(seen[k]){dup++;return;}
+    seen[k]=1;list.push(d);
+  });
+  if(list.length===0){
+    setErr("没读到任何有效客户行","每一行都缺公司名、邮箱、电话和备注，没法分级。请至少填一列。");
+    return;
+  }
+
+  const notes=[];
+  if(dup) notes.push("发现 "+dup+" 条重复（公司名+联系方式完全一样），已自动合并，不会重复占你的时间。");
+  const badMail=list.filter(d=>d.email&&!EMAIL_RE.test(d.email)).length;
+  if(badMail) notes.push("有 "+badMail+" 行的邮箱格式看着不对（少 @ 或缺域名），这些行的联系分已打折，发信前记得核对。");
+  const noContact=list.filter(d=>!d.email&&!d.phone).length;
+  if(noContact) notes.push("有 "+noContact+" 行既没邮箱也没电话，只能在 LinkedIn / 官网 / 展会名录上先补联系方式（补上邮箱最多能加 28 分）。");
+  const gbk=/\uFFFD/.test(raw);
+  if(gbk) notes.push("内容里出现了乱码字符。若中文显示不对，请在 Excel 里另存为「CSV UTF-8」后重新上传（上传文件会自动尝试 GBK 解码）。");
+  setNotice(notes);
+
+  STATE.list=list;STATE.filter="ALL";STATE.sortKey="total";STATE.sortDir=-1;
+  const counts={T0:0,T1:0,T2:0,T3:0};
+  list.forEach(d=>counts[d.tier]++);
+  document.getElementById("counts").innerHTML=["T0","T1","T2","T3"].map(t=>
+    '<span class="pill"><span class="badge b-'+t+'">'+t+'</span> '+counts[t]+' 家</span>').join("")
+    +'<span class="pill">共 '+list.length+' 条</span>';
+
+  const t0=list.filter(d=>d.tier==="T0").sort((a,b)=>b.total-a.total);
+  const f=document.getElementById("first");
+  if(t0.length){
+    f.innerHTML="今天就先联系这 "+t0.length+" 家：<b>"+t0.map(d=>esc(d.company||"(未命名)")).join("、")+"</b>——分越高越靠前。";
+  }else{
+    const best=list.slice().sort((a,b)=>b.total-a.total)[0];
+    f.innerHTML="这一批里没有 T0（80 分以上），别慌：先打分数最高的 <b>"+esc(best.company||"(未命名)")+"</b>（"+best.total+" 分），剩下的按表往下排。<br>想提分最快的两招：补上邮箱或电话（最多 +40），把 source 改成 referral（朋友介绍）或 trade_show（展会）。";
+  }
+
+  renderFilters();
+  renderTable();
+  document.getElementById("detail").textContent=
+    "计分上限：联系 40 / 来源 30 / 采购信号 20 / 成熟度 10 = 100 分。缺的列按 0 算，所以补信息＝涨分。";
+  document.getElementById("out").style.display="block";
+  if(scroll){
+    const o=document.getElementById("out");
+    if(o.scrollIntoView) o.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+}
+
+const TIER_RANK={T0:0,T1:1,T2:2,T3:3};
+function visibleList(){
+  const f=STATE.filter;
+  let l=STATE.list.filter(d=>{
+    if(f==="ALL")return true;
+    if(f==="HAS")return !!(d.email||d.phone);
+    if(f==="NOC")return !d.email&&!d.phone;
+    if(f==="MAIL")return !!d.email&&!EMAIL_RE.test(d.email);
+    return d.tier===f;
+  });
+  const k=STATE.sortKey, dir=STATE.sortDir;
+  l.sort((a,b)=>{
+    let r=0;
+    if(k==="total") r=a.total-b.total;
+    else if(k==="tier") r=TIER_RANK[a.tier]-TIER_RANK[b.tier]||a.total-b.total;
+    else r=String(a[k]||"").localeCompare(String(b[k]||""),"zh-Hans-CN");
+    return (r||a.total-b.total)*dir;
+  });
+  return l;
+}
+function renderFilters(){
+  document.getElementById("filters").innerHTML=FILTERS.map(fc=>
+    '<button type="button" class="chip" data-f="'+fc[0]+'" aria-pressed="'+(STATE.filter===fc[0])+'">'+fc[1]+'</button>').join("");
+}
+function renderTable(){
+  const tb=document.querySelector("#tbl tbody");tb.innerHTML="";
+  const list=visibleList();
+  if(!list.length){
+    tb.innerHTML='<tr><td colspan="6" class="subdetail">这个筛选条件下没有结果，点上面的「全部」看完整名单。</td></tr>';
+    return;
+  }
+  list.forEach((d,i)=>{
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td><span class="badge b-${d.tier}">${d.tier}</span></td>
-      <td>${d.company||"(未命名)"}</td><td>${d.country||"?"}</td>
-      <td><b>${d.total}</b></td><td>${TIER_NEXT[d.tier]}</td>`;
+    tr.innerHTML='<td><span class="badge b-'+d.tier+'">'+d.tier+'</span></td>'+
+      '<td>'+esc(d.company||"(未命名)")+'</td><td>'+esc(d.country||"—")+'</td>'+
+      '<td><b>'+d.total+'</b></td><td>'+esc(TIER_NEXT[d.tier])+'</td>'+
+      '<td><button type="button" class="actbtn" data-copy="'+i+'">复制邮件</button></td>';
     tb.appendChild(tr);
     const trd=document.createElement("tr");
     trd.className="subrow";
-    trd.innerHTML=`<td colspan="5" class="subdetail">分项：联系 ${d.contact}（${d.clabel}） · 来源 ${d.source}（${d.src||"search"}） · 采购信号 ${d.buying} · 成熟度 ${d.maturity}（${d.mlabel}）＝ 共 ${d.total}</td>`;
+    const mail=d.email?(esc(d.email)+(EMAIL_RE.test(d.email)?"":" ⚠格式存疑")):"无邮箱";
+    trd.innerHTML='<td colspan="6" class="subdetail">得分明细：联系 '+d.contact+'（'+esc(d.clabel)+'，'+mail+'） · 来源 '+d.source+'（'+esc(d.src||"search")+'） · 采购信号 '+d.buying+' · 成熟度 '+d.maturity+'（'+esc(d.mlabel)+'） ＝ 共 '+d.total+' 分'+
+      (d.note?'<br>备注：'+esc(d.note):"")+'</td>';
     tb.appendChild(trd);
   });
-  document.getElementById("detail").textContent=
-    "计分上限：联系 40 / 来源 30 / 采购信号 20 / 成熟度 10 = 100。想看完整明细或导出 JSON，可用同款 Python：python scripts/lead_score.py examples/leads_example.csv --format detail。";
-  document.getElementById("out").style.display="block";
+}
+function exportCSV(){
+  const list=visibleList();
+  if(!list.length){toast("当前没有可导出的结果");return;}
+  const head=["company","country","tier","score","next_step","email","phone","source","contact","note"];
+  const q=v=>{const s=String(v==null?"":v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const body=list.map(d=>[d.company,d.country,d.tier,d.total,TIER_NEXT[d.tier],
+    d.email,d.phone,d.src||"",d.contact,d.note].map(q).join(","));
+  const txt="\ufeff"+head.join(",")+"\n"+body.join("\n")+"\n";
+  try{
+    const blob=new Blob([txt],{type:"text/csv;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);a.download="leads_scored.csv";
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    toast("已导出 leads_scored.csv（带 BOM，Excel 直接打开中文不乱码）");
+  }catch(_){
+    window.prompt("浏览器不让直接下载，请手动复制下面的内容存成 .csv：",txt);
+  }
+}
+function copyTop(){
+  const list=visibleList().filter(d=>d.tier==="T0"||d.tier==="T1");
+  const src=list.length?list:visibleList().slice(0,5);
+  if(!src.length){toast("当前没有可复制的结果");return;}
+  const txt=src.map((d,i)=>(i+1)+". ["+d.tier+"] "+(d.company||"(未命名)")+
+    (d.country?"（"+d.country+"）":"")+" "+(d.email||"无邮箱")+" "+(d.phone||"无电话")+
+    " · "+d.total+"分 · "+TIER_NEXT[d.tier]).join("\n");
+  copyText(txt,"已复制优先联系名单，可直接粘进 Excel / 微信");
 }
 
-function loadExample(){
+function loadExample(quiet){
   fetch("examples/leads_example.csv").then(r=>r.text()).then(t=>{
-    document.getElementById("csv").value=t.trim();run();
+    document.getElementById("csv").value=t.trim();run();if(!quiet)toast("已载入 10 条虚构示例数据");
   }).catch(()=>{
     // fetch 失败（新手双击 file:// 直接打开必走这里）：用与 examples/leads_example.csv
     // 正文 100% 同源的脱敏数据兜底——【示例】前缀 + sample.example 保留域名，
@@ -237,12 +551,50 @@ function loadExample(){
 【示例】三角洲轮胎,Saudi Arabia,"TBR, PCR, OTR",referral,procurement@sample.example,+966 00 000 0000,15,purchasing manager,"Strategic supplier RFQ, tender, 3 years contract, needs SASO compliance"
 【示例】尼日利亚先锋,Nigeria,"PCR tubes",search,,+966 00 000 0000,7,buyer,"Asked about FOB pricing, no quantity confirmed"`;
     run();
+    if(!quiet) toast("已载入 10 条虚构示例数据（公司名带【示例】，邮箱是 sample.example 保留域）");
   });
 }
 
-document.getElementById("run").onclick=run;
-document.getElementById("load").onclick=loadExample;
-loadExample();
+document.getElementById("run").onclick=function(){run(true);};
+document.getElementById("load").onclick=function(){loadExample(false);};
+document.getElementById("exp").onclick=exportCSV;
+document.getElementById("copytop").onclick=copyTop;
+document.getElementById("filters").addEventListener("click",function(e){
+  const b=e.target.closest?e.target.closest("[data-f]"):null;
+  if(!b)return;
+  STATE.filter=b.getAttribute("data-f");
+  renderFilters();renderTable();
+});
+document.querySelector("#tbl thead").addEventListener("click",function(e){
+  const b=e.target.closest?e.target.closest("[data-k]"):null;
+  if(!b)return;
+  const k=b.getAttribute("data-k");
+  if(STATE.sortKey===k) STATE.sortDir=-STATE.sortDir;
+  else {STATE.sortKey=k;STATE.sortDir=(k==="total"||k==="tier")?-1:1;}
+  renderTable();
+});
+document.querySelector("#tbl tbody").addEventListener("click",function(e){
+  const b=e.target.closest?e.target.closest("[data-copy]"):null;
+  if(!b)return;
+  const d=visibleList()[+b.getAttribute("data-copy")];
+  if(!d)return;
+  copyText(outreachText(d),"已复制「"+(d.company||"这家")+"」的首触邮件，把 [ ] 换成你自己的信息就能发");
+});
+const fileInput=document.getElementById("file");
+fileInput.addEventListener("change",function(e){handleFile(e.target.files&&e.target.files[0]);});
+const ta=document.getElementById("csv");
+["dragenter","dragover"].forEach(function(ev){
+  ta.addEventListener(ev,function(e){e.preventDefault();ta.classList.add("drop");});
+});
+["dragleave","dragend"].forEach(function(ev){
+  ta.addEventListener(ev,function(){ta.classList.remove("drop");});
+});
+ta.addEventListener("drop",function(e){
+  e.preventDefault();ta.classList.remove("drop");
+  const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+  if(f) handleFile(f);
+});
+loadExample(true);
 </script>
 </body>
 </html>

@@ -1,17 +1,41 @@
 # ---- 凭据与本机配置（绝不能进仓库）----
+# 这一段的判断标准很简单：漏掉一个 token 的代价是你下个月的账单，
+# 多挡一个无关文件的代价是你多敲一次 git add -f。前者贵得多。
 .env
 .env.*
+.envrc
+env/
 *.key
 *.pem
+*.p12
+*.pfx
+*.keystore
+id_rsa*
+id_ed25519*
+*.ppk
 credentials.json
+*credential*
+# 谷歌/各种云服务下载下来的服务账号文件，一个 json 就能刷你的额度
+*service_account*
+service_account*
 secrets/
+secret*
+*secret*.*
 accounts.json
 *_token*.json
 *_secret*.json
+# token.* / *_token* 这两个是给「顺手把 API token 粘进 txt」这种经典操作兜底的
+token.*
+token*.txt
+*.token
+*_token*
 ba_token*
 mail_*
 cookie*
 *.har
+# 本机覆盖配置：你自己改的端口、路径、密码，不属于开源项目
+config.local.py
+*.local.py
 
 # ---- 真实客户数据与商业资料（脱敏红线）----
 # 客户名单、海关原始数据、报价单、PI/合同、发票、单证
@@ -33,13 +57,27 @@ private/
 单证*
 
 # ---- CSV / Excel 兜底（拦住新手随意命名的真实导出，闭合脱敏红线）----
+# 你的客户名单。别提交——你不想让同行在 GitHub 上看见你的报价底牌。
+# 名字怎么起都躲不掉：客户名单.xlsx / leads.csv / 2026客户.xlsx / 我的客户.csv /
+# contacts.csv / 报价单.xlsx / my_leads.csv，全在这一层被摁住。
 *.csv
 *.xlsx
-报价*.xlsx
-客户*.csv
-# 示例数据（脱敏版）允许进仓库
-!examples/leads_example.csv
-!**/examples/**
+*.xls
+报价*
+客户*
+
+# ⚠️ 白名单必须放在上面那几条通配「之后」才生效，顺序写反它就是一张废纸。
+# 仓库自带的脱敏示例要留着——index.html 会 fetch 它，CI 也拿它跑冒烟。
+# 所以：examples/ 里只放行名字带 example 的文件，其余一律照挡。
+examples/*
+!examples/*example*
+
+# ⚠️ 但这条白名单本身就是个洞，请务必读完：
+# examples/leads_example.csv 是「已被 git 跟踪」的文件——对已跟踪文件，gitignore 说了不算。
+# 你一旦按 docs/00-getting-started.md 的教程把真名单填进这个示例文件，
+# git 会非常高兴地帮你 push 上去，而 .gitignore 一声不吭。
+# 正确姿势：先复制一份再改（cp examples/leads_example.csv private/my_leads.csv），
+# 真数据只往 private/ 里丢——那个目录是黑的。改完示例记得 git checkout 还原。
 
 # ---- Excel 临时锁文件 ----
 ~$*
@@ -66,20 +104,58 @@ backups/
 *.tar.gz
 node_modules/
 __pycache__/
+# *.pyc 只挡了编译缓存的一种后缀，.pyo / .pyd 会漏；*.py[cod] 才是那个该写的写法
 *.pyc
+*.pyo
+*.pyd
+*.py[cod]
+$py.class
 .venv/
 venv/
+env.bak/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # ---- 编辑器与系统 ----
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+ehthumbs.db
 desktop.ini
 *.lnk
+# 编辑器备份和临时文件：*.bak / *~ 里经常躺的是你改到一半的真报价单
+*.bak
+*.tmp
+*.temp
+*.orig
+*.swp
+*.swo
+*~
 
-# ---- 本地脚本产物 ----
+# ---- 本地脚本产物（4 个脚本 --out 写出来的东西，里头全是真客户）----
+# 注意：不能图省事写 *.md 或 *.json——README.md 还得进仓库，整类忽略会把自己脚打了。
+# 所以这里只能按脚本文档里出现过的那几个名字点名。
+# scored.json 是 lead_score.py 顶部示例里那个，plan.json 是 followup_plan.py 的；
+# 它们躺在仓库根目录、长得就像「待提交文件」，git add -A 一发就走。
 *_scored.csv
+*_scored.json
+scored.json
+scored*.json
 followup_plan_*.csv
+followup_plan_*.json
+plan.json
+plan*.json
+out.json
+out.md
+out.txt
+quote.txt
+quote_*.txt
 drafts.md
 *.log
+
+# 最省心的办法根本不是记这些文件名：把产物写进 private/ 或 internal/ 就行——
+# python scripts/lead_score.py private/my_leads.csv --out private/scored.json
+# 那两个目录整个是黑的，随便你往里堆什么名字。

@@ -1,43 +1,47 @@
 # zero-to-trade
 
-**An open-source operating system for selling abroad when you have zero experience. Seven stages, from choosing a market to getting paid — plus four Python scripts (one alpha quoting engine) you can actually run.**
+![CI](https://github.com/6hn68/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.8%2B-306998)
 
-> The premise, in one line: **AI does the heavy lifting, you make the calls.**
+**Seven stages, from "which country do I even pick" to "the money arrived." Plus four Python scripts that do the boring parts. No experience assumed. That's the point.**
 
-> 🔥 **You sent 200 cold emails and got zero replies. It's not your English — it's your order of operations.** This repo breaks "from picking a market to getting paid" into 7 executable steps plus four Python scripts (one alpha quoting engine) you can run, so each step tells you exactly which site to open, what to type, and what "passed" looks like.
+> You sent 200 cold emails and got zero replies. That's not your English. That's your order of operations.
+>
+> This repo turns "start exporting" into something you can actually work: which site to open this afternoon, what to type into it, and what result means you passed.
 
-> 🔓 MIT open source · 🚫 No paid course · ✅ Scripts run with zero deps (CI passing) · 🛡️ Anonymous author — credibility comes from the content
+> The one rule underneath everything here: **AI does the heavy lifting, you make the calls.**
 
-MIT licensed · v0.1.5 · [中文版](README.md)
+No course to buy. No paid tier. No email wall. MIT licensed, v0.1.5 · [中文版](README.md)
+
+> PRs welcome, especially from people who sell into a market this repo has never heard of. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## The problem this solves
+## What this actually fixes
 
-Search "how do I start exporting" and you'll get a pile of things: a success-story guru, two hundred SEO blog posts, the free preview of a paid course, a YouTube video with a thumbnail promising fast money. You read them all, you feel like you understand, you open a customs-data website the next morning and still don't know what to type in the first box.
+Google "how do I start exporting." You get one guy's success story, two hundred SEO posts, the free preview of a paid course, and a YouTube thumbnail promising money fast. You read all of it, you feel informed, and the next morning you're staring at a customs-data site with no idea what goes in the first field.
 
-The problem isn't a shortage of information. It's that the information comes in fragments, it's edited from the winner's perspective, and it never tells you the next action.
+That's not a shortage of information. It's information in the wrong shape: chopped into fragments, written from the winner's point of view, and stopping right before the part where you do something.
 
-How most tutorials handle it: *"You should do background research on your customers."* Then nothing. You still don't know which fields to check, which sites to check them on, what a red flag looks like, or when you've checked enough.
+Here's how most tutorials handle it. *"You should do background research on your customers."* Then: *"Background research is important."* Then nothing. You still don't know which fields, which websites, what a red flag looks like, or when you've checked enough.
 
-How this repo handles it: **take one task all the way down until it becomes an action.**
+This repo does the opposite: **take one task and keep breaking it down until it's an action.**
 
 | What a tutorial says | What this repo says |
 |---|---|
-| "Do background research" | L1 screen checks exactly three things: does the site exist, how long has the company been registered, are the social accounts active. Fail any one and the lead is dead. |
-| "Quality matters more than quantity" | 10 leads get sorted into T0/T1/T2/T3, and each tier comes with its own next action and its own time budget. |
-| "Follow up with them" | Day 1, 3, 5, 7. Different angle each time. Day 7 ends with either a clear close or a clear drop. |
-| "AI is changing trade" | Four stdlib-only Python scripts (one alpha quoting engine). `python scripts/lead_score.py examples/leads_example.csv` gives you a full tiering in 30 seconds. |
+| "Do background research" | L1 screen, three checks: does the site exist, how long has the company been registered, are the social accounts alive. Fail any one and the lead is dead. |
+| "Quality matters more than quantity" | 10 leads get sorted into T0/T1/T2/T3, each tier with its own next move and its own time budget. |
+| "Follow up with them" | Day 1, 3, 5, 7. A different angle each time, and day 7 ends with a decision: push or drop. |
+| "AI is changing trade" | Four stdlib-only Python scripts (one alpha quoting engine). `python scripts/lead_score.py examples/leads_example.csv` and you have the full tiering in about thirty seconds. |
 
-The difference isn't the amount of information. It's the **grain size**. Every conclusion in this repo has to land on: which site do you open this afternoon, what do you type, and what result counts as passed.
+Same information. Different **grain size**. That's the entire difference. Every claim in here has to survive one question: what do I open this afternoon, and what do I type?
 
-This isn't motivational material. It's an executable checklist and a few scripts.
+So no, this isn't motivation. It's a checklist and four scripts.
 
 ---
 
 ## The seven stages
 
-One continuous chain, from "pick a country" to "get the money." Each stage has a doc, and each stage produces something you can hold in your hand.
+One chain, start to finish: pick a country, end with money in the bank. One doc per stage, and every doc ends with something you can actually use.
 
 | Stage | What you do | Output |
 |---|---|---|
@@ -51,46 +55,46 @@ One continuous chain, from "pick a country" to "get the money." Each stage has a
 
 Stage docs live in `docs/`, one file per stage, all following the same six-part structure (see [CONTRIBUTING.md](CONTRIBUTING.md)): **what this stage is for → how to do it, step by step → the pass/fail criteria → the classic mistakes → copy-paste templates → the AI prompts for this stage.**
 
-**Total beginner?** Read [`docs/00-getting-started.md`](docs/00-getting-started.md) first — no git, no Python assumed, working in about 10 minutes. Or start with [`docs/fast-path.md`](docs/fast-path.md): five days from zero to your first reply.
+**Never done this before?** [`docs/00-getting-started.md`](docs/00-getting-started.md) assumes no git and no Python, and gets you moving in about 10 minutes. In a hurry instead? [`docs/fast-path.md`](docs/fast-path.md) is five days from zero to your first reply.
 
 ---
 
 ## 30-second quickstart
 
-**No Python?** Just open [`index.html`](index.html) in a browser — paste a CSV and see the T0-T3 tiering, zero install, zero dependencies. (Auto-hosted on GitHub Pages once pushed, so anyone can open it.)
+**Don't want to install Python?** Open [`index.html`](index.html) in a browser. Paste a CSV, get the T0-T3 tiering. Nothing to install. (Once it's pushed, GitHub Pages hosts it, so you can send the link to someone else.)
 
-Four scripts (one is the v0.2 alpha quoting engine). No third-party packages. Python 3.8+.
+Four scripts, one of them the v0.2 alpha quoting engine. Standard library only. Python 3.8+.
 
 ```bash
-# 1. Tier your leads. CSV in, T0-T3 out, each tier with its next action.
+# 1. Tier your leads. CSV in, T0-T3 out, each tier with its next move.
 python scripts/lead_score.py examples/leads_example.csv
 
-# 2. Generate bilingual (EN + 中文) outreach copy for a given tier.
+# 2. Draft outreach copy for one tier, English and 中文 side by side.
 python scripts/outreach_gen.py examples/leads_example.csv --tier T0
 
-# 3. Build a 7-day, 3-touch follow-up plan with real dates.
+# 3. Build the follow-up plan. Three touches, real dates.
 python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv examples/leads_example.csv
 
-# 4. (alpha) Quoting engine: cost + freight + margin → FOB/CIF range + 3-step concession ladder
+# 4. (alpha) Quote: cost + freight + margin -> FOB/CIF range + a 3-step concession ladder.
 python scripts/quote_engine.py --cost 28 --freight 6 --margin 15
 ```
 
-Expected output from the first command (英文翻译版，便于阅读). The script prints in Chinese; the company names below are the actual sample data (【示例】 = "sample"), and the next-action column is translated to English (10 sample leads):
+What that first command actually prints, on 10 sample leads. The script outputs in Chinese; 【示例】 is just a marker meaning "sample", and the last column is translated here:
 
 | Tier | Company | Country | Score | Next action |
 |---|---|---|---|---|
-| T0 | 【示例】海湾轮胎贸易 | Saudi Arabia | 95 | contact today, don't wait |
-| T0 | 【示例】三角洲轮胎 | Saudi Arabia | 92 | contact today, don't wait |
-| T1 | 【示例】阿曼蓝海 | Oman | 77 | this week |
-| T1 | 【示例】半岛汽车 | Saudi Arabia | 71 | this week |
-| T1 | 【示例】尼罗河商贸 | Egypt | 67 | this week |
-| T1 | 【示例】迪拜轮毂行 | UAE | 65 | this week |
-| T1 | 【示例】利雅得汽配 | Saudi Arabia | 60 | this week |
-| T2 | 【示例】尼日利亚先锋 | Nigeria | 46 | low-freq pool, scan daily |
-| T3 | 【示例】黎凡特供配 | Lebanon | 20 | info insufficient, top up first |
-| T3 | 【示例】利雅得零件店 | Saudi Arabia | 10 | info insufficient, top up first |
+| T0 | 【示例】海湾轮胎贸易 | Saudi Arabia | 95 | send first touch today, don't wait |
+| T0 | 【示例】三角洲轮胎 | Saudi Arabia | 88 | send first touch today, don't wait |
+| T1 | 【示例】阿曼蓝海 | Oman | 77 | this week; draft the copy today |
+| T1 | 【示例】半岛汽车 | Saudi Arabia | 71 | this week; draft the copy today |
+| T1 | 【示例】尼罗河商贸 | Egypt | 67 | this week; draft the copy today |
+| T1 | 【示例】迪拜轮毂行 | UAE | 65 | this week; draft the copy today |
+| T1 | 【示例】利雅得汽配 | Saudi Arabia | 60 | this week; draft the copy today |
+| T2 | 【示例】尼日利亚先锋 | Nigeria | 46 | cold pool, sweep it once a day |
+| T3 | 【示例】黎凡特供配 | Lebanon | 20 | not enough info, go find contact + need first |
+| T3 | 【示例】利雅得零件店 | Saudi Arabia | 10 | not enough info, go find contact + need first |
 
-Summary: **T0:2 / T1:5 / T2:1 / T3:2**. Reply to first: 【示例】海湾轮胎贸易, 【示例】三角洲轮胎.
+Summary: **T0:2 / T1:5 / T2:1 / T3:2**. Contact today: 【示例】海湾轮胎贸易, 【示例】三角洲轮胎. This week: 【示例】阿曼蓝海, 【示例】半岛汽车, 【示例】尼罗河商贸, 【示例】迪拜轮毂行, 【示例】利雅得汽配. Leave alone for now: 【示例】黎凡特供配, 【示例】利雅得零件店.
 
 CSV header:
 
@@ -98,9 +102,11 @@ CSV header:
 company,country,product,source,email,phone,years,contact,note
 ```
 
-Only company is required; missing fields score at the floor. source matters most: referral/trade_show/customs/linkedin/search.
+Only `company` is required. Everything else can be blank, and blanks score at the floor. `source` moves the needle most: `referral` / `trade_show` / `customs` / `linkedin` / `search`.
 
-The scripts only handle what a machine can decide: does an email exist, does a website exist, does this lead clear the T0 threshold. Whether a lead is *worth your time* stays in the docs and in your head.
+All four scripts take `--help`. `lead_score.py` also has `--format json` and `--country` / `--product` filters, if you want to pipe it into a spreadsheet.
+
+The scripts only decide what a machine can decide: is there an email, is there a website, does this clear the T0 bar. Whether a lead deserves your afternoon lives in the docs, and in your head.
 
 ---
 
@@ -129,7 +135,7 @@ zero-to-trade/
 ├── scripts/               # Runnable Python, standard library only
 │   ├── lead_score.py      # Tier leads T0-T3
 │   ├── outreach_gen.py    # Bilingual outreach copy per tier
-│   ├── followup_plan.py   # 7-day, 3-touch follow-up plan
+│   ├── followup_plan.py   # 3-touch follow-up plan with real dates
 │   └── quote_engine.py    # v0.2 quoting engine (alpha): FOB/CIF range + 3-step concession ladder
 ├── examples/
 │   └── leads_example.csv  # Sample data, runnable as-is
@@ -140,19 +146,19 @@ zero-to-trade/
 
 ---
 
-## Why AI tools, and not just methodology
+## Why scripts, and not just a method doc
 
-A lot of "AI for business" projects take one approach: dump the methodology into a prompt. This one does the reverse — **set the discipline first, then hand out the tools.**
+Most "AI for business" repos do the same thing: take the methodology, paste it into a prompt, ship it. This one runs backwards. **Discipline first, tools second.**
 
-The reason is simple: **being good at prompts is not the same as being good at trade.** This repo assumes what you lack isn't wording, it's a framework for deciding. So:
+Here's why: **being good at prompts is not the same as being good at trade.** My bet is that you're not short of wording. You're short of a way to decide. So:
 
-- **Discipline is the value.** T0 gets an email today. T3 goes in a drawer for three months. A concession without something in return is a giveaway, not a negotiation. These are rules, and no model should be making them for you.
-- **AI takes the heavy lifting.** Batch-screening 8 leads, drafting three levels of background research on 50 companies, generating variants of seven days of follow-up copy — high effort, low judgement. Hand it over.
-- **Scripts make it repeatable.** If tiering is done by feel each time, it isn't a standard. So it becomes a script under 200 lines with zero dependencies, and two people running it get the same answer.
+- **The rules are the product here.** T0 gets an email today. T3 sits in a drawer for three months. A concession that buys nothing back is a gift, not a negotiation. No model gets to make those calls for you.
+- **Volume goes to AI.** Screening 8 leads in one pass, drafting three levels of background research on 50 companies, spinning out seven days of follow-up variants. Hours of work, almost no judgement in it.
+- **Anything repeatable gets scripted.** If tiering is a feeling, it isn't a standard. So it's a script under 200 lines with zero dependencies, and two people running it land on the same answer.
 
-The dividing line: **if it can be an `if/else`, it goes in a script; if it needs a trade-off, it goes in the docs; if it has to sound like a human on the other end, it goes in `prompts/`.**
+Where the line sits: **can it be an `if/else`? Into a script. Does it need a trade-off? Into the docs. Does it have to sound like a human wrote it? Into `prompts/`.**
 
-The scripts also deliberately avoid pandas and the OpenAI SDK. Environment setup alone turns away beginners, and a beginner who exports loses more time to `pip install` than to finding customers.
+No pandas, no OpenAI SDK, on purpose. Environment setup is where beginners quit. Someone new to export will lose more hours to `pip install` than to finding customers, and that's a stupid place to lose them.
 
 ---
 
@@ -160,46 +166,46 @@ The scripts also deliberately avoid pandas and the OpenAI SDK. Environment setup
 
 | Version | Status | Contents |
 |---|---|---|
-| **v0.1.5** | Added | Zero-install browser demo (index.html) + v0.2 quoting engine alpha (quote_engine.py) + brand manifesto (MANIFESTO) + launch/promo checklist (GITHUB_LAUNCH) + Fast Path + deal walkthrough |
+| **v0.1.5** | Shipped | Zero-install browser demo (index.html) + v0.2 quoting engine alpha (quote_engine.py) + brand manifesto (MANIFESTO) + launch/promo checklist (GITHUB_LAUNCH) + Fast Path + deal walkthrough |
 | **v0.1** | Shipped | 7 stage docs, 4 stdlib scripts, 27 prompts, bilingual README |
 | **v0.2** | 🟡 In progress (alpha) | **AI quoting engine**: `scripts/quote_engine.py` is live in alpha — input costs + market + competitor anchor price → FOB/CIF range + a three-step concession ladder (each step must buy something) |
 | **v0.3** | Planned | **Buyer background-check agent**: input a company name → L1/L2/L3 research draft + red-flag checklist, with source links |
 | **Long term** | — | Industry packs (tyres, building materials, machinery, hardware); outreach copy in Spanish/Arabic/French/Russian; public de-identified lead datasets; wiring v0.2's quoting engine to customs data for automatic competitor anchor pricing |
 
-v0.3 comes before v0.2 on purpose: quoting needs to know the buyer's price band, and the most reliable source of a price band is the buyer's own order history. Vetting first, then quoting.
+v0.3 is deliberately ahead of v0.2. To quote well you need the buyer's price band, and the best source for that is their own order history. Vet first, quote second.
 
 ---
 
 ## Contributing
 
-The gap in this repo is not a shortage of docs. It's the absence of **country-specific field detail.** I know how the first tyre order into the Middle East goes. I don't know how building-materials distribution works in Ecuador, or which documents Nigerian customs actually demands. Only people selling there can fill that in.
+The hole here isn't docs. It's **country-specific field detail.** I know how the first tyre order into the Middle East goes. I have no idea how building-materials distribution works in Ecuador, or which documents Nigerian customs actually wants. Only people selling there can fill that in.
 
-Three ways in, ordered by how little you need to know:
+Three ways in, cheapest first:
 
-1. **Open an issue to fix something.** Typos, outdated facts, judgment calls that read as mush. One sentence beats silence. The template asks three things: which line confused you, which number has no source, which rule doesn't apply to your industry.
-2. **Translate a stage doc.** Spanish, Arabic, Portuguese, Russian, French, Vietnamese — whatever you're fluent in. Keep the six-part structure, swap the language, align terms against the [GLOSSARY.md](GLOSSARY.md).
-3. **Add the stage detail for your industry or country.** This is the missing part. Write what you've actually done, not what you think should be done. Down to field names, document names, channel structure, payment habits, and the reasons buyers refuse to pay.
+1. **Fix something.** Typo, stale fact, a rule that reads like mush. Open an issue. One sentence beats silence. The template asks three things: which line lost you, which number has no source, which rule doesn't hold in your industry.
+2. **Translate a stage.** Spanish, Arabic, Portuguese, Russian, French, Vietnamese — whatever you actually speak. Keep the six-part structure, swap the language, match terms against [GLOSSARY.md](GLOSSARY.md).
+3. **Add your country or industry.** This is the missing part. Write what you've done, not what you think should be done. Field names, document names, how the channel is built, how people pay, and why they refuse to pay.
 
-Code contributions welcome too, with one hard constraint: **Python 3.8+, standard library only.** Reasoning in [CONTRIBUTING.md](CONTRIBUTING.md).
-
----
-
-## 🛠️ For developers: hackable, zero-dependency
-
-All four scripts (`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine`) use the Python standard library only — **no third-party dependencies**. Fork it, tweak it, embed it:
-
-- Change scoring weights? Edit the four constants at the top of `lead_score.py` (`CONTACT_W / SOURCE_W / SIGNAL_W / MATURITY_W`); the max stays 100.
-- Plug in your own customs data? Align your CSV header to `company,country,product,source,email,phone,years,contact,note` and feed it in.
-- Embed in your own toolchain? Each script is importable — `score_leads()`, `build_message()`, `plan_followups()`, `quote_range()` are pure functions returning dicts/lists. No network, no file writes.
-- CI runs `py_compile` + smoke tests (py3.8/3.11/3.13) on every PR, so your edits won't silently break.
-
-> Design philosophy: **verifiable > flashy.** You don't have to trust me — run `python scripts/lead_score.py examples/leads_example.csv` and see for yourself.
+Code too, with one hard rule: **Python 3.8+, standard library only.** The reasoning is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## ⭐ Like it? Drop a star
+## For developers: hackable, and it has no dependencies
 
-zero-to-trade is **actively maintained** (recent commits in the repo history). If it saved you from a wrong turn, a star in the top-right corner is the best feedback — and the easiest way to find it again.
+All four scripts (`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine`) are standard library only. There is no `pip install`. Fork it, change it, drop it into your own stuff:
+
+- Weights feel wrong? Four constants at the top of `lead_score.py` (`CONTACT_W / SOURCE_W / SIGNAL_W / MATURITY_W`). Still caps at 100.
+- Got your own customs data? Match the header (`company,country,product,source,email,phone,years,contact,note`) and feed it in.
+- Want it inside your own tool? Every script imports clean. `score_leads()`, `build_message()`, `plan_followups()`, `quote_range()` are pure functions returning dicts and lists. No network, no files written.
+- CI runs `py_compile` plus smoke tests (py3.8/3.11/3.13) on every PR, so a bad edit doesn't sneak through.
+
+> The bias here is **verifiable over clever.** Don't take my word for it: run `python scripts/lead_score.py examples/leads_example.csv` and read what comes out.
+
+---
+
+## If this saved you a wrong turn
+
+Star it. Top-right corner. That's the whole ask. It's also how you find this again in six months, when you've forgotten the name and need the follow-up plan at 11pm.
 
 ![Stars](https://img.shields.io/github/stars/6hn68/zero-to-trade?style=social) ![Last Commit](https://img.shields.io/github/last-commit/6hn68/zero-to-trade)
 
@@ -218,7 +224,7 @@ zero-to-trade is **actively maintained** (recent commits in the repo history). I
 
 [MIT](LICENSE) © 2026 zero-to-trade contributors
 
-Use it, change it, sell with it — just keep the credit. Disclaimer: none of this guarantees you'll land a deal. What it does guarantee is that you won't stop because you didn't know the next step.
+Use it, change it, sell with it. Keep the credit line. One caveat: none of this guarantees you'll land a deal. What it does guarantee is that you won't grind to a halt because you didn't know the next step.
 
 ---
 
@@ -226,6 +232,6 @@ Use it, change it, sell with it — just keep the credit. Disclaimer: none of th
 
 **Open an issue: https://github.com/6hn68/zero-to-trade/issues**
 
-Spot an error? Say so. Have field detail from a market this repo knows nothing about? Send a PR. Want to argue about the method? Open an issue.
+Something in here wrong? Say so, that counts as a contribution. Selling into a market this repo has never heard of? That's a PR I actually want. Think the whole method is off? Argue with me in an issue, I'd rather be wrong out loud.
 
-The author's personal details are deliberately not listed here. **Credibility should come from the content, not from who wrote it.** Tag the maintainer in an issue and GitHub will route the notification.
+No author bio, on purpose. **The content should be what convinces you, not who wrote it.** Need to reach me: @ the maintainer in an issue. GitHub puts it in their inbox.

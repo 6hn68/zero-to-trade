@@ -1,23 +1,125 @@
-name: 补充市场/行业实战细节
-description: 你真跑过的环节细节，是全球买家最缺的内容
+name: 内容缺口
+description: 文档写的和你在当地碰上的对不上号？说一句差在哪就行
 labels: [content]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 你不用会写代码
+
+        这份表是给跑过单的人填的。不会 Python 能填，不会 git 也能填。
+
+        我们要的是这种话：**"07 交付里说清关 3 天，我在达曼卡了 11 天，因为证书得发货前办。"**
+
+        不要的是这种话：**"建议加强风险管控意识。"** 这种我们自己也会写。
+
+        只填你确定的那几栏，剩下的空着。填错不扣分。
+  - type: dropdown
+    id: step
+    attributes:
+      label: 哪一步坑到你了
+      description: 认不出是哪一步就选最后一项，我们来认领。
+      options:
+        - 01 选市场（docs/01-market-selection.md）
+        - 02 找客户（docs/02-find-leads.md）
+        - 03 背调客户（docs/03-due-diligence.md）
+        - 04 建联客户（docs/04-outreach.md）
+        - 05 聊单（docs/05-negotiation.md）
+        - 06 报价谈判（docs/06-quote.md）
+        - 07 订单交付（docs/07-order-delivery.md）
+        - 00 入门那篇（docs/00-getting-started.md）
+        - 全程串讲（docs/deal-walkthrough.md）
+        - 极简路线（docs/fast-path.md）
+        - 脚本（scripts/ 里那 4 个 py）
+        - 浏览器 Demo（index.html）
+        - 其他文件（README / CONTRIBUTING / GLOSSARY / prompts）
+        - 对不上号，你们帮我认领
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 实际发生了什么
+      description: 当讲给同行听。谁、在哪、干了啥、最后卡在哪。
+      placeholder: |
+        货到达曼，第 11 天才放行。前 3 天是我们单证没齐，后 8 天纯等证书。
+    validations:
+      required: true
+  - type: textarea
+    id: gap
+    attributes:
+      label: 文档里写的和现实差在哪
+      description: 没读过文档也行，写"我觉得正确说法是啥"就够了。
+      placeholder: |
+        文档写清关 3-5 天。实际是证书必须发货前办，不然 10 天起。
+    validations:
+      required: true
   - type: input
     id: market
     attributes:
-      label: 国家 / 地区
+      label: 你所在的市场 / 国家
+      description: 写你亲身跑的那个市场。跨国的就都写上。
+      placeholder: 沙特（达曼港）
     validations:
       required: true
   - type: input
     id: industry
     attributes:
-      label: 行业 / 产品
-    validations:
-      required: true
-  - type: textarea
-    id: detail
+      label: 行业 / 产品（选填）
+      placeholder: 轮胎，PCR 为主
+  - type: dropdown
+    id: evidence
     attributes:
-      label: 你真跑过的细节（字段名 / 单证名 / 渠道结构 / 付款习惯 / 常见拒付理由）
-      placeholder: 写你真做过的，不写你觉得应该这样。
+      label: 你咋知道的
+      description: 这条决定我们把它写成硬结论还是写成"待核实"，很关键。
+      options:
+        - 我自己跑过，亲手办的
+        - 官方文件 / 海关或使馆网站（我能贴链接）
+        - 同行、货代或客户告诉我的
+        - 我猜的，没验证过
     validations:
       required: true
+  - type: markdown
+    attributes:
+      value: |
+        选"同行说的"或"我猜的"也收。我们会标成待核实，等下一个人也这么说，它就升级成硬结论。报错的代价远小于沉默的代价。
+  - type: dropdown
+    id: pr-willing
+    attributes:
+      label: 你想自己写 PR，还是只想告诉我们
+      options:
+        - 我只想说一声，剩下的你们写（最省事，也是最欢迎的填法）
+        - 我可以改，但得有人带我走一遍 git
+        - 我自己开 PR，别跟我抢
+        - 先潜水，看看别人怎么填的
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        ## 提交前扫一眼这两条
+
+        **一、脱敏。** 客户名、邮箱、电话、单号、金额，一律换成假的。真名写成【示例客户】，邮箱写成 sample@example.com。issue 是公开的，Google 搜得到。
+
+        **二、别贴不该贴的。** 只写公开能查到的东西。客户的底价、合同条款、内部联系人名单是人家的商业机密；姓名加手机号加身份证号这种组合，在国内可能够得上侵犯公民个人信息，对你对我们都是麻烦。
+
+        我们宁可少一条经验，也不想多一场官司。
+  - type: checkboxes
+    id: redact
+    attributes:
+      label: 我确认上面没留真东西
+      options:
+        - label: 客户名、邮箱、电话都换成了假的
+          required: true
+        - label: 没贴客户的底价、合同条款这类不能公开的内容
+          required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: 还有啥想说的（选填）
+      placeholder: |
+        顺带说一句，07 里那个验货标准我在当地根本找不到第三方，只能自己飞过去。
+  - type: markdown
+    attributes:
+      value: |
+        提交后我们会在 issue 底下跟你对话确认，确认完才改文档。确认过的经验会写进致谢名单，你要是不想露名，说一声就行。

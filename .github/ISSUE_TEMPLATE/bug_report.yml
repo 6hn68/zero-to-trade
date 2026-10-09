@@ -1,29 +1,114 @@
-name: Bug report
-description: 报告一个错误、过时信息或说不清的判断标准
+name: 卡住了 / 报错了
+description: 脚本跑不动、网页不对劲、文档看不懂 —— 都填这个
 labels: [bug]
 body:
   - type: markdown
     attributes:
       value: |
-        三句话原则：哪一行看不懂、哪个数字没有来源、哪条不适用你所在的行业。
-  - type: input
+        填不出来就别硬填，写「不知道」也比空着强 —— 空着我们只能猜。
+
+        如果你的电脑冒烟了，那不是我们的 bug，先拔电源。
+
+        标题建议写成 `[脚本] lead_score.py 报 KeyError`、`[文档] 06 报价那步算不出来` 这种。别写「救命」，搜不到。
+  - type: dropdown
     id: where
     attributes:
-      label: 哪一行 / 哪个文件
-      placeholder: e.g. docs/04-outreach.md 第 32 行
+      label: 你在哪儿卡住的
+      description: 选最接近的那个。选错了没事，我们从下面几栏看得出来。
+      options:
+        - 浏览器 Demo（双击 index.html 那个）
+        - 命令行跑 scripts/ 里的 Python 脚本
+        - 读 docs/ 里的文档
+        - 照着 prompts/ 或 examples/ 做
+        - 别的 / 我也说不清
     validations:
       required: true
   - type: textarea
-    id: what
+    id: what-happened
     attributes:
-      label: 你看到的是什么
+      label: 你遇到啥事了
+      description: 说人话就行。「点了没反应」「跑完啥也没输出」「出来的数不对」都算。
+      placeholder: 我双击 index.html，粘了 CSV，点完按钮底下是空的。
     validations:
       required: true
   - type: textarea
-    id: expect
+    id: steps
     attributes:
-      label: 你预期应该是什么（可选）
+      label: 你当时在干啥
+      description: 从第 1 步开始写，一步一行。最后一步最有用 —— 多数问题就出在那儿。
+      placeholder: |
+        1. 双击 index.html
+        2. 把我的 CSV 粘进框里
+        3. 点了「开始分级」
+    validations:
+      required: true
   - type: textarea
-    id: context
+    id: expected
     attributes:
-      label: 你的行业 / 国家（便于判断是否适用）
+      label: 你觉得它应该干啥
+      placeholder: 我以为它会给我排出 T0 到 T3，结果一条都没出来。
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        ---
+
+        ### 贴数据之前，先做两件事
+
+        你的 CSV 里可能有真客户。公开 issue 是能被搜到的，删晚了就晚了。
+
+        1. 公司名 → 改成【示例】某某贸易
+        2. 邮箱 → 改成 sample@example.com（电话、WhatsApp 同理）
+
+        命令和报错可以原样贴，那里面没人名。
+  - type: dropdown
+    id: os
+    attributes:
+      label: 你用的啥系统
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - 手机 / 平板
+        - 不知道（公司电脑、虚拟机，说不清）
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python 版本（跑脚本的填，其他人跳过）
+      description: 不知道就开终端敲 `python --version`，把蹦出来那行抄过来。Mac 上可能得敲 `python3 --version`。
+      placeholder: Python 3.11.4
+  - type: input
+    id: command
+    attributes:
+      label: 你敲的完整命令（跑脚本的填）
+      description: 从 `python` 开始整行复制，参数别省 —— 你改过的那个参数往往就是线索。
+      placeholder: python scripts/lead_score.py examples/leads_example.csv
+  - type: textarea
+    id: error
+    attributes:
+      label: 完整报错
+      description: 从终端最上面那行开始，全选复制。最后一行最有用，但前面几行能告诉我们它是怎么走到那儿的。
+      placeholder: "Traceback (most recent call last):"
+      render: shell
+  - type: input
+    id: file-line
+    attributes:
+      label: 哪个文件 / 哪一行（知道才填）
+      description: 看不懂文档的话填这个。只知道「网页上那个粘贴框」也行，别空着不填又不说。
+      placeholder: docs/04-outreach.md 第 32 行
+  - type: checkboxes
+    id: sanitized
+    attributes:
+      label: 提交前打个勾
+      options:
+        - label: 公司名和邮箱我都改过了，真客户的没贴上来
+          required: true
+        - label: 我搜过一遍，没人提过一样的问题
+  - type: textarea
+    id: extra
+    attributes:
+      label: 还有啥想说的（可选）
+      description: 截图直接拖进来。
