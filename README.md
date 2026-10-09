@@ -4,7 +4,7 @@
 
 **外贸零基础，7 步跑到第一单。**
 
-- **要花多久**：不装任何东西，2 分钟能在浏览器里看到第一版分级结果；想跑脚本就装一次 Python（约 20 分钟，大半时间在等下载），之后每条命令 30 秒。7 步全走完、发出第一次真实触达，按 [`docs/fast-path.md`](docs/fast-path.md) 是 5 天、每天 1–2 小时。
+- **要花多久**：不装任何东西，2 分钟能在浏览器里看到第一版分级结果；想跑脚本就装一次 Python（约 20 分钟，大半时间在等下载），之后每条命令 30 秒。7 步全走完、发出第一次真实触达，按 [`docs/fast-path.md`](docs/fast-path.md) 是 7 天、每天 1–2 小时。
 - **你能得到什么**：7 个环节的清单（每步只回答"打开哪个网站、填什么、看到什么算过关"）+ 4 个能直接跑的 Python 脚本 + 27 条可粘贴的 AI 提示词。
 
 > 我第一年做外贸，开发信写了 40 封，回复 0 封。我当时的结论是"我英语太烂了"。
@@ -87,7 +87,7 @@ python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv examples/lead
 python scripts/quote_engine.py --cost 28 --freight 6 --margin 15
 ```
 
-想直接开干的话，看 [`docs/fast-path.md`](docs/fast-path.md)：从 0 到第一次真实触达，5 天、每天 1–2 小时。它不保证你拿到回复——第一封回复可能第 2 天来，也可能第 8 周才来。
+想直接开干的话，看 [`docs/fast-path.md`](docs/fast-path.md)：从 0 到第一次真实触达，7 天、每天 1–2 小时。它不保证你拿到回复——第一封回复可能第 2 天来，也可能第 8 周才来。
 
 ### 第 1 条命令真的会打印这些
 
@@ -174,7 +174,7 @@ zero-to-trade/
 ├── LICENSE                # MIT
 ├── docs/                  # 7 个环节的详细文档（一个环节一个文件）
 │   ├── 00-getting-started.md   # 完全零基础：A 路不装东西 2 分钟 / B 路首次约 20 分钟
-│   ├── fast-path.md            # 5 天从零到第一封客户回复（新手最快路径）
+│   ├── fast-path.md            # 7 天从零到第一封客户回复（新手最快路径）
 │   ├── 01-market-selection.md
 │   ├── 02-find-leads.md
 │   ├── 03-due-diligence.md
@@ -295,7 +295,7 @@ v0.2 的前置条件是 v0.3 的背调数据——因为报价需要知道对方
 
 ## English (short version)
 
-**zero-to-trade** is an open-source operating system for people starting in foreign trade with zero experience. Seven stages, from picking a market to shipping an order, plus four runnable Python scripts (one alpha quoting engine) that do the boring parts. Two minutes in a browser if you install nothing; about five days at 1–2 hours a day to make your first real contact.
+**zero-to-trade** is an open-source operating system for people starting in foreign trade with zero experience. Seven stages, from picking a market to shipping an order, plus four runnable Python scripts (one alpha quoting engine) that do the boring parts. Two minutes in a browser if you install nothing; about seven days at 1–2 hours a day to make your first real contact.
 
 The premise: **AI does the heavy lifting, you make the calls.** Most tutorials tell you "you should do customer background research" and stop there. This repo tells you which three fields to check, which sites to check them on, and what result makes you drop the lead.
 

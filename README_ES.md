@@ -41,7 +41,7 @@ Un tutorial te dice «haz una investigación de antecedentes» y se va. Este rep
 | **06 Cotizar y negociar** | Si cedes algo, pides algo a cambio | Hoja de cotización + escalera de concesiones + guiones |
 | **07 Entregar el pedido** | Contrato, producción, inspección, documentos, pago y flete | Ciclo cerrado + plan de recompra |
 
-Cada etapa tiene su archivo en `docs/` y sigue la misma estructura de seis partes. Si arrancas desde cero, empieza por [`docs/00-getting-started.md`](docs/00-getting-started.md). Si prefieres ir directo, usa [`docs/fast-path.md`](docs/fast-path.md): cinco días desde cero hasta tu primera respuesta.
+Cada etapa tiene su archivo en `docs/` y sigue la misma estructura de seis partes. Si arrancas desde cero, empieza por [`docs/00-getting-started.md`](docs/00-getting-started.md). Si prefieres ir directo, usa [`docs/fast-path.md`](docs/fast-path.md): siete días desde cero hasta tu primera respuesta.
 
 ---
 
@@ -77,7 +77,7 @@ zero-to-trade/
 ├── LICENSE                # MIT
 ├── docs/                  # Un archivo por etapa, todos con seis partes
 │   ├── 00-getting-started.md   # Para empezar de cero: sin git ni Python en 10 min
-│   ├── fast-path.md            # 5 días desde cero hasta tu primera respuesta
+│   ├── fast-path.md            # 7 días desde cero hasta tu primera respuesta
 │   ├── 01-market-selection.md
 │   ├── 02-find-leads.md
 │   ├── 03-due-diligence.md

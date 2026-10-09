@@ -319,6 +319,6 @@ python scripts/lead_score.py --help
 3. [03-due-diligence.md](03-due-diligence.md) —— 怎么分辨骗子（**必读，能救钱**）
 4. [04-outreach.md](04-outreach.md) → [05-negotiation.md](05-negotiation.md) → [06-quote.md](06-quote.md) → [07-order-delivery.md](07-order-delivery.md) —— 建联、聊单、报价、交付
 
-**如果你急着想先拿到结果**，不建议按上面慢慢读，直接走 [fast-path.md](fast-path.md)（5 天，从 0 到收到第一封真人回复，每天 1–2 小时）。
+**如果你急着想先拿到结果**，不建议按上面慢慢读，直接走 [fast-path.md](fast-path.md)（7 天，从 0 到收到第一封真人回复，每天 1–2 小时）。
 
 提醒一句，别搞反分工：脚本只干「机器能判定的活儿」——有没有邮箱、来源可不可信、谁先打。至于值不值得花时间、怎么谈，那是文档里的，也是你自己脑子里的。脚本替不了你谈单，它连电话都不接。

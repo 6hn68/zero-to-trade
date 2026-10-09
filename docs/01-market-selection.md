@@ -391,4 +391,4 @@ UNVERIFIED 项（必须列出，超过 3 条则本轮打分作废）：
 
 **回退**：如果模板 D 的四段式里 `待核实` 超过 3 条且一时查不到，不要卡在这一步——带着 `UNVERIFIED` 标记继续往 [02-find-leads.md](02-find-leads.md) 走，用真实买家反馈回来补数据，往往比坐在电脑前查更快。
 
-**相关文档**：[`03-due-diligence.md`](03-due-diligence.md) 背调｜[`04-outreach.md`](04-outreach.md) 建联｜[`05-negotiation.md`](05-negotiation.md) 谈单｜[`06-quote.md`](06-quote.md) 报价｜[`07-order-delivery.md`](07-order-delivery.md) 交付｜[`deal-walkthrough.md`](deal-walkthrough.md) 全程案例｜[`fast-path.md`](fast-path.md) 5 天速通｜[README.md](../README.md) 总览
+**相关文档**：[`03-due-diligence.md`](03-due-diligence.md) 背调｜[`04-outreach.md`](04-outreach.md) 建联｜[`05-negotiation.md`](05-negotiation.md) 谈单｜[`06-quote.md`](06-quote.md) 报价｜[`07-order-delivery.md`](07-order-delivery.md) 交付｜[`deal-walkthrough.md`](deal-walkthrough.md) 全程案例｜[`fast-path.md`](fast-path.md) 7 天速通｜[README.md](../README.md) 总览

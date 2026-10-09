@@ -55,7 +55,7 @@ One chain, start to finish: pick a country, end with money in the bank. One doc 
 
 Stage docs live in `docs/`, one file per stage, all following the same six-part structure (see [CONTRIBUTING.md](CONTRIBUTING.md)): **what this stage is for → how to do it, step by step → the pass/fail criteria → the classic mistakes → copy-paste templates → the AI prompts for this stage.**
 
-**Never done this before?** [`docs/00-getting-started.md`](docs/00-getting-started.md) assumes no git and no Python, and gets you moving in about 10 minutes. In a hurry instead? [`docs/fast-path.md`](docs/fast-path.md) is five days from zero to your first reply.
+**Never done this before?** [`docs/00-getting-started.md`](docs/00-getting-started.md) assumes no git and no Python, and gets you moving in about 10 minutes. In a hurry instead? [`docs/fast-path.md`](docs/fast-path.md) is seven days from zero to your first reply.
 
 ---
 
