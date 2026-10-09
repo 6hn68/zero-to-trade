@@ -75,6 +75,9 @@ jobs:
                           if a.name.split('.')[0] not in (ALLOWED | LOCAL):
                               bad.append('%s: import %s' % (f, a.name))
                   elif isinstance(node, ast.ImportFrom) and not node.level:
+                      # __future__ 是编译器指令，不是真依赖，放它过
+                      if node.module == '__future__':
+                          continue
                       top = (node.module or '').split('.')[0]
                       if top not in (ALLOWED | LOCAL):
                           bad.append('%s: from %s import ...' % (f, node.module))
@@ -83,6 +86,10 @@ jobs:
                        '加一个 requests 就全废了：\n  ' + '\n  '.join(bad))
           print('  四个脚本只 import 标准库和彼此 ✓')
           PY
+
+      - name: 真客户数据自查脚本能不能跑（挡住 .gitignore 挡不住的那类漏网）
+        run: |
+          python scripts/check_private_data.py
 
       - name: 铁律复查：CI 里不许出现任何装包命令
         run: |
@@ -287,7 +294,8 @@ jobs:
           for root, dirs, files in os.walk('.'):
               dirs[:] = [d for d in dirs if d not in {'.git', '__pycache__'}]
               for fn in files:
-                  if not fn.endswith(('.md', '.csv', '.html', '.py', '.txt', '.json', '.yml')):
+                  # .example 也扫：万一有人加带这个后缀的文件，别让它成为盲区。
+                  if not fn.endswith(('.md', '.csv', '.example', '.html', '.py', '.txt', '.json', '.yml')):
                       continue
                   p = os.path.join(root, fn)
                   try:

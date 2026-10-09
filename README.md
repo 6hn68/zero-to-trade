@@ -36,8 +36,8 @@
 |---|---|
 | 「要做客户背调」 | L1 筛查查 3 项（官网存在性、成立年份、社媒是否活跃），任一项不过直接淘汰 |
 | 「要重视客户质量」 | 10 条线索自动分成 T0/T1/T2/T3，每级写清下一步该干什么、该花多少时间 |
-| 「记得跟进」 | 第 1/3/5/7 天各一次触达，每次话术不同，第 7 天给一个明确的收尾或推进动作 |
-| 「AI 会改变外贸」 | 4 个 stdlib-only Python 脚本（含 1 个 alpha 报价引擎），`python scripts/lead_score.py examples/leads_example.csv` 30 秒出分级结果 |
+| 「记得跟进」 | 首发当天、第 2 天后、第 5 天后各触达一次，共 3 次，每次话术不同；第 5 天那次是收尾信，发完就停手 |
+| 「AI 会改变外贸」 | 4 个 stdlib-only Python 脚本（含 1 个 alpha 报价引擎），`python scripts/lead_score.py my_leads.csv` 30 秒出分级结果 |
 
 信息量其实差不多，差的只是拆得够不够细。这里的每一条结论都得能落到「今天下午打开哪个网站、填什么、看到什么算过关」——落不到的，我就没往上写。
 
@@ -73,25 +73,39 @@
 
 愿意装的话，下面 4 个脚本全是标准库写的，零第三方依赖，Python 3.8+ 就能跑。第 4 个还是 v0.2 alpha，别直接拿它去报真实价格。
 
+**先花 10 秒做一件事**：把示例数据复制一份成自己的 `my_leads.csv`，**真名单只往这份里填**：
+
+```bash
+cp examples/leads_example.csv my_leads.csv
+```
+
+（Windows 手动做：打开 `examples` 文件夹，把 `leads_example.csv` 复制到上一层，改名叫 `my_leads.csv`。）
+
+为什么要多这一步：`my_leads.csv` 会被自动拦住不传到网上，`examples/` 里那份是仓库自带的，改坏了会把你下次同步的代码一起搞乱。
+
+然后跑这 4 条：
+
 ```bash
 # 1. 线索自动分级：输入 CSV，输出 T0-T3 排序 + 每级下一步动作
-python scripts/lead_score.py examples/leads_example.csv
+python scripts/lead_score.py my_leads.csv
 
 # 2. 按分级生成中英对照建联文案（英文发送，中文供你审批）
-python scripts/outreach_gen.py examples/leads_example.csv --tier T0
+python scripts/outreach_gen.py my_leads.csv --tier T0
 
 # 3. 生成 7 天 3 触达跟进计划表（带具体日期）
-python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv examples/leads_example.csv
+python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv my_leads.csv
 
 # 4. (alpha) 报价引擎：成本 + 海运费 + 毛利 → FOB/CIF 区间 + 三档让步阶梯
 python scripts/quote_engine.py --cost 28 --freight 6 --margin 15
 ```
 
+> 直接把 `examples/leads_example.csv` 喂给脚本也能跑。但真名单别填进那个文件——它是仓库自带的，你一改，下次同步代码就会跟它打架。
+
 想直接开干的话，看 [`docs/fast-path.md`](docs/fast-path.md)：从 0 到第一次真实触达，7 天、每天 1–2 小时。它不保证你拿到回复——第一封回复可能第 2 天来，也可能第 8 周才来。
 
 ### 第 1 条命令真的会打印这些
 
-下面是 `python scripts/lead_score.py examples/leads_example.csv` 的实际输出，一个字没改：
+下面是 `python scripts/lead_score.py my_leads.csv`（my_leads.csv 就是上面那份示例复制出来的）的实际输出，一个字没改：
 
 ```
 ====================================================================================
@@ -124,7 +138,7 @@ python scripts/quote_engine.py --cost 28 --freight 6 --margin 15
 
 ### CSV 字段
 
-`examples/leads_example.csv` 是可直接跑的示例，表头：
+`my_leads.csv`（从 `examples/leads_example.csv` 复制来的那份）的表头长这样：
 
 ```
 company,country,product,source,email,phone,years,contact,note
@@ -189,7 +203,7 @@ zero-to-trade/
 │   ├── followup_plan.py   # 7 天 3 触达跟进计划表
 │   └── quote_engine.py    # v0.2 报价引擎(alpha)：FOB/CIF 区间 + 三档让步阶梯
 ├── examples/
-│   └── leads_example.csv  # 示例数据，可直接跑
+│   └── leads_example.csv  # 示例数据（复制成 my_leads.csv 再填自己的）
 ├── prompts/
 │   └── AI_PROMPTS.md      # 27 条可直接粘贴的英文提示词，按环节分组
 └── assets/                # 图片、截图、图表
@@ -250,7 +264,7 @@ v0.2 的前置条件是 v0.3 的背调数据——因为报价需要知道对方
 - 想嵌进自己的工具链？每个脚本都能 `import`，`score_leads()` / `build_message()` / `plan_followups()` / `quote_range()` 都是纯函数，返回字典或列表，不碰网络、不写文件。
 - CI 在 GitHub Actions 上跑 `py_compile` + 冒烟测试（py3.8 / 3.11 / 3.13），改完提 PR 不会悄悄坏掉。
 
-> 你不用信我说的。跑一遍 `python scripts/lead_score.py examples/leads_example.csv` 自己看结果——这玩意儿好不好使，30 秒就能验证，用不着我在这儿吹。
+> 你不用信我说的。复制一份示例数据，跑一遍 `python scripts/lead_score.py my_leads.csv` 自己看结果——这玩意儿好不好使，30 秒就能验证，用不着我在这儿吹。
 
 ---
 
@@ -312,8 +326,11 @@ The premise: **AI does the heavy lifting, you make the calls.** Most tutorials t
 **30-second demo** (Python 3.8+, no third-party packages):
 
 ```bash
-python scripts/lead_score.py examples/leads_example.csv
+cp examples/leads_example.csv my_leads.csv
+python scripts/lead_score.py my_leads.csv
 ```
+
+Copy the sample data to your own file first — the `.example` suffix is there so nobody accidentally publishes their real customer list. Fill `my_leads.csv`, never the example file.
 
 Ten sample leads come back tiered T0:2 / T1:5 / T2:1 / T3:2, each with its own next action.
 

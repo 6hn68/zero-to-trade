@@ -66,18 +66,22 @@ private/
 报价*
 客户*
 
-# ⚠️ 白名单必须放在上面那几条通配「之后」才生效，顺序写反它就是一张废纸。
-# 仓库自带的脱敏示例要留着——index.html 会 fetch 它，CI 也拿它跑冒烟。
-# 所以：examples/ 里只放行名字带 example 的文件，其余一律照挡。
+# examples/ 里只放行仓库自带那份脱敏示例，其余一律照挡。
+# （别写成整个 examples/ 都挡——新手从GitHub 克隆后第一步就没数据可跑，
+#   「先 cp 一份」的教程等于把门槛抬高了。）
 examples/*
-!examples/*example*
+!examples/leads_example.csv
 
-# ⚠️ 但这条白名单本身就是个洞，请务必读完：
-# examples/leads_example.csv 是「已被 git 跟踪」的文件——对已跟踪文件，gitignore 说了不算。
-# 你一旦按 docs/00-getting-started.md 的教程把真名单填进这个示例文件，
-# git 会非常高兴地帮你 push 上去，而 .gitignore 一声不吭。
-# 正确姿势：先复制一份再改（cp examples/leads_example.csv private/my_leads.csv），
-# 真数据只往 private/ 里丢——那个目录是黑的。改完示例记得 git checkout 还原。
+# ---- 这一段是整个文件里最重要的，别删 ----
+# ⚠️ 上面那行白名单本身是个洞，所以说清楚：
+#   examples/leads_example.csv 是「已被 git 跟踪」的文件，
+#   而 .gitignore 只对还没被跟踪的文件生效。你往它里面填真客户，
+#   git 会照传不误，.gitignore 一声不吭。
+# 所以才需要那个自查脚本——提交前跑一遍，它会把你抓出来：
+#     python scripts/check_private_data.py
+# 也进了 CI，PR 里夹带真实数据会当场挂掉。
+#
+# 真名单写在 my_leads.csv（上面 *.csv 那条会挡住它），别写在 examples/ 里。
 
 # ---- Excel 临时锁文件 ----
 ~$*
