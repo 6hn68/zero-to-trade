@@ -19,6 +19,7 @@
 """
 from __future__ import print_function
 
+import argparse
 import os
 import re
 import sys
@@ -91,7 +92,31 @@ def scan_file(path):
     return hits
 
 
+def _repo_root():
+    """仓库根目录：从本文件位置推，不依赖当前工作目录。
+
+    Repo root derived from this file's location, never from the cwd:
+    running the script from scripts/ used to silently scan only that
+    directory (13 files) and still report a pass.
+    """
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
 def main():
+    argparse.ArgumentParser(
+        prog="check_private_data.py",
+        description="扫一遍仓库，查有没有真实客户数据（真实公司名/电话/邮箱）混进示例和文档（只用标准库）",
+        epilog="可直接复制的例子:\n  python scripts/check_private_data.py\n\n"
+               "没参数就直接扫：通过会说扫了多少文件，没通过会逐条列出可疑位置。",
+    ).parse_args()
+    root = _repo_root()
+    # 不在根目录就直接报错退出：换个目录跑会漏扫、报假通过，
+    # 安全检查宁可拦住也不许悄悄放过。
+    if os.path.abspath(os.getcwd()) != os.path.abspath(root):
+        print("错误：不在仓库根目录（当前在 %s）。" % os.getcwd())
+        print("  这个脚本只扫仓库根目录下的文件，换个目录跑会漏扫、报假通过。")
+        print("  请先 cd 到 %s 再跑。" % root)
+        return 2
     # 只扫要提交的目录，别把 node_modules、.venv 这些翻一遍
     roots = ["scripts", "docs", "examples", "prompts", ".github"]
     # 仓库根目录下的单文件（README / LICENSE 之类）
@@ -99,17 +124,22 @@ def main():
 
     seen = set()
     files = []
-    for fn in sorted(os.listdir(".")):
-        if fn.endswith(SCAN_EXT) and os.path.isfile(fn):
-            root_files.append(fn)
+    for fn in sorted(os.listdir(root)):
+        p = os.path.join(root, fn)
+        if fn.endswith(SCAN_EXT) and os.path.isfile(p):
+            root_files.append(os.path.relpath(p, root))
 
-    for root in roots:
-        if not os.path.isdir(root):
+    for sub in roots:
+        base = os.path.join(root, sub)
+        if not os.path.isdir(base):
             continue
-        for fn in sorted(os.listdir(root)):
-            p = os.path.join(root, fn)
-            if os.path.isfile(p) and fn.endswith(SCAN_EXT):
-                files.append(p)
+        # 递归进子目录：以前只取顶层，docs/advanced/ 里的文件根本没扫过
+        for dirpath, dirnames, filenames in os.walk(base):
+            dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIR)
+            for fn in sorted(filenames):
+                if fn.endswith(SCAN_EXT):
+                    files.append(os.path.relpath(
+                        os.path.join(dirpath, fn), root))
 
     files = sorted(set(files) | set(root_files))
     files = [f.replace("\\", "/") for f in files]
@@ -125,6 +155,7 @@ def main():
             total_hits += len(hits)
             report.append((path, hits))
 
+    print("仓库根目录：%s" % root)
     print("扫了 %d 个文件" % len(files))
     if not report:
         print("没查到真实客户数据，这一关过了。")

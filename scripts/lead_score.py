@@ -9,7 +9,8 @@ lead_score.py — 客户线索 T0-T3 自动分级
 用法见 --help（里面的例子都能直接复制）。
 
 输入 CSV：company 这一列必须有，其余 country/product/source/email/phone/contact/
-years/note 有就加分，没有也能跑。表头大小写、前后空格你随便写，脚本都认。
+years/note 有就加分，没有也能跑。表头大小写、前后空格你随便写，脚本都认；
+产品/邮箱/国家这些常用中文列名也认（公司列除外，必须写 company）。
 （邮箱格式不对就不算数；years 里填 2010 这种年份，会自动当成成立年份折算成年数。）
 
 分级（满分 100）：联系方式 40 / 来源 30 / 采购信号 20 / 成熟度 10。权重集中在
@@ -21,12 +22,65 @@ import argparse
 import csv
 import io
 import json
+import logging
 import os
 import re
 import sys
+import time
 import unicodedata
+import uuid
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Dict, List, Optional, Tuple
+
+
+def setup_log(name):
+    """Append run records to logs/<name>.log (project root, git-ignored).
+
+    Screen output is unchanged; the log only adds: run time, argv,
+    and a result summary, so the next run can be traced and improved.
+    Only run summaries are logged, never message bodies or customer data,
+    so the log stays a trace record rather than a copy of the output.
+    """
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    log_dir = os.path.join(root, "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log = logging.getLogger(name)
+    log.setLevel(logging.INFO)
+    if not log.handlers:
+        handler = logging.FileHandler(os.path.join(log_dir, name + ".log"), encoding="utf-8")
+        handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
+        log.addHandler(handler)
+    log.info("RUN argv=%s", " ".join(sys.argv))
+    return log
+
+
+def write_trace(tool, input_summary, output_summary, duration_s, error=""):
+    """往 logs/trace-YYYY-MM-DD.jsonl 追加一行（字段见 docs/trace-format.md）。
+
+    输入/输出只记摘要：文件名只记 basename，公司名、人名、邮箱电话一律不记。
+    日志写不出去（比如 logs/ 目录被锁了）也不该把一次正常运行搞崩，
+    所以这里所有 OSError 都静默吞掉。
+    """
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    record = {
+        "trace_id": str(uuid.uuid4()),
+        "ts": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "tool": tool,
+        "input": input_summary,
+        "output": output_summary,
+        "duration_s": round(duration_s, 3),
+        "error": error,
+    }
+    try:
+        os.makedirs(os.path.join(root, "logs"), exist_ok=True)
+        with open(os.path.join(root, "logs",
+                               "trace-%s.jsonl" % datetime.now().strftime("%Y-%m-%d")),
+                  "a", encoding="utf-8") as f:
+            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
+
 
 # ================================================================ 权重总表
 # 想改评分口径，只改这一块，改完务必跑一次：
@@ -107,6 +161,19 @@ MAX_CELL_CHARS = 2000       # 超长字段截断，防止一个巨长备注拖�
 PLACEHOLDERS = {"", "-", "--", "---", "/", "n/a", "na", "n.a.", "none", "null",
                 "nil", "unknown", "tbd", "?", "??", "待定", "待补", "暂无",
                 "未知", "无", "不知道", "未填写"}
+# 中文列名 -> 英文列名：中文 Excel 另存的表常把产品/邮箱写成中文，
+# 不认就会静默丢列、少算分。注意：公司列故意不映射——全中文表头
+# （公司/产品/邮箱）仍按“缺少 company 列”大声报错，这是已锁定的行为；
+# 只有 company 这一列坚持英文，才能保证这层保护还在。
+# Chinese header aliases: Chinese Excel exports often name the data columns
+# in Chinese; unrecognised headers used to be silently dropped (lost email
+# points, T0 demoted to T1). The company column is deliberately NOT mapped,
+# so an all-Chinese header still fails loudly with "缺少 company 列".
+HEADER_ALIASES = {
+    "产品": "product", "邮箱": "email", "国家": "country",
+    "来源": "source", "电话": "phone", "年份": "years",
+    "联系人": "contact", "备注": "note",
+}
 # 读不懂的编码就按这个顺序回退，最后一项 latin-1 永不失败，用来兜底不崩
 FALLBACK_ENCODINGS = ("utf-8-sig", "gb18030", "utf-8", "big5", "latin-1")
 
@@ -243,7 +310,7 @@ def _decode(raw: bytes) -> Tuple[str, str]:
 
 def read_leads(path: str) -> List[Dict[str, Any]]:
     """读成「一行一个 dict」。容错：编码自动回退 GB18030；表头大小写/空格/空列名/
-    重复列名都能处理；表头前以 # 开头的行当免责声明跳过；支持引号字段与超长字段。"""
+    重复列名都能处理，常用中文列名（产品/邮箱等）自动认；表头前以 # 开头的行当免责声明跳过；支持引号字段与超长字段。"""
     try:
         with open(path, "rb") as f:
             raw = f.read()
@@ -269,32 +336,37 @@ def read_leads(path: str) -> List[Dict[str, Any]]:
     except (OverflowError, ValueError):
         pass
 
-    reader = csv.reader(io.StringIO(text, newline=""))
+    reader = csv.reader(io.StringIO(text, newline=""), strict=True)
     header: Optional[List[str]] = None
     records: List[Dict[str, Any]] = []
-    for row_values in reader:
-        # 跳过完全空白的行（表头前后都跳）
-        if not row_values or all((c or "").strip() == "" for c in row_values):
-            continue
-        # 表头尚未确定时，# 开头的行当作免责声明注释跳过
-        if header is None:
-            if (row_values[0] or "").lstrip().startswith("#"):
+    try:
+        for row_values in reader:
+            # 跳过完全空白的行（表头前后都跳）
+            if not row_values or all((c or "").strip() == "" for c in row_values):
                 continue
-            header = [h.strip() or "第%d列" % (i + 1)
-                      for i, h in enumerate(row_values)]
-            seen, dups = set(), []
-            for name in header:  # 重名列只认第一列的值
-                if name.lower() in seen:
-                    dups.append(name)
-                seen.add(name.lower())
-            if dups:
-                print("警告：表头有重复列名 %s，只保留第一列的值。" % "、".join(dups))
-            continue
-        record: Dict[str, Any] = {}
-        for col, value in zip(header, row_values):
-            if col not in record:
-                record[col] = value
-        records.append(record)
+            # 表头尚未确定时，# 开头的行当作免责声明注释跳过
+            if header is None:
+                if (row_values[0] or "").lstrip().startswith("#"):
+                    continue
+                header = [HEADER_ALIASES.get(h.strip(), h.strip())
+                          or "第%d列" % (i + 1)
+                          for i, h in enumerate(row_values)]
+                seen, dups = set(), []
+                for name in header:  # 重名列只认第一列的值
+                    if name.lower() in seen:
+                        dups.append(name)
+                    seen.add(name.lower())
+                if dups:
+                    print("警告：表头有重复列名 %s，只保留第一列的值。" % "、".join(dups))
+                continue
+            record: Dict[str, Any] = {}
+            for col, value in zip(header, row_values):
+                if col not in record:
+                    record[col] = value
+            records.append(record)
+    except csv.Error:
+        raise LeadDataError("CSV 里有个引号没闭合（某个字段开头写了 \"，后面没写配对的 \"）。"
+                            "检查一下出问题的那行：引号要成对出现；备注里有逗号就把整段用双引号包起来。")
 
     if header is None:
         raise LeadDataError("这个 CSV 没有表头行（第一行得是列名，比如 company,country）。")
@@ -358,9 +430,20 @@ def analyze(rows: List[Dict[str, Any]], country: Optional[str] = None,
 def _wide(ch: str) -> bool:
     return unicodedata.east_asian_width(ch) in ("W", "F")
 
+def _flat(text: str) -> str:
+    """表格/明细渲染前把值压成单行：换行、回车、制表符改为空格，NUL 直接去掉。
+    单元格里的换行会把表格行打断，NUL 会原样进输出；JSON/CSV 不走这里，
+    它们保留原值（转义后仍然合法）。
+    Flatten a value for table/detail rendering: fold newlines/tabs to spaces
+    and drop NUL bytes so a cell can never break the layout. JSON/CSV keep
+    the raw values (they escape them, so they stay valid)."""
+    return (str(text).replace("\x00", "")
+            .replace("\r", " ").replace("\n", " ").replace("\t", " "))
+
 def _fit(text: str, width: int, right: bool = False) -> str:
     """按终端显示宽度补齐：中文占 2 列、英文占 1 列，所以用 %-26s 那种按字符数
     补齐的写法一定会歪。放不下的截断加省略号。"""
+    text = _flat(text)
     if sum(2 if _wide(c) else 1 for c in text) > width:
         kept, used = "", 0
         for ch in text:
@@ -374,7 +457,7 @@ def _fit(text: str, width: int, right: bool = False) -> str:
 
 def _names_of(results: List[Dict[str, Any]], tier: str) -> str:
     """某一级的公司名用顿号串起来；一个都没有就写「无」。"""
-    names = [r["company"] for r in results if r["tier"] == tier]
+    names = [_flat(r["company"]) for r in results if r["tier"] == tier]
     return "、".join(names) if names else "无"
 
 def render_table(results: List[Dict[str, Any]], duplicates: int = 0) -> str:
@@ -419,7 +502,7 @@ def render_detail(results: List[Dict[str, Any]], duplicates: int = 0) -> str:
     lines = []
     for r in results:
         lines.append("[%s] %s  (%s，%d 分)"
-                     % (r["tier"], r["company"], r["country"], r["score"]))
+                     % (r["tier"], _flat(r["company"]), _flat(r["country"]), r["score"]))
         lines += ["     %s %s" % (_fit(k, 12), v) for k, v in r["detail"].items()]
         lines.append("     %s %s" % (_fit("下一步", 12), r["action"]))
         if r["dup_count"] > 1:
@@ -458,14 +541,45 @@ def render_json(results: List[Dict[str, Any]], source_file: str,
     return json.dumps(payload, ensure_ascii=False, indent=2)
 
 class _ZhArgumentParser(argparse.ArgumentParser):
-    """argparse 默认报错是英文，包一层，给新人一句能看懂的话。"""
+    """argparse 默认报错是英文，包一层，给新人一句能看懂的话。
+
+    共用版：11 个脚本原来各写一份，只有提示里的脚本名不一样。
+    这里用 self.prog 取名（各脚本建 parser 时都传了 prog="<名>.py"），
+    行为和原来一样。例外：due_diligence.py 的报错里带本脚本的例子
+    和常见报错，是特制的，留在原地别抽。
+    """
 
     def error(self, message: str):  # type: ignore[override]
+        message = message.replace(
+            "the following arguments are required: ", "缺了必填参数：")
+        message = message.replace(
+            "unrecognized arguments: ", "不认识的参数：")
         self.print_usage(sys.stderr)
         raise SystemExit(
             "\n参数没写对：%s\n"
-            "  不知道怎么填就跑：python %s --help（里面有能直接复制的例子）"
-            % (message, os.path.basename(sys.argv[0]) or "lead_score.py"))
+            "  不知道怎么填就跑：python scripts/%s --help（里面有能直接复制的例子）"
+            % (message, self.prog))
+
+
+def _width(s):
+    """终端显示宽度：中文/全角按 2 计，否则按 1 计。"""
+    return sum(2 if unicodedata.east_asian_width(c) in ("W", "F") else 1 for c in s)
+
+
+def _pad(s, width):
+    return s + " " * max(0, width - _width(s))
+
+
+def money(x):
+    """金额统一「四舍五入到分」。用 Decimal 而非 round()：
+    round() 是银行家舍入（round(2.675, 2) == 2.67），还会留下 31.179999 这类浮点尾巴。"""
+    return float(Decimal(str(x)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
+def fmt(x):
+    """金额显示：固定两位小数（31.1 不会被打印成 31.1，避免列错位）。"""
+    return "%.2f" % money(x)
+
 
 def build_parser() -> _ZhArgumentParser:
     p = _ZhArgumentParser(
@@ -492,13 +606,35 @@ contact/years/note）有就加分、没有也能跑。照 examples/leads_example
     return p
 
 def main() -> None:
-    args = build_parser().parse_args()
+    parser = build_parser()
+    if len(sys.argv) == 1:
+        parser.print_usage(sys.stderr)
+        print("\n没给参数：不知道怎么填就跑 python scripts/lead_score.py --help，"
+              "里面有能直接复制的例子。", file=sys.stderr)
+        raise SystemExit(2)
+    args = parser.parse_args()
+    log = setup_log("lead_score")
+    started = time.monotonic()
+    trace_input = os.path.basename(args.csv_path)
     try:
         rows = read_leads(args.csv_path)
     except LeadDataError as e:
+        log.info("RESULT error=%s", e)
+        write_trace("lead_score.py", trace_input, "",
+                    time.monotonic() - started, str(e))
         raise SystemExit("错误：%s" % e)
 
     results, duplicates = analyze(rows, args.country, args.product)
+    counts = {"T0": 0, "T1": 0, "T2": 0, "T3": 0}
+    for r in results:
+        counts[r.get("tier", "T3")] += 1
+    log.info("RESULT total=%d T0=%d T1=%d T2=%d T3=%d duplicates=%s",
+             len(results), counts["T0"], counts["T1"], counts["T2"], counts["T3"], duplicates)
+    write_trace("lead_score.py", trace_input,
+                "共 %d 条 · T0:%d T1:%d T2:%d T3:%d · 去重 %s 条"
+                % (len(results), counts["T0"], counts["T1"],
+                   counts["T2"], counts["T3"], duplicates),
+                time.monotonic() - started)
     if args.format == "json":
         text = render_json(results, args.csv_path, duplicates)
     elif args.format == "csv":
@@ -517,6 +653,9 @@ def main() -> None:
             with open(args.out, "w", encoding="utf-8", newline="") as f:
                 f.write(text)
         except OSError as e:
+            write_trace("lead_score.py", trace_input, "",
+                        time.monotonic() - started,
+                        "写不进「%s」：%s" % (args.out, e.strerror or e))
             raise SystemExit("错误：写不进「%s」：%s（换个目录，或先关掉打开它的 Excel）"
                              % (args.out, e.strerror or e))
         print("已写入 %s" % args.out)
