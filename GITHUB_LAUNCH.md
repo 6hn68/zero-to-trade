@@ -52,7 +52,7 @@ export
 
 **About 描述（仓库页右上 About 里填，带关键词）**：
 - 短描述：`Open-source foreign-trade workflow for starting export with zero experience — 7 stages + 4 stdlib-only Python scripts (quoting engine is alpha).`
-- 长描述（About 下方的 Description 框）：`An open-source foreign-trade workflow for absolute beginners: pick a market → find/vet leads → outreach → quote → deliver. Ships 4 stdlib-only Python scripts (lead scoring, outreach copy, follow-up plan, quoting engine) and 27 copy-paste AI prompts. Anonymous, no paid course.`
+- 长描述（About 下方的 Description 框）：`An open-source foreign-trade workflow for absolute beginners: pick a market → find/vet leads → outreach → quote → deliver. Ships 5 stdlib-only Python script files (lead scoring, outreach copy, follow-up plan, quoting engine, privacy guard) and 39 copy-paste AI prompts. Anonymous, no paid course.`
 
 ---
 
@@ -177,7 +177,7 @@ gh release create v0.1 --title "v0.1 · 第一版" --notes "## 这一版有什�
 - 7 步外贸工作流：选市场 → 找客户 → 背调 → 建联 → 谈判 → 报价 → 交单
 - 4 个纯标准库 Python 脚本（线索分级 / 建联文案 / 跟进计划 / 报价引擎），Python 3.8+，不用 pip install
 - index.html：浏览器打开就能跑的零安装 Demo
-- 27 条可复制的 AI prompt
+- 40 条可复制的 AI prompt
 - 中 / 英 / 西 三语 README
 
 ## 还粗糙的地方

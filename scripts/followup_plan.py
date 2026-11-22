@@ -12,6 +12,17 @@
     T2  D0 / D7 / D14    低频培育，只在有行情时才发
     T3  不排触达          信息不足，先补信息；本级的止损线就是 0 次
 
+标准节奏（7 天 3 触达）是 Day1 / Day4 / Day7：
+    Day1 = 起算日 D0（首触日），Day4 = D3，Day7 = D6 —— T1 的节奏就是标准节奏。
+    T0 是高频变体（D0/D2/D5，6 天内三次，仍在 7 天包线内）；T2 是低频例外。
+    check_cadence() / validate_cadence() 在每次排期时校验这条规则，
+    节奏被改错会直接报错，不会悄悄排错日期。
+
+明确拒绝立刻停（红线）：
+    对方明确说不 / 不需要 / 别再联系 → 后续触达全部取消，一封都不再发，
+    30 天内不再联系（最早再联系日 = 拒绝日 + 30 天）。
+    执行入口是 remaining_touches() / plan_with_reply()，命令行用 --reply refused。
+
 止损线（第 3 次触达后还零回应就停）:
     第 3 次触达后仍无任何回应（含已读不回）→ 无条件停手，进长名单，季度扫一次。
     继续发只会拉低域名信誉，而且对方已经用行为告诉你答案了。
@@ -48,9 +59,17 @@
 import argparse
 import csv
 import json
+import logging
 import os
 import sys
+import time
 from datetime import datetime, timedelta
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lead_score import LeadDataError, analyze, read_leads, write_trace, _ZhArgumentParser, setup_log  # noqa: E402
+
+
+
 
 TIER_LABEL = {
     "T0": "立即建联（多线并进）",
@@ -72,6 +91,24 @@ MAX_TOUCHES = 3
 MIN_GAP_DAYS = 2
 STOP_LINE = ("第 %d 次触达后仍无任何回应（含已读不回）→ 无条件停手，进长名单，季度扫一次。"
              % MAX_TOUCHES)
+
+# Standard rhythm: Day1 / Day4 / Day7, counted from 1; Day1 is the start day (D0).
+# 标准节奏：Day1 / Day4 / Day7（从 1 数起；Day1 就是起算日 D0）。
+# Offsets are 0-based day counts from the start date; T1 runs exactly this rhythm.
+STANDARD_RHYTHM_OFFSETS = (0, 3, 6)
+STANDARD_RHYTHM = ("D0", "D3", "D6")
+
+# Explicit refusal: stop at once, do not contact them again for 30 days.
+# 明确拒绝：立刻停手，30 天内不再联系。
+REFUSAL_COOLDOWN_DAYS = 30
+
+# Reply status of a lead: what the other side said back (or did not say).
+# 线索的回复状态：对方回了什么（或者没回）。
+REPLY_NO_REPLY = "no_reply"    # Silence so far — keep the plan going. / 还没回——按计划继续。
+REPLY_REPLIED = "replied"      # They answered — cadence done, talk instead. / 回了——节奏结束，转正常对话。
+REPLY_REFUSED = "refused"      # Explicit no — stop at once. / 明确拒绝——立刻停。
+REPLY_NOT_NOW = "not_now"      # "Not now" — park in the long list. / 现在不是时候——进长名单。
+REPLY_STATUSES = (REPLY_NO_REPLY, REPLY_REPLIED, REPLY_REFUSED, REPLY_NOT_NOW)
 
 # 每个 tier 的节奏：[第几天, 渠道, 这次具体说什么（角度）, 必须带的新信息, 停止条件, 文案来源]
 # 停止条件按「已经发出去的那一封」来写：D2 时只发过 D0，不能写「两次无回应」。
@@ -202,6 +239,10 @@ def build_plan(tier, start, company=None, market="gcc", avoid_weekend=False):
         raise ValueError("未知 tier：%s（可选：%s）" % (tier, "/".join(CADENCE)))
     if market not in MARKETS:
         raise ValueError("未知 market：%s（可选：%s）" % (market, "/".join(MARKETS)))
+    # Self-check the rhythm before scheduling anything: a tampered CADENCE
+    # fails loudly here instead of silently producing wrong dates.
+    # 排期前先自检节奏：CADENCE 被改错会在这里直接报错，不会悄悄排错日期。
+    validate_cadence(tier)
     try:
         start_dt = datetime.strptime(start, "%Y-%m-%d")
     except ValueError:
@@ -255,6 +296,165 @@ def plan_followups(tier, start, company=None, market="gcc", avoid_weekend=False)
     """README 对外承诺的可导入入口（同 build_plan）：纯函数，返回行字典列表。"""
     return build_plan(tier, start, company=company, market=market,
                       avoid_weekend=avoid_weekend)
+
+
+def validate_standard_rhythm(offsets):
+    """Raise ValueError unless offsets are exactly Day1/Day4/Day7 (0, 3, 6).
+
+    Offsets are 0-based day counts from the start date: Day1 = 0, Day4 = 3,
+    Day7 = 6. Anything else is not the standard 7-day 3-touch rhythm.
+    校验标准节奏：offsets 必须是 Day1/Day4/Day7（0, 3, 6），否则报错。
+    """
+    try:
+        got = tuple(int(o) for o in offsets)
+    except (TypeError, ValueError):
+        raise ValueError("标准节奏应为天数偏移 (0, 3, 6)，收到的是 %r" % (offsets,))
+    if got != STANDARD_RHYTHM_OFFSETS:
+        raise ValueError(
+            "标准节奏必须是 Day1/Day4/Day7（偏移 0, 3, 6），收到的是 %s"
+            % (got,))
+
+
+def check_cadence(tier):
+    """Check one tier's rhythm. Returns a list of problems (empty = OK).
+
+    Rules — the 7-day 3-touch envelope / 规则——7 天 3 触达包线：
+    - T1 must be exactly the standard rhythm Day1/Day4/Day7 (D0/D3/D6).
+      T1 必须是标准节奏 Day1/Day4/Day7（D0/D3/D6）。
+    - Every tier: at most MAX_TOUCHES touches, offsets strictly increasing,
+      each gap >= MIN_GAP_DAYS. / 每级：最多 3 次，偏移递增，间隔 ≥ 2 天。
+    - T0/T1 must finish within 7 days (last offset <= 6). / T0/T1 须在 7 天内排完。
+    - T2 is the documented low-frequency exception (D0/D7/D14, only sends when
+      there is market news; D14 archives, it does not send), so it is exempt
+      from the 7-day span. / T2 是低频例外，不受 7 天跨度限制。
+    - T3 must schedule nothing (0 touches is its stop line). / T3 必须 0 次。
+    """
+    if tier not in CADENCE:
+        return ["未知 tier：%s（可选：%s）" % (tier, "/".join(CADENCE))]
+    steps = CADENCE[tier]
+    problems = []
+    if tier == "T3":
+        if steps:
+            problems.append("T3 不应排任何触达，但排了 %d 次" % len(steps))
+        return problems
+    if len(steps) != MAX_TOUCHES:
+        problems.append("%s 应排 %d 次触达，实际排了 %d 次"
+                        % (tier, MAX_TOUCHES, len(steps)))
+        return problems
+    offsets = [_day_offset(s[0]) for s in steps]
+    if tier == "T1":
+        try:
+            validate_standard_rhythm(offsets)
+        except ValueError as e:
+            problems.append(str(e))
+    for prev, cur in zip(offsets, offsets[1:]):
+        if cur <= prev:
+            problems.append("%s 的偏移必须递增，收到 %s" % (tier, offsets))
+            break
+        if cur - prev < MIN_GAP_DAYS:
+            problems.append("%s 相邻两次间隔 %d 天，小于最少 %d 天"
+                            % (tier, cur - prev, MIN_GAP_DAYS))
+    if tier in ("T0", "T1") and offsets[-1] > 6:
+        problems.append("%s 最后一次在 D%d，超出 7 天包线（应在 D6 之前）"
+                        % (tier, offsets[-1]))
+    return problems
+
+
+def validate_cadence(tier):
+    """Raise ValueError if check_cadence(tier) finds any problem."""
+    problems = check_cadence(tier)
+    if problems:
+        raise ValueError("节奏校验失败（%s）：%s" % (tier, "；".join(problems)))
+
+
+def stop_after_reply(reply):
+    """True if this reply ends the cadence (no more touches).
+
+    - no_reply: keep going. / 没回——继续。
+    - replied / refused / not_now: stop. / 回了 / 拒绝 / 不是时候——都停。
+    Raises ValueError on an unknown status.
+    """
+    if reply not in REPLY_STATUSES:
+        raise ValueError("未知回复状态：%r（可选：%s）"
+                         % (reply, "/".join(REPLY_STATUSES)))
+    return reply != REPLY_NO_REPLY
+
+
+def remaining_touches(rows, reply):
+    """Filter a planned touch list by the lead's reply. Returns a new list.
+
+    - no_reply: everything stays. / 没回——全留。
+    - refused: nothing stays — stop at once, even mid-cadence. A refusal that
+      arrives after D0 still cancels D3 and D6. / 明确拒绝——全取消，哪怕 D0 已发出。
+    - replied / not_now: nothing stays either (talk instead, or park them).
+      / 已回复 / 不是时候——同样停，不再按计划发。
+    The input list is untouched. Raises ValueError on an unknown status.
+    """
+    if reply not in REPLY_STATUSES:
+        raise ValueError("未知回复状态：%r（可选：%s）"
+                         % (reply, "/".join(REPLY_STATUSES)))
+    if reply == REPLY_NO_REPLY:
+        return list(rows)
+    return []
+
+
+def refusal_cooldown_until(reply_date):
+    """Earliest date you may contact them again after an explicit refusal.
+
+    reply_date: YYYY-MM-DD (the day they said no). Returns YYYY-MM-DD,
+    REFUSAL_COOLDOWN_DAYS (30) days later. Raises ValueError on a bad date.
+    明确拒绝后的最早再联系日 = 拒绝日 + 30 天。
+    """
+    try:
+        day = datetime.strptime(reply_date, "%Y-%m-%d")
+    except (TypeError, ValueError):
+        raise ValueError("拒绝日期格式应为 YYYY-MM-DD，收到的是 %r" % reply_date)
+    return (day + timedelta(days=REFUSAL_COOLDOWN_DAYS)).strftime("%Y-%m-%d")
+
+
+def plan_with_reply(tier, start, reply=REPLY_NO_REPLY, reply_date=None,
+                    company=None, market="gcc", avoid_weekend=False):
+    """build_plan + the refusal state machine. Returns (rows, note).
+
+    note is "" when the plan runs as-is; otherwise a plain-language reason
+    why the remaining touches are gone (and, for a refusal with a date,
+    the earliest day you may reach out again).
+    排期 + 回复状态机：返回（剩余触达行，说明）。没回复时说明为空。
+    """
+    rows = build_plan(tier, start, company=company, market=market,
+                      avoid_weekend=avoid_weekend)
+    if reply == REPLY_NO_REPLY:
+        return rows, ""
+    if reply == REPLY_REFUSED:
+        if reply_date:
+            note = ("明确拒绝：立刻停手，后续 %d 次触达全部取消；"
+                    "最早 %s 之后再联系。"
+                    % (len(rows), refusal_cooldown_until(reply_date)))
+        else:
+            note = ("明确拒绝：立刻停手，后续 %d 次触达全部取消；30 天内不再联系。"
+                    % len(rows))
+        return [], note
+    if reply == REPLY_REPLIED:
+        return [], "对方已回复：跟进节奏结束，转去正常对话，不再按计划发。"
+    return [], "对方说现在不是时候：停手，进长名单，季度扫一次。"
+
+
+def print_stopped(reply, note):
+    """Refusal / reply stop notice: no plan, just the reason. Plain words.
+
+    停手提示：不打印计划表，只讲清为什么停、什么时候能再联系。
+    """
+    print("")
+    print("=" * 74)
+    print("  跟进已停止（回复状态：%s）" % reply)
+    print("=" * 74)
+    print("")
+    print("  %s" % note)
+    print("")
+    print("  提醒：停了就是停了，别换个渠道再发一遍——换渠道也算触达。")
+    print("")
+    print("=" * 74)
+    print("")
 
 
 def print_plan(tier, start, rows, companies, market="gcc", scope="(本级全部线索)",
@@ -348,28 +548,55 @@ def print_no_plan(tier, csv_path=None, count=0):
     print("")
 
 
+
+
 def main():
-    p = argparse.ArgumentParser(
+    p = _ZhArgumentParser(
+        prog="followup_plan.py",
         description="按 T0/T1/T2/T3 排一张带日期的跟进节奏表（含止损线与防骚扰提醒）",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="示例:\n  python scripts/followup_plan.py --tier T0 --start 2026-10-08")
+        epilog="可直接复制的例子:\n  python scripts/followup_plan.py --tier T0 --start 2026-10-08")
     p.add_argument("--tier", choices=["T0", "T1", "T2", "T3"], default="T0",
                    help="要规划的层级，默认 T0（T3 不排触达）")
-    p.add_argument("--start", required=True,
-                   help="起算日 YYYY-MM-DD（首触实际发送日；必填，不用本机日期，保证可复现）")
+    p.add_argument("--start", "--start-date", required=True,
+                   help="起算日 YYYY-MM-DD（首触实际发送日；必填，不用本机日期，保证可复现。"
+                        "--start-date 是旧版写法，同样可用）")
     p.add_argument("--csv", help="线索 CSV，用于列出本级公司名（可选）")
     p.add_argument("--company", help="只给单个公司排期（与 --csv 同时给时以此为准）")
     p.add_argument("--market", choices=sorted(MARKETS), default="gcc",
                    help="目标市场，决定周末与发送时段，默认 gcc")
+    p.add_argument("--reply", choices=list(REPLY_STATUSES), default=REPLY_NO_REPLY,
+                   help="对方的回复状态：no_reply（默认，没回，按计划继续）/ "
+                        "replied（已回复，停）/ refused（明确拒绝，立刻停）/ "
+                        "not_now（现在不是时候，停）")
+    p.add_argument("--reply-date",
+                   help="对方回复的日期 YYYY-MM-DD（仅 --reply refused 时用于算 "
+                        "30 天冷却期，可选）")
     p.add_argument("--avoid-weekend", action="store_true",
                    help="把落在周末的触达自动顺延到下一个工作日")
     p.add_argument("--format", choices=["table", "csv", "json"], default="table")
     p.add_argument("--out", help="输出路径，仅对 --format csv / json 生效")
+    if len(sys.argv) == 1:
+        p.print_usage(sys.stderr)
+        print("\n没给参数：不知道怎么填就跑 python scripts/followup_plan.py --help，"
+              "里面有能直接复制的例子。", file=sys.stderr)
+        raise SystemExit(2)
     args = p.parse_args()
+    log = setup_log("followup_plan")
+    started = time.monotonic()
+    # trace 里只记参数摘要：公司名不记（--company 给了也只记“单家”）。
+    trace_input = ("tier=%s start=%s market=%s%s"
+                   % (args.tier, args.start, args.market,
+                      " csv=%s" % os.path.basename(args.csv) if args.csv
+                      else " 单家" if (args.company or "").strip() else " 本级全部"))
 
     try:
         start_dt = datetime.strptime(args.start, "%Y-%m-%d")
     except ValueError:
+        log.info("RESULT error=bad_start value=%r", args.start)
+        write_trace("followup_plan.py", trace_input, "",
+                    time.monotonic() - started,
+                    "--start 日期格式应为 YYYY-MM-DD，收到的是 %r" % args.start)
         raise SystemExit("错误：--start 日期格式应为 YYYY-MM-DD（例 2026-10-08），"
                          "收到的是 %r" % args.start)
     # strptime 也接受 2026-10-8 这种非补零写法，统一回写成标准格式，避免后面算错
@@ -378,8 +605,6 @@ def main():
     companies = []
     if args.csv:
         try:
-            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-            from lead_score import analyze, read_leads
             scored = analyze(read_leads(args.csv))
             # lead_score.analyze() 返回 (线索列表, 被合并的重复条数)；
             # 也有版本只返回列表。两种都吃下，避免上游一改这边就崩。
@@ -388,17 +613,41 @@ def main():
             leads = [l for l in scored if l.get("tier") == args.tier]
             companies = [l["company"] for l in leads]
         except FileNotFoundError:
+            write_trace("followup_plan.py", trace_input, "",
+                        time.monotonic() - started,
+                        "找不到文件 %s" % args.csv)
             raise SystemExit("错误：找不到文件 %s" % args.csv)
-        except ImportError:
-            raise SystemExit("错误：导入 lead_score.py 失败，"
-                             "请确保两个脚本同在 scripts/ 目录下。")
+        except LeadDataError as e:
+            log.info("RESULT error=%s", e)
+            write_trace("followup_plan.py", trace_input, "",
+                        time.monotonic() - started, str(e))
+            raise SystemExit("错误：%s" % e)
 
-    rows = build_plan(args.tier, args.start, args.company,
-                      args.market, args.avoid_weekend)
+    try:
+        rows, reply_note = plan_with_reply(args.tier, args.start, args.reply,
+                                           args.reply_date, args.company,
+                                           args.market, args.avoid_weekend)
+    except ValueError as e:
+        write_trace("followup_plan.py", trace_input, "",
+                    time.monotonic() - started, str(e))
+        raise SystemExit("错误：%s" % e)
+    log.info("RESULT tier=%s start=%s company=%s rows=%d reply=%s",
+             args.tier, args.start, (args.company or "").strip() or "(本级全部)",
+             len(rows), args.reply)
     scope = (args.company or "").strip() or "(本级全部线索)"
+
+    if reply_note:
+        # Replied / refused / not now: no plan at all, just the stop notice.
+        # 回了 / 拒绝了 / 不是时候：不打印计划表，只讲停手原因。
+        write_trace("followup_plan.py", trace_input, reply_note,
+                    time.monotonic() - started)
+        print_stopped(args.reply, reply_note)
+        return
 
     if not rows:
         # T3：止损线就是 0 次，不生成任何触达行，也不写空文件
+        write_trace("followup_plan.py", trace_input, "0 行（无触达计划）",
+                    time.monotonic() - started)
         print_no_plan(args.tier, args.csv, len(companies))
         return
 
@@ -411,6 +660,9 @@ def main():
         elif args.csv:
             print("提示：%s 里没有 %s 级线索，不生成文件。"
                   "换 --tier 或先补线索。" % (args.csv, args.tier))
+            write_trace("followup_plan.py", trace_input,
+                        "0 行（该级无线索，不生成文件）",
+                        time.monotonic() - started)
             return
         else:
             targets = ["(本级全部线索)"]
@@ -425,9 +677,16 @@ def main():
                     w.writeheader()
                     w.writerows(all_rows)
             except OSError as e:
+                write_trace("followup_plan.py", trace_input, "",
+                            time.monotonic() - started,
+                            "写不进 %s：%s" % (path, e))
                 raise SystemExit("错误：写不进 %s\n  %s" % (path, e))
             print("已写入 %s（%d 家 × %d 步 = %d 行）"
                   % (path, len(targets), len(rows), len(all_rows)))
+            write_trace("followup_plan.py", trace_input,
+                        "%d 家 × %d 步 = %d 行"
+                        % (len(targets), len(rows), len(all_rows)),
+                        time.monotonic() - started)
             return
 
         payload = {
@@ -457,17 +716,26 @@ def main():
                 with open(args.out, "w", encoding="utf-8") as f:
                     f.write(text)
             except OSError as e:
+                write_trace("followup_plan.py", trace_input, "",
+                            time.monotonic() - started,
+                            "写不进 %s：%s" % (args.out, e))
                 raise SystemExit("错误：写不进 %s\n  %s" % (args.out, e))
             print("已写入 %s（%d 家 × %d 步 = %d 行）"
                   % (args.out, len(targets), len(rows), len(all_rows)))
         else:
             print(text)
+        write_trace("followup_plan.py", trace_input,
+                    "%d 家 × %d 步 = %d 行"
+                    % (len(targets), len(rows), len(all_rows)),
+                    time.monotonic() - started)
         return
 
     if args.out:
         print("提示：--out 仅对 --format csv / json 生效，本次为 table 已忽略。")
 
     print_plan(args.tier, args.start, rows, companies, args.market, scope, args.csv)
+    write_trace("followup_plan.py", trace_input,
+                "%d 步计划" % len(rows), time.monotonic() - started)
 
 
 if __name__ == "__main__":

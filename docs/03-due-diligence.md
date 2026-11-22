@@ -211,6 +211,7 @@ A/B/C 与 T0-T3 的映射口径见 [04·建联客户](./04-outreach.md)（C 一�
 - **时间盒守住了**：单家总耗时 ≤ 45 分钟，L3 只做在 A 类上（超时 = 本环节没做好）。
 - **已回写**：每条 A/B 线索的 `note` 都有一句可对外说的证据，`source` 已更新为背调后最可信来源；内部风险判断不写在 `note` 里。
 - 每条线索的处置动作已定（进建联 / 降级 / 终止），不是只填了个字母。
+- 每条背调结论标证据档：[硬数据]官网原文、注册库、海关数据等一手来源；[原话]人物/媒体原话，注明出处；[推断]基于证据的合理推断，必须标注「推断」。查不到写「待核实」，**绝不编造**。
 
 ## 八、AI 提示词
 
@@ -460,3 +461,230 @@ python scripts/outreach_gen.py my_leads.csv --tier T0
 ## 十二、下一环节
 
 筛完并回写之后，你手上是一批被评级过的真买家。下一步是 [04·建联客户](./04-outreach.md)：按 T0-T3 分级（A→T0、B→T1–T2、C→T3 只养不推），用三线并进的方式完成第一次接触。
+
+## 十三、背调 Agent（脚本版）：`scripts/due_diligence.py`
+
+前面十二节是手工做法，这一节是把它跑起来的脚本。脚本不联网、不替你上网查——你把公开渠道查到的事实填进来，它按本页的口径判定、定级、列出下一步。只用 Python 标准库，Python 3.8+ 就能跑。
+
+**口径说明（先说清，免得你以为脚本另搞了一套）：**
+
+- **L1 是本页第五节的四问**（官网存在性 / 联系方式 / 贸易属性 / 规模迹象），不是三问。任务简报里一度写 L1 是三项（官网、年份、社媒），本页第五节定的是四问——脚本按本页四问走，四问覆盖了简报的三项，并多补了"联系方式"一问（域名邮箱 vs 免费邮箱，这是第六节红旗的第一条）。
+- **L2 是六维**（身份 / 规模 / 信誉 / 采购力 / 付款习惯 / 合规），每维只给三种结论：通过 / 待核实 / 红旗。查不到写"待核实"，不许编。
+- **L3 只列"查什么、去哪查"**，状态永远是"待查"。仅 A 类值得花这 30 分钟；B/C 不做。
+- **评级**：A = L1 全过 + 有进口记录 + 品类匹配 + 找到具体采购人，且零红旗；B = L1 全过但证据弱，或命中 1 项降级红旗；C = L1 不过/答不上来，或命中 2 项及以上红旗；制裁名单 / 货款付给第三方账户 = 立即终止。评级映射 T0/T1/T2/T3：A→T0、B→T1–T2、C→T3。
+- **字段名跟线索表 9 列对齐**：`company` / `country` / `product` / `source` / `email`（脚本里叫 `--email-domain`，只填域名，别贴完整邮箱）/ `phone` / `years` / `contact`（脚本里叫 `--contact-role`，写角色别写人名）/ `note`。`--note` 是你补充的一句信息，只原样展示，不进判定。
+- **客户视图**（`--audience client`）：只给已核实的公开事实 + 还需要对方补的材料。评级、红旗、终止状态、内部判断、原始输入一律不带出门——跟 `quote_engine.py` 的客户视图一个路数。
+- **输出 JSON**（`--format json`）：跟 `lead_score.py` 一个信封口径，`generated_at` 打头；内部版带 `inputs`，客户版只剩公开事实。
+
+### 用法
+
+```bash
+# A 级：海关数据来的老进口商
+python3 scripts/due_diligence.py --company "【示例】海湾轮胎贸易" \
+  --country "Saudi Arabia" --product "TBR 12.00R20" \
+  --website sample.example --website-updated recent --years 18 \
+  --email-domain sample.example --phone "+000 00 000 0000" \
+  --address "Riyadh, Saudi Arabia" --source customs --social active \
+  --customs-record yes --import-match yes \
+  --contact-role "purchasing manager" --employees 45 \
+  --trade-role importer --legal-name-match yes --sanctions clear \
+  --adverse no --payment prepaid
+
+# B 级：LinkedIn 来的新客户，证据还不够
+python3 scripts/due_diligence.py --company "【示例】半岛汽车" \
+  --country "Saudi Arabia" --product "TBR 12.00R20" \
+  --website sample.example --years 4 --email-domain sample.example \
+  --source linkedin --social active --customs-record unknown \
+  --import-match unknown --contact-role "sourcing manager" \
+  --employees 6 --trade-role distributor --legal-name-match unknown \
+  --sanctions clear --payment unknown
+
+# C 级：官网没有、只剩免费邮箱、首触就要账期
+python3 scripts/due_diligence.py --company "【示例】黎凡特供配" \
+  --country Lebanon --product "TBR 12.00R20" --website none \
+  --email-domain gmail.com --source search --social inactive \
+  --customs-record no --contact-role "sales" --payment credit
+
+# 只给客户看的那一面（JSON）
+python3 scripts/due_diligence.py --company "【示例】海湾轮胎贸易" \
+  --country "Saudi Arabia" --website sample.example --years 18 \
+  --email-domain sample.example --source customs --social active \
+  --customs-record yes --import-match yes \
+  --contact-role "purchasing manager" --format json --audience client
+
+# 写进文件（默认只打印到屏幕）
+python3 scripts/due_diligence.py --company "【示例】海湾轮胎贸易" \
+  --country "Saudi Arabia" --website sample.example --years 18 \
+  --email-domain sample.example --source customs --social active \
+  --customs-record yes --import-match yes \
+  --contact-role "purchasing manager" --out report.txt
+```
+
+`--help` 里有上面这 5 个例子，能直接复制跑。缺 `--company` 会给一句人话报错，不抛 traceback；`--customs-record` 这类三态参数只认 `yes` / `no` / `unknown`，写错一样给人话报错。
+
+### 输出样例（逐字贴脚本真实输出，2026-11-07 实测）
+
+A 级：
+```text
+============================================================
+客户背调报告：【示例】海湾轮胎贸易
+============================================================
+  国家：Saudi Arabia  |  产品：TBR 12.00R20  |  来源：customs  |  生成时间：2026-11-07T10:19:39+00:00
+
+【L1 筛查】  全过
+  [通过] 官网存在性：官网能打开，最近有更新痕迹
+  [通过] 联系方式：域名邮箱 sample.example
+  [通过] 贸易属性：渠道角色：importer
+  [通过] 规模迹象：成立约 18 年；员工约 45 人；社媒活跃
+
+【L2 标准六维】
+  [通过] 身份：注册名与自称名一致
+  [通过] 规模：成立约 18 年；员工约 45 人
+  [通过] 信誉：公开渠道未见被执行 / 失信 / 破产记录
+  [通过] 采购力：有进口记录，且品类与你的产品匹配
+  [通过] 付款习惯：接受预付 / 即期信用证
+  [通过] 合规：公开制裁名单未命中；收款账户与合同主体一致
+
+【红旗清单】无
+
+【L3 深度清单】仅 A 类做（30 分钟，硬上限 45 分钟）
+  - 海关数据：去哪查：UN Comtrade（comtradeplus.un.org）/ 各国官方统计与海关公开查询 / 持牌商业数据平台的公开查询功能
+      验什么：进口品类、频次、量级是否与官网自述对得上（状态：待查）
+  - 财报与规模：去哪查：官网 About / LinkedIn 公司页员工数区间 / 展会参展商名录 / 行业协会会员名录
+      验什么：规模数字能否交叉验证，别只信官网一家之言（状态：待查）
+  - 诉讼与执行：去哪查：目标国法院/司法公开检索 / 企业信用公示类公开平台 / Google News 搜「公司名 + lawsuit / bankruptcy / fraud」
+      验什么：有无被执行、失信、破产清算记录（状态：待查）
+  - 关联公司：去哪查：目标国官方商业登记机关公开查询 / 官网集团介绍 / LinkedIn 母子公司关系
+      验什么：母子公司、同一控制人、注册名与自称名是否一致（状态：待查）
+  - 制裁名单：去哪查：OFAC / EU / UN 公开制裁名单检索
+      验什么：命中即立即终止，不接触、不报价、不寄样（状态：待查）
+
+【评级】A 级（映射 T0）
+【下一步】48 小时内首触，投人（映射 T0）；首触前先做 L3 深度档案（30 分钟）
+【线索表 note 列（可对外说的一句证据）】
+  Est. 18 years; import record found on public customs data; product category matches; contact: purchasing manager; importer/distributor
+
+口径：L1 四问 / L2 六维 / L3 仅 A 类，见 docs/03-due-diligence.md。
+```
+
+B 级：
+```text
+============================================================
+客户背调报告：【示例】半岛汽车
+============================================================
+  国家：Saudi Arabia  |  产品：TBR 12.00R20  |  来源：linkedin  |  生成时间：2026-11-07T10:19:39+00:00
+
+【L1 筛查】  全过
+  [通过] 官网存在性：官网能打开（更新时间待核实）
+  [通过] 联系方式：域名邮箱 sample.example
+  [通过] 贸易属性：渠道角色：distributor
+  [通过] 规模迹象：成立约 4 年；员工约 6 人；社媒活跃
+
+【L2 标准六维】
+  [待核实] 身份：注册名是否与自称名一致：待核实（目标国官方商业登记机关公开查询）
+  [通过] 规模：成立约 4 年；员工约 6 人
+  [待核实] 信誉：被执行 / 失信 / 破产记录：待核实（目标国法院公开检索）
+  [待核实] 采购力：进口记录：待核实（UN Comtrade / 海关公开查询）
+  [待核实] 付款习惯：付款习惯：待核实（首触就要账期是红旗，先问清再报价）
+  [通过] 合规：公开制裁名单未命中；收款账户与合同主体一致
+
+【红旗清单】无
+
+【L3 深度清单】仅 A 类做（30 分钟，硬上限 45 分钟）
+  - 海关数据：去哪查：UN Comtrade（comtradeplus.un.org）/ 各国官方统计与海关公开查询 / 持牌商业数据平台的公开查询功能
+      验什么：进口品类、频次、量级是否与官网自述对得上（状态：待查）
+  - 财报与规模：去哪查：官网 About / LinkedIn 公司页员工数区间 / 展会参展商名录 / 行业协会会员名录
+      验什么：规模数字能否交叉验证，别只信官网一家之言（状态：待查）
+  - 诉讼与执行：去哪查：目标国法院/司法公开检索 / 企业信用公示类公开平台 / Google News 搜「公司名 + lawsuit / bankruptcy / fraud」
+      验什么：有无被执行、失信、破产清算记录（状态：待查）
+  - 关联公司：去哪查：目标国官方商业登记机关公开查询 / 官网集团介绍 / LinkedIn 母子公司关系
+      验什么：母子公司、同一控制人、注册名与自称名是否一致（状态：待查）
+  - 制裁名单：去哪查：OFAC / EU / UN 公开制裁名单检索
+      验什么：命中即立即终止，不接触、不报价、不寄样（状态：待查）
+
+【评级】B 级（映射 T1/T2）
+【下一步】补材料再推进（映射 T1/T2）：先补下面缺的材料，补完重评；补之前只用低成本方式试
+【还缺的材料】
+  - L2 身份：待核实
+  - L2 信誉：待核实
+  - L2 采购力：待核实
+  - L2 付款习惯：待核实
+  - 进口记录：需要公开海关数据佐证
+  - 品类匹配：需要确认进口品类与你的产品对得上
+【线索表 note 列（可对外说的一句证据）】
+  Est. 4 years; contact: sourcing manager; importer/distributor
+
+口径：L1 四问 / L2 六维 / L3 仅 A 类，见 docs/03-due-diligence.md。
+```
+
+C 级：
+```text
+============================================================
+客户背调报告：【示例】黎凡特供配
+============================================================
+  国家：Lebanon  |  产品：TBR 12.00R20  |  来源：search  |  生成时间：2026-11-07T10:19:39+00:00
+
+【L1 筛查】  有不通过项
+  [不通过] 官网存在性：没给官网 / 官网打不开：先按不存在处理
+  [不通过] 联系方式：唯一联系方式是免费邮箱（gmail.com）：先补域名邮箱
+  [待核实] 贸易属性：没给渠道角色（进口商/批发/零售/车队）：待核实
+  [待核实] 规模迹象：社媒不活跃，且年份、人数都没给：待核实
+
+【L2 标准六维】
+  [待核实] 身份：注册名是否与自称名一致：待核实（目标国官方商业登记机关公开查询）
+  [待核实] 规模：成立年份、员工数都没给：待核实
+  [待核实] 信誉：被执行 / 失信 / 破产记录：待核实（目标国法院公开检索）
+  [待核实] 采购力：无公开进口记录（小买家也可能没记录，别直接当没有）
+  [红旗] 付款习惯：首次接触就要大额账期：降级，只做预付或即期信用证
+  [待核实] 合规：制裁名单：待核实（OFAC / EU / UN 公开检索）
+
+【红旗清单】共 3 项
+  [降级] 官网不存在 / 多年未更新 / 只有 Coming soon —— 降为 C
+  [降级] 唯一联系方式是免费邮箱 —— 降级：先补到域名邮箱再回来
+  [降级] 首次接触就要大额账期 / 只接受 EXW-FCA 且拒绝任何预付 —— 降级：只做预付或即期信用证
+
+【L3 深度清单】仅 A 类做（30 分钟，硬上限 45 分钟）
+  - 海关数据：去哪查：UN Comtrade（comtradeplus.un.org）/ 各国官方统计与海关公开查询 / 持牌商业数据平台的公开查询功能
+      验什么：进口品类、频次、量级是否与官网自述对得上（状态：待查）
+  - 财报与规模：去哪查：官网 About / LinkedIn 公司页员工数区间 / 展会参展商名录 / 行业协会会员名录
+      验什么：规模数字能否交叉验证，别只信官网一家之言（状态：待查）
+  - 诉讼与执行：去哪查：目标国法院/司法公开检索 / 企业信用公示类公开平台 / Google News 搜「公司名 + lawsuit / bankruptcy / fraud」
+      验什么：有无被执行、失信、破产清算记录（状态：待查）
+  - 关联公司：去哪查：目标国官方商业登记机关公开查询 / 官网集团介绍 / LinkedIn 母子公司关系
+      验什么：母子公司、同一控制人、注册名与自称名是否一致（状态：待查）
+  - 制裁名单：去哪查：OFAC / EU / UN 公开制裁名单检索
+      验什么：命中即立即终止，不接触、不报价、不寄样（状态：待查）
+
+【评级】C 级（映射 T3）
+【下一步】放弃或放冷池：先补 L1 没过/待核实的项，补完再重评；补之前不进主动建联序列
+【还缺的材料】
+  - L1：官网存在性（没给官网 / 官网打不开：先按不存在处理）
+  - L1：联系方式（唯一联系方式是免费邮箱（gmail.com）：先补域名邮箱）
+  - L1：贸易属性（没给渠道角色（进口商/批发/零售/车队）：待核实）
+  - L1：规模迹象（社媒不活跃，且年份、人数都没给：待核实）
+  - L2 身份：待核实
+  - L2 规模：待核实
+  - L2 信誉：待核实
+  - L2 采购力：待核实
+  - L2 合规：待核实
+  - 进口记录：需要公开海关数据佐证
+  - 品类匹配：需要确认进口品类与你的产品对得上
+  - 具体采购人：需要找到采购/老板一级的对接人
+
+口径：L1 四问 / L2 六维 / L3 仅 A 类，见 docs/03-due-diligence.md。
+```
+
+### 读报告的三个要点
+
+1. **先看【评级】和【下一步】，再看细节。** A 就 48 小时内首触；B 先看【还缺的材料】，按顺序补，补完重评；C 直接放冷池，别在它身上再花 30 分钟做 L3。
+2. **【线索表 note 列】那句英文证据可以直接粘进 `my_leads.csv` 的 `note` 列**——只写已核实的事实，能当着对方面念出来。没核实出东西时这一行是空的，空着也别编一句（见第十节坑 8："没查到" ≠ "没有"）。
+3. **内部判断绝不进给客户的文件。** 内部报告里的评级、红旗、终止状态，用 `--audience client` 再跑一遍就全没了；`outreach_gen.py` 拼进开发信的 `note` 列也只取那句英文证据，内部判断请另加 `risk` 列（见第十一节模板 3）。
+
+### 常见报错
+
+| 你看到的 | 意思是 | 怎么办 |
+|---|---|---|
+| `缺 --company：公司名是必填项` | 没给公司名 | 补 `--company "公司名"`；示例公司加【示例】前缀 |
+| `argument --customs-record: invalid choice` | 三态参数写错了 | 只认 `yes` / `no` / `unknown` |
+| `argument --trade-role: invalid choice: 'unknown'` | 渠道角色没有 `unknown` 这个取值 | 不知道就别传这个参数，缺着就是"待核实" |
+| 评级是 B，但你觉得应该是 A | 某个 A 条件没满足 | 看【还缺的材料】：进口记录、品类匹配、具体采购人、L2 待核实项，缺哪项补哪项 |

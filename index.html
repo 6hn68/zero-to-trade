@@ -89,6 +89,20 @@
   .toast.on{opacity:1}
   a:focus-visible,button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
   .foot{color:var(--muted);font-size:12.5px;line-height:1.7;margin-top:14px}
+  /* 2-minute demo checklist: click a step to mark it done and jump to where it happens
+     2 分钟演示清单：点一步标完成、跳到对应位置 */
+  .demo-steps{list-style:none;margin:8px 0 0;padding:0}
+  .demo-steps li{padding:9px 11px;border:1px solid var(--line);border-radius:10px;
+    margin:0 0 8px;background:#fff;cursor:pointer;line-height:1.6}
+  .demo-steps li:hover{border-color:var(--blue)}
+  .demo-steps li.done{background:#f0f7f0;border-color:#b7d8b7}
+  .demo-steps .n{display:inline-block;min-width:22px;height:22px;line-height:22px;
+    text-align:center;border-radius:50%;background:var(--blue);color:#fff;
+    font-weight:700;font-size:12px;margin-right:8px}
+  .demo-steps li.done .n{background:#1a6b36}
+  .demo-steps .demo-t{font-weight:700}
+  .demo-steps li.done .demo-t{text-decoration:line-through;color:var(--muted)}
+  .demo-steps .demo-c{color:var(--muted);font-size:13px}
   @media(max-width:680px){
     .wrap{padding:16px 12px 44px}
     h1{font-size:20px;line-height:1.35}
@@ -116,6 +130,21 @@
   </div>
   <p class="lead">这是「零基础跑通外贸」7 步里的第 4 步：<b>线索分级</b>，夹在「找客户」和「发开发信」中间。活儿就一件：把名单排个队，定下先打谁。这页你只管分级，别的先别操心。</p>
 
+  <div class="card" id="demo">
+    <h2>2 分钟演示：从名单到第一封建联信 / 2-minute demo: list → first outreach</h2>
+    <p class="guide">示例名单已经自动载入、自动分好级了——你打开这页，就已经跑完第 1、2 步。按顺序点下面 7 步，每步点一下就跳到对应的地方，2 分钟走完一次真实分级 + 一条建联消息。The sample list already loaded and scored itself when this page opened, so steps 1–2 are done — click the 7 steps in order and each one jumps to where it happens.</p>
+    <p class="hint" id="demoprog">已完成 2 / 7 步（第 1、2 步打开页面时已自动完成）</p>
+    <ol class="demo-steps" id="demosteps">
+      <li class="done" data-target="#csv"><span class="n">1</span> <span class="demo-t">拿一份名单 · Get a list</span> <span class="demo-c">— 示例已在框里（10 条虚构数据）；换你自己的名单就粘进来，或用 <code>cp examples/leads_example.csv my_leads.csv</code> 再填</span></li>
+      <li class="done" data-target="#out"><span class="n">2</span> <span class="demo-t">分级 · Tier it</span> <span class="demo-c">— 点「开始分级」，10 条排成 T0–T3；对应命令 <code>python scripts/lead_score.py my_leads.csv</code></span></li>
+      <li data-target="#first"><span class="n">3</span> <span class="demo-t">找到今天先打的 T0 · Find today's T0s</span> <span class="demo-c">— 分最高的 2 家今天就发；发信前先背调：<code>python scripts/due_diligence.py --company "【示例】海湾轮胎贸易"</code></span></li>
+      <li data-target="#tbl"><span class="n">4</span> <span class="demo-t">生成建联消息 · Write the first touch</span> <span class="demo-c">— 点某行里的「复制邮件」，首触邮件草稿到手；对应命令 <code>python scripts/outreach_gen.py my_leads.csv --tier T0</code></span></li>
+      <li><span class="n">5</span> <span class="demo-t">把 [ ] 换成你自己的信息 · Make it yours</span> <span class="demo-c">— 名字、公司、WhatsApp 换成你自己的再发；模板里的 [ ] 一个都别留</span></li>
+      <li><span class="n">6</span> <span class="demo-t">按 D0/D2/D5 跟进 · Follow up D0/D2/D5</span> <span class="demo-c">— 6 天 3 次，第 3 次没回就停手；节奏表：<code>python scripts/followup_plan.py --tier T0 --start 2026-11-22 --csv my_leads.csv</code>，话术见 <a href="docs/04-outreach.md">《04 建联》</a></span></li>
+      <li data-target="#morescripts"><span class="n">7</span> <span class="demo-t">对方回了再报价 · Quote when they reply</span> <span class="demo-c">— 没回别报价，回了再算：<code>python scripts/quote_engine.py --cost 28 --freight 6 --margin 15</code>；7 天没回就催一句 <code>python scripts/nudge.py --day D7 --scenario quoted</code></span></li>
+    </ol>
+  </div>
+
   <p class="kicker">不用装 Python，双击就能开 · 名单只在你自己电脑里算，跑不到网上去</p>
   <h1>客户名单丢进来，先打哪几家我给你排好队</h1>
   <p class="sub">你手上有一份客户名单（名片、展会登记表、Excel 都行），却卡在"先联系谁"上。放进来，我按"多快能成交"给它打个分排队：分高的今天就得发，分低的先搁着。别一上来就群发——把人都吓跑了，名单再长也白搭。<b>线索</b>这词听着玄，其实就是个可能买你东西的联系人：有个名字、一张名片，都算一条。</p>
@@ -127,7 +156,7 @@
     <div class="grid">
       <div>
         <label for="csv">① 把客户名单贴这儿（CSV 就行：Excel 里「另存为 → CSV UTF-8」）</label>
-        <textarea id="csv" aria-describedby="csvfmt" placeholder="company,country,product,source,email,phone,years,contact,note&#10;【示例】海湾轮胎贸易,Saudi Arabia,TBR 12.00R20,referral,demo01@sample.example,+966 00 000 0000,18,purchasing manager,Annual RFQ"></textarea>
+        <textarea id="csv" aria-describedby="csvfmt" placeholder="company,country,product,source,email,phone,years,contact,note&#10;【示例】海湾轮胎贸易,Saudi Arabia,TBR 12.00R20,referral,demo01@sample.example,+000 00 000 0000,18,purchasing manager,Annual RFQ"></textarea>
         <p class="hint" id="csvfmt">第一行写列名：<code>company,country,product,source,email,phone,years,contact,note</code>。<code>company</code>（公司名）是唯一必填的，别的空着也能跑，缺哪项就少拿哪项的分。文件也能<b>直接拖</b>进上面的框。</p>
       </div>
       <div>
@@ -135,6 +164,7 @@
         <input id="file" type="file" accept=".csv,.txt,text/csv,text/plain" aria-describedby="srchelp" />
         <div class="row">
           <button class="ghost" id="load" type="button">载入示例（10 条假数据，纯练手）</button>
+          <button class="ghost" id="load-led" type="button">载入 LED 示例（8 条，非轮胎）</button>
           <button id="run" type="button">开始分级</button>
         </div>
         <p class="hint" id="srchelp" style="margin-top:14px">
@@ -183,6 +213,28 @@
 
   <p class="foot">就这样，名单不会被上传到任何服务器——整个计算都在这个 HTML 文件里、在你自己的浏览器里跑完，断网也能用。<br>
     想跑更大批量、或把结果存成 JSON，仓库里有同款 Python 脚本：<code>python scripts/lead_score.py examples/leads_example.csv --format detail</code>（计分规则与本页完全一致：联系 40 / 来源 30 / 采购信号 20 / 成熟度 10 = 100 分）。</p>
+
+  <div class="card" id="morescripts">
+    <h2>分完级，仓库里还有 11 个脚本接着干活</h2>
+    <p class="guide">本页只是 12 个脚本里的 1 个（线索分级）。分完级往下走，照这个顺序用：</p>
+    <table>
+      <thead><tr><th scope="col">脚本</th><th scope="col">干什么</th><th scope="col">先抄哪句</th></tr></thead>
+      <tbody>
+        <tr><td><code>outreach_gen.py</code></td><td>按分级生成中英对照建联文案（不用表格也能单条写）</td><td><code>python scripts/outreach_gen.py examples/leads_example.csv --tier T1</code></td></tr>
+        <tr><td><code>followup_plan.py</code></td><td>D0/D2/D5 跟进节奏表（T0 6 天 3 次）</td><td><code>python scripts/followup_plan.py --tier T0 --start 2026-10-08</code></td></tr>
+        <tr><td><code>due_diligence.py</code></td><td>发信前背调：L1/L2/L3 三级 + A/B/C 评级</td><td><code>python scripts/due_diligence.py --company "【示例】海湾轮胎贸易"</code></td></tr>
+        <tr><td><code>quote_engine.py</code></td><td>FOB/CIF 报价 + 底价 + 三档让步阶梯</td><td><code>python scripts/quote_engine.py --cost 28 --freight 6 --margin 15</code></td></tr>
+        <tr><td><code>landed_cost.py</code></td><td>到岸全成本：FOB → CIF → DDP</td><td><code>python scripts/landed_cost.py --fob 30 --freight 5 --duty 10</code></td></tr>
+        <tr><td><code>anchor_price.py</code></td><td>竞品锚价：海关竞品价区间 + 自家成本 → 三档锚价</td><td><code>python scripts/anchor_price.py --comp-low 30 --comp-high 45 --cost 28</code></td></tr>
+        <tr><td><code>tire_pack.py</code></td><td>轮胎规格 + 市场 → GCC 认证 + 清关单证</td><td><code>python scripts/tire_pack.py --size 295/80R22.5 --market saudi</code></td></tr>
+        <tr><td><code>trade_show.py</code></td><td>展会名片 → 会后 24 小时跟进计划</td><td><code>python scripts/trade_show.py --csv examples/trade_show_example.csv</code></td></tr>
+        <tr><td><code>nudge.py</code></td><td>催单话术：D3/D7/D14/D30 × 三种场景</td><td><code>python scripts/nudge.py --day D7 --scenario quoted</code></td></tr>
+        <tr><td><code>fast_path.py</code></td><td>V19 七天快路径互动版：每天看任务、干完打卡</td><td><code>python scripts/fast_path.py --day 1</code></td></tr>
+        <tr><td><code>check_private_data.py</code></td><td>提交前自查：扫一遍有没有真实客户数据混进来</td><td><code>python scripts/check_private_data.py</code></td></tr>
+      </tbody>
+    </table>
+    <p class="hint" style="margin-top:10px">完整用法与参数见 <a href="scripts/README.md">scripts/README.md</a>；每个脚本都有 <code>--help</code>，例子能直接复制。</p>
+  </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -333,24 +385,28 @@ function parseCSV(text,d){
   return rows.filter(r=>r.some(x=>(x||"").trim()!==""));
 }
 
+// 与 scripts/lead_score.py 同一套规则（Round 9 逐项对齐）：
+// ① 邮箱格式不对 = 没填邮箱（Python 的 _has_email 只认合规格式），以前这里是 -18 分打折；
+// ② 电话至少 7 位数字才算数，光写 "WA" 不算电话；③ 采购信号不扫公司名——公司叫「XX轮胎」
+//    不代表它现在要买，Python 端特意排除了 company；④ 电话里带 WA 加 4 分（封顶 40），以前
+//    Demo 漏了这一项；⑤ 仅备注里有社媒账号不给分（Python 给 0 分）。
 function scoreLead(r){
   const email=(r.email||"").trim(), phone=(r.phone||"").trim();
+  const hasEmail=email&&EMAIL_RE.test(email);
+  const hasPhone=phone&&(phone.match(/\d/g)||[]).length>=7;
   let contact=0,clabel="none";
-  if(email&&phone){contact=40;clabel="email+phone";}
-  else if(email){contact=28;clabel="email";}
-  else if(phone){contact=22;clabel="电话";}
-  // 原逻辑里这一分支写在 phone 为空之后，永远走不到；改为在备注/联系人里找社媒账号
-  else if(/whatsapp|\bwa\b|wechat|微信/i.test((r.note||"")+" "+(r.contact||""))){contact=10;clabel="仅社媒账号";}
-  if(email&&!EMAIL_RE.test(email)&&(clabel==="email"||clabel==="email+phone")){
-    contact=Math.max(0,contact-18);clabel+="(格式存疑)";
-  }
+  if(hasEmail&&hasPhone){contact=40;clabel="email+phone";}
+  else if(hasEmail){contact=28;clabel="email";}
+  else if(hasPhone){contact=22;clabel="电话";}
+  if(contact>0&&/whats\s?app|\bwa\b|\bwm\b/i.test(phone)){contact=Math.min(40,contact+4);clabel+="+WhatsApp";}
   const src=(r.source||"search").trim().toLowerCase();
   const source=SOURCE_SCORE[src]===undefined?10:SOURCE_SCORE[src];
-  const blob=[r.note,r.product,r.company,r.contact].join(" ").toLowerCase();
+  const blob=[r.note,r.product,r.contact].join(" ").toLowerCase();
   let buying=0;
   for(const g of BUYING){ if(g.kws.some(k=>blob.includes(k))) buying+=g.pts; }
   buying=Math.min(buying,20);
-  const y=parseFloat(r.years); const yy=isNaN(y)?0:y;
+  const ym=(r.years||"").match(/\d+(?:\.\d+)?/); let yy=ym?parseFloat(ym[0]):0;
+  if(yy>100){yy=Math.max(0,new Date().getFullYear()-yy);}
   let maturity=0,mlabel="未知";
   if(yy>=10){maturity=10;mlabel=">=10y";}
   else if(yy>=3){maturity=7;mlabel="3-10y";}
@@ -422,7 +478,7 @@ function run(scroll){
   const notes=[];
   if(dup) notes.push("发现 "+dup+" 条重复（公司名+联系方式完全一样），已自动合并，不会重复占你的时间。");
   const badMail=list.filter(d=>d.email&&!EMAIL_RE.test(d.email)).length;
-  if(badMail) notes.push("有 "+badMail+" 行的邮箱格式看着不对（少 @ 或缺域名），这些行的联系分已打折，发信前记得核对。");
+  if(badMail) notes.push("有 "+badMail+" 行的邮箱格式看着不对（少 @ 或缺域名），这些行按没填邮箱算分，发信前记得核对。");
   const noContact=list.filter(d=>!d.email&&!d.phone).length;
   if(noContact) notes.push("有 "+noContact+" 行既没邮箱也没电话，只能在 LinkedIn / 官网 / 展会名录上先补联系方式（补上邮箱最多能加 28 分）。");
   const gbk=/\uFFFD/.test(raw);
@@ -537,26 +593,49 @@ function loadExample(quiet){
   }).catch(()=>{
     // fetch 失败（新手双击 file:// 直接打开必走这里）：用与 examples/leads_example.csv
     // 正文 100% 同源的脱敏数据兜底——【示例】前缀 + sample.example 保留域名，
-    // 电话统一为明显占位的 +966 00 000 0000，绝不出现任何真实公司/真实域名。
+    // 电话统一为占位符 +000 00 000 0000，绝不出现任何真实公司/真实域名。
     document.getElementById("csv").value=
 `company,country,product,source,email,phone,years,contact,note
-【示例】海湾轮胎贸易,Saudi Arabia,"TBR 12.00R20, PCR tubes",referral,demo01@sample.example,+966 00 000 0000,18,purchasing manager,"Annual RFQ for truck tyres, looking for supplier, 40HQ container regular"
-【示例】迪拜轮毂行,UAE,"PCR 195/65R15, alloy rims",trade_show,,+966 00 000 0000,9,buyer,"Met at Gulf Oil Show, asked for quotation, 20GP trial order"
-【示例】利雅得汽配,Saudi Arabia,"TBR 315/80R22.5",customs,purchase@sample.example,,12,,,Importer record: 6 shipments/year from Asia
-【示例】尼罗河商贸,Egypt,"PCR tubes, motorcycle tyres",search,contact@sample.example,+966 00 000 0000,6,procurement,"Requesting quotation for 20GP mixed container"
-【示例】半岛汽车,Saudi Arabia,"PCR, alloy wheels",linkedin,info@sample.example,+966 00 000 0000,4,sourcing manager,"LinkedIn message, interested but timing unclear"
-【示例】利雅得零件店,Saudi Arabia,"spare parts",search,,,,3,,Retail shop, no import record
-【示例】阿曼蓝海,Oman,"TBR 12.00R20",customs,sales@sample.example,+966 00 000 0000,25,,"Tender invitation issued by Oman municipality"
-【示例】黎凡特供配,Lebanon,"PCR tubes",linkedin,,,,2,,Small distributor, no evidence of import
-【示例】三角洲轮胎,Saudi Arabia,"TBR, PCR, OTR",referral,procurement@sample.example,+966 00 000 0000,15,purchasing manager,"Strategic supplier RFQ, tender, 3 years contract, needs SASO compliance"
-【示例】尼日利亚先锋,Nigeria,"PCR tubes",search,,+966 00 000 0000,7,buyer,"Asked about FOB pricing, no quantity confirmed"`;
+【示例】海湾轮胎贸易,Saudi Arabia,"TBR 12.00R20, PCR tubes",referral,demo01@sample.example,+000 00 000 0000,18,purchasing manager,"Annual RFQ for truck tyres, looking for supplier, 40HQ container regular"
+【示例】迪拜轮毂行,UAE,"PCR 195/65R15, alloy rims",trade_show,,+000 00 000 0000,9,buyer,"Met at Gulf Oil Show, asked for quotation, 20GP trial order"
+【示例】利雅得汽配,Saudi Arabia,"TBR 315/80R22.5",customs,purchase@sample.example,,12,,"Importer record: 6 shipments/year from Asia"
+【示例】尼罗河商贸,Egypt,"PCR tubes, motorcycle tyres",search,contact@sample.example,+000 00 000 0000,6,procurement,"Requesting quotation for 20GP mixed container"
+【示例】半岛汽车,Saudi Arabia,"PCR, alloy wheels",linkedin,info@sample.example,+000 00 000 0000,4,sourcing manager,"LinkedIn message, interested but timing unclear"
+【示例】利雅得零件店,Saudi Arabia,"spare parts",search,,,3,,"Retail shop, no import record"
+【示例】阿曼蓝海,Oman,"TBR 12.00R20",customs,sales@sample.example,+000 00 000 0000,25,,"Tender invitation issued by Oman municipality"
+【示例】黎凡特供配,Lebanon,"PCR tubes",linkedin,,,2,"Small distributor, no evidence of import"
+【示例】三角洲轮胎,Saudi Arabia,"TBR, PCR, OTR",referral,procurement@sample.example,+000 00 000 0000,15,purchasing manager,"Strategic supplier RFQ, tender, 3 years contract, needs SASO compliance"
+【示例】尼日利亚先锋,Nigeria,"PCR tubes",search,,+000 00 000 0000 WA,7,buyer,"Asked about FOB pricing, no quantity confirmed"`;
     run();
     if(!quiet) toast("已载入 10 条虚构示例数据（公司名带【示例】，邮箱是 sample.example 保留域）");
   });
 }
 
+function loadLightingExample(quiet){
+  fetch("examples/leads_example_lighting.csv").then(r=>r.text()).then(t=>{
+    document.getElementById("csv").value=t.trim();run();if(!quiet)toast("已载入 8 条 LED 虚构示例数据");
+  }).catch(()=>{
+    // fetch 失败（file:// 直接打开）：与 examples/leads_example_lighting.csv
+    // 正文 100% 同源的脱敏数据兜底——【示例】前缀 + sample.example 保留域名，
+    // 电话统一为占位符 +000 00 000 0000，绝不出现任何真实公司/真实域名。
+    document.getElementById("csv").value=
+`company,country,product,source,email,phone,years,contact,note
+【示例】拉各斯明亮贸易,Nigeria,LED flood lights,search,led01@sample.example,+000 00 000 0000 WA,6,purchasing manager,"Posted an RFQ for 500pcs LED flood lights on a B2B platform last week"
+【示例】阿克拉优品,Ghana,solar street lights,search,led02@sample.example,,8,procurement,"Replied to first email; asked about warranty terms"
+【示例】内罗毕迅捷进口,Kenya,LED high bay lights,search,,,,,"Company website exists; no named contact found yet"
+【示例】波哥大安第斯商贸,Colombia,industrial LED panels,search,,,,,"Active Instagram; sells lighting wholesale; no website"
+【示例】迪拜珍珠贸易,UAE,LED strip lights,customs,led05@sample.example,+000 00 000 0000,,purchasing director,"Purchasing director identified on LinkedIn; import record found in customs data"
+【示例】利雅得努尔供应,Saudi Arabia,LED bulbs,search,,,,,"Only an Instagram shop page; no phone or email anywhere"
+【示例】圣保罗光明商贸,Brazil,solar garden lights,trade_show,,,,,"Name found on an expo exhibitor list; no contact info at all"
+【示例】达累斯萨拉姆晨光,Tanzania,LED street lights,search,led08@sample.example,,,,"Asked a competitor for quotation (seen in RFQ); decision maker unknown"`;
+    run();
+    if(!quiet) toast("已载入 8 条 LED 虚构示例数据（公司名带【示例】，邮箱是 sample.example 保留域）");
+  });
+}
+
 document.getElementById("run").onclick=function(){run(true);};
 document.getElementById("load").onclick=function(){loadExample(false);};
+document.getElementById("load-led").onclick=function(){loadLightingExample(false);};
 document.getElementById("exp").onclick=exportCSV;
 document.getElementById("copytop").onclick=copyTop;
 document.getElementById("filters").addEventListener("click",function(e){
@@ -594,6 +673,32 @@ ta.addEventListener("drop",function(e){
   const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
   if(f) handleFile(f);
 });
+// 2-minute demo checklist: click a step to mark it done and jump to where it happens.
+// Clicking a link inside a step still follows the link.
+// 2 分钟演示清单：点一步标完成、跳到对应位置；步里带链接的，点链接照常跳转。
+(function(){
+  var list=document.getElementById("demosteps");
+  var prog=document.getElementById("demoprog");
+  if(!list||!prog) return;
+  function update(){
+    var done=list.querySelectorAll("li.done").length;
+    prog.textContent="已完成 "+done+" / 7 步"+
+      (done>=7?" —— 演示走完了，剩下的就是发出去、等回复":"");
+  }
+  list.addEventListener("click",function(e){
+    var li=e.target.closest?e.target.closest("li"):null;
+    if(!li) return;
+    li.classList.add("done");
+    update();
+    if(e.target.tagName==="A") return; // let the link navigate / 链接照常跳转
+    var t=li.getAttribute("data-target");
+    if(t){
+      var el=document.querySelector(t);
+      if(el&&el.scrollIntoView) el.scrollIntoView({behavior:"smooth",block:"start"});
+    }
+  });
+  update();
+})();
 loadExample(true);
 </script>
 </body>

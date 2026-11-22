@@ -1,12 +1,12 @@
 # zero-to-trade
 
-**Un sistema operativo de código abierto para sacar adelante tu primera exportación si empiezas de cero: 7 etapas, 4 scripts de Python sin dependencias y una demo que abre en el navegador. De elegir el mercado a cobrar el pedido.**
+**Un flujo de trabajo abierto para sacar adelante tu primera exportación si empiezas de cero: 7 etapas, 14 scripts de Python sin dependencias y una demo que abre en el navegador. De elegir el mercado a cobrar el pedido.**
 
 > La idea cabe en una línea: **la IA hace el trabajo pesado; tú decides.**
 
-> **Mandaste 200 correos en frío (*cold emails*) y recibiste 0 respuestas. El correo funcionó; el proceso, no.** Este repo ordena el trabajo en 7 etapas y 4 scripts. En cada etapa te dice qué sitio abrir, qué escribir y qué resultado cuenta como «aprobado».
+> **Mandaste 200 correos en frío (*cold emails*) y recibiste 0 respuestas. El correo funcionó; el proceso, no.** Este repo ordena el trabajo en 7 etapas y 14 scripts. En cada etapa te dice qué sitio abrir, qué escribir y qué resultado cuenta como «aprobado».
 
-Licencia MIT · v0.1.5 · autoría anónima: zero-to-trade · [中文版](README.md) · [English](README_EN.md)
+Licencia MIT · V20 · autoría anónima: zero-to-trade · [中文版](README.md) · [English](README_EN.md)
 
 Esta versión en español es un *starter*. Buscamos a gente que la revise y la complete. Si algo suena raro, abre un issue o manda un PR; la versión de referencia sigue siendo [README_EN.md](README_EN.md).
 
@@ -24,8 +24,8 @@ Un tutorial te dice «haz una investigación de antecedentes» y se va. Este rep
 |---|---|
 | «Haz una investigación de antecedentes» | El filtro L1 revisa tres cosas: si la empresa tiene web, cuántos años lleva registrada y si sus redes siguen activas. Si una falla, el lead se descarta. |
 | «La calidad importa más que la cantidad» | Ordena 10 leads en T0/T1/T2/T3. Cada nivel trae su próxima acción y su propio límite de tiempo. |
-| «Haz seguimiento» | Días 1, 3, 5 y 7. Cambias el enfoque cada vez. El día 7 hay dos opciones: cierre claro o descarte claro. Dejarlo flotando no cuenta como estrategia. |
-| «La IA está cambiando el comercio exterior» | Hay 4 scripts en Python puro, solo con la biblioteca estándar y sin dependencias. `python scripts/lead_score.py examples/leads_example.csv` devuelve los niveles en 30 segundos. |
+| «Haz seguimiento» | Días 0, 2 y 5: tres toques en 6 días. Cambias el enfoque cada vez. El día 5 hay dos opciones: cierre claro o descarte claro. Dejarlo flotando no cuenta como estrategia. |
+| «La IA está cambiando el comercio exterior» | Hay 14 scripts en Python puro, solo con la biblioteca estándar y sin dependencias. `python scripts/lead_score.py examples/leads_example.csv` devuelve los niveles en 30 segundos. |
 
 ---
 
@@ -36,7 +36,7 @@ Un tutorial te dice «haz una investigación de antecedentes» y se va. Este rep
 | **01 Elegir mercado** | Puntúas idioma, demanda y barreras | 1 mercado inicial + 3 razones |
 | **02 Encontrar leads** | Buscas por cuatro rutas: aduanas, redes, buscadores y ferias | ≥20 leads verificados al día |
 | **03 Evaluar al comprador** | Filtro L1 → revisión L2 → investigación L3 | Calificación A/B/C; estafadores fuera |
-| **04 Contactar** | Clasificas en T0-T3 y usas tres canales en el primer contacto | Lista por nivel + plan de 7 días |
+| **04 Contactar** | Clasificas en T0-T3 y usas tres canales en el primer contacto | Lista por nivel + plan D0/D2/D5 |
 | **05 Hablar de especificaciones** | Primero pides lo fácil. El precio va al final | Especificación / cantidad / puerto de destino |
 | **06 Cotizar y negociar** | Si cedes algo, pides algo a cambio | Hoja de cotización + escalera de concesiones + guiones |
 | **07 Entregar el pedido** | Contrato, producción, inspección, documentos, pago y flete | Ciclo cerrado + plan de recompra |
@@ -49,7 +49,7 @@ Cada etapa tiene su archivo en `docs/` y sigue la misma estructura de seis parte
 
 **¿No tienes Python?** Abre [`index.html`](index.html) en el navegador, pega un CSV y mira la clasificación T0-T3. No instalas nada.
 
-Hay 4 scripts. Uno es el motor de cotización v0.2 en fase alfa. No usan paquetes de terceros y funcionan con Python 3.8+.
+Hay 12 archivos de scripts: 11 de negocio y 1 de privacidad. Uno de negocio es el motor de cotización. No usan paquetes de terceros y funcionan con Python 3.8+.
 
 ```bash
 python scripts/lead_score.py examples/leads_example.csv
@@ -72,6 +72,8 @@ zero-to-trade/
 ├── index.html             # Demo en el navegador, sin instalar nada (GitHub Pages)
 ├── MANIFESTO.md           # Anonimato y cero cursos de pago
 ├── CONTRIBUTING.md        # Cómo contribuir + reglas para docs y código
+├── CHANGELOG.md           # Registro de cambios
+├── ROADMAP.md             # Hoja de ruta
 ├── GLOSSARY.md            # Términos comerciales en 中文 / English / Español
 ├── GITHUB_LAUNCH.md       # Lista de lanzamiento y promoción
 ├── LICENSE                # MIT
@@ -88,13 +90,21 @@ zero-to-trade/
 │   └── deal-walkthrough.md     # Primera venta ficticia, pero verosímil, paso a paso
 ├── scripts/               # Python con biblioteca estándar y nada más
 │   ├── lead_score.py      # Clasifica leads en T0-T3
-│   ├── outreach_gen.py    # Genera mensajes bilingües según el nivel
-│   ├── followup_plan.py   # Seguimiento de 7 días y 3 contactos
-│   └── quote_engine.py    # Cotización v0.2 (fase alfa): FOB/CIF + escalera
+│   ├── outreach_gen.py    # Mensajes según el nivel (EN/ZH + ES/PT/AR con referencia en inglés, V13)
+│   ├── followup_plan.py   # Seguimiento D0/D2/D5, 3 contactos en 6 días
+│   ├── quote_engine.py    # Cotización: FOB/CIF + escalera
+│   ├── due_diligence.py   # Agente V11 de investigación: L1/L2/L3 + calificación A/B/C + alertas
+│   ├── tire_pack.py       # Paquete V12 de neumáticos: medida + mercado → GCC + documentos + notas
+│   ├── landed_cost.py     # Coste en destino, V14: FOB + flete + seguro → CIF, más arancel + gastos en destino → DDP
+│   └── trade_show.py      # Ferias, V15: expositores recogidos en la feria → plan de seguimiento de 24 horas (agradecimiento en 2 h, pista de cotización en 12 h, llamada/WhatsApp en 24 h)
+│   ├── nudge.py           # Recordatorios, V16: D3/D7/D14/D30 × cotizado/muestra enviada/precio en negociación → versión corta de WhatsApp + versión larga de correo (inglés + chino)
+│   ├── anchor_price.py    # Precio ancla de la competencia, V18: rango de precios de la competencia (datos de aduanas) + tu coste → tres niveles CIF agresivo/medio/conservador + lista de verificación de 5 puntos
+│   ├── fast_path.py     # Ruta rápida interactiva de 7 días, V19: --day N muestra las tareas, --done N marca, --progress resume (alineada con docs/fast-path.md)
 ├── examples/
-│   └── leads_example.csv  # Datos de ejemplo listos para ejecutar
+│   ├── leads_example.csv  # Datos de ejemplo listos para ejecutar
+│   └── trade_show_example.csv  # Expositores de ejemplo, uno por nivel de interés
 ├── prompts/
-│   └── AI_PROMPTS.md      # 27 prompts en inglés, por etapa y listos para pegar
+│   └── AI_PROMPTS.md      # 40 prompts en inglés, por etapa y listos para pegar
 └── assets/                # Imágenes, capturas y diagramas
 ```
 
@@ -108,7 +118,7 @@ Muchos proyectos de «IA para negocios» meten toda la metodología en un prompt
 
 El valor está en la disciplina. Un T0 recibe un correo hoy. Un T3 pasa tres meses en la lista fría. Si concedes algo sin pedir nada a cambio, no estás negociando: estás haciendo un regalo. El comprador, por supuesto, no va a protestar.
 
-La IA se queda con el trabajo pesado: filtrar 8 leads, preparar borradores de *due diligence* en 3 niveles para 50 empresas y generar variantes para 7 días de seguimiento. Decidir a quién no escribirle sigue siendo cosa tuya.
+La IA se queda con el trabajo pesado: filtrar 8 leads, preparar borradores de *due diligence* en 3 niveles para 50 empresas y generar variantes para el seguimiento D0/D2/D5. Decidir a quién no escribirle sigue siendo cosa tuya.
 
 Los scripts ponen el estándar en código. Si clasificas por intuición, cada día obtienes un criterio distinto. Por eso la clasificación vive en un script de menos de 200 líneas y sin dependencias.
 
@@ -118,11 +128,24 @@ Los scripts ponen el estándar en código. Si clasificas por intuición, cada d�
 
 | Versión | Estado | Contenido |
 |---|---|---|
+| **V13** | ✅ Listo (2026-11-07) | Mensajes multilingües (`scripts/outreach_gen.py --lang es/pt/ar`: texto en español/portugués/árabe + original en inglés tras cada mensaje; plantillas en correspondencia uno a uno con las inglesas T0/T1/T2, un solo diccionario en el script) + nueva sección en `docs/04-outreach.md` (uso + 3 salidas reales pegadas tal cual) + `tests/` con 80 pruebas + 40 prompts sin cambios (28 básicos + 12 avanzados) + 7 scripts |
+| **V18** | ✅ Listo (2026-11-07) | Precio ancla de la competencia (`scripts/anchor_price.py`: rango de precios de la competencia (datos de aduanas) + tu coste → tres niveles CIF agresivo/medio/conservador, cada uno con margen, rentabilidad, equivalente FOB, recargo implícito y cuándo usarlo; lista de verificación de 5 puntos — coste, flete, tipo de cambio, condiciones de pago, vigencia — antes de cotizar, cualquier punto sin verificar se marca; aviso de bajo coste «bajo coste, no tomes el pedido, negocia volumen a cambio de precio primero»; sin mediana, se estima como (mínimo + máximo) / 2 y se marca como estimación; `--format json` / `--audience client`) + `docs/anchor-price.md` (uso + guía de anclaje + 2 salidas reales pegadas tal cual) + una línea en `docs/06-quote.md` (anclar antes de cotizar) + `tests/` con 187 pruebas + 40 prompts sin cambios (28 básicos + 12 avanzados) + 11 scripts |
+| **V20** | ✅ Actual (2026-11-14) | Fusión de incrementos locales + 10 rondas de endurecimiento: entradas CLI unificadas (errores en lenguaje claro, códigos de salida alineados) + pruebas reforzadas (modo de mensaje único, alias `--start-date`, registros de ejecución) + números de la documentación alineados + ejemplo fuera de neumáticos (8 leads de iluminación LED) + página de demostración sincronizada con V19 + errores claros para CSV defectuosos (columna ausente / archivo vacío / comillas sin cerrar ya no dan traceback) + prompts alineados (el comando de seguimiento P04-4 gana `--avoid-weekend`, la ventana P10-2 unificada en 48 horas) + registro de ejecución lanzado (`logs/trace-YYYY-MM-DD.jsonl`, una línea por ejecución de los tres scripts principales) + limpieza de código (funciones compartidas en un solo lugar, −151 líneas netas; dos fragmentos muertos eliminados) + `tests/` con 452 pruebas + 40 prompts sin cambios (28 básicos + 12 avanzados) + 14 scripts |
+| **V19** | ✅ Listo (2026-11-07) | Ruta rápida interactiva de 7 días (`scripts/fast_path.py`: `--day N` muestra las tareas del día — nombre de la tarea + qué hay que producir + qué script o documento usar; `--done N` marca un día con marca de tiempo, guardado en el JSON de `--state`, repetir el registro avisa que ya está marcado y no se duplica; `--progress` resume hechos / pendientes / vencidos (vencido = fecha prevista anterior a hoy y sin marcar, fecha prevista = primer día de `--start` + (N-1) días; sin `--start` no se cuentan vencidos, y se dice claro; `--list` muestra los 7 días; tareas alineadas línea por línea con `docs/fast-path.md`, sin inventar otra lista; `--help` trae ejemplos reales, un día o fecha inválidos dan un error en lenguaje claro) + `docs/fast-path-interactive.md` (uso + formato del archivo de estado + regla de vencimiento + panorama de 7 días + 2 salidas reales pegadas tal cual) + una línea arriba en `docs/fast-path.md` (entrada interactiva) + una línea en `docs/00-getting-started.md` paso B5 (8 scripts restantes → 9) + `tests/` con 226 pruebas + 40 prompts sin cambios (28 básicos + 12 avanzados) + 12 scripts |
+| **V17** | ✅ Listo (2026-11-07) | READMEs completos en portugués y árabe (nuevos `README_PT.md` en portugués brasileño y `README_AR.md` en árabe con diseño RTL, ambos traducidos por completo y alineados con README_EN.md: mismas secciones, tablas, comandos, nombres de scripts, nombres de archivos, versión y números; todas las empresas, precios y contactos de ejemplo son ficticios, marcados con 【示例】 y dominio reservado sample.example) + `tests/` con 167 pruebas + 40 prompts sin cambios (28 básicos + 12 avanzados) + 10 scripts |
+| **V16** | ✅ Listo (2026-11-07) | Biblioteca de recordatorios (`scripts/nudge.py`: D3/D7/D14/D30 × cotizado/muestra enviada/precio en negociación, 12 mensajes en total, versión corta de WhatsApp + versión larga de correo, inglés primero con traducción al chino después de cada mensaje; tono en escalera — D3 recordatorio suave, D7 preguntar cómo va, D14 tres opciones para salir del paso (precio más bajo / otra medida / plazo de pago más largo), D30 último mensaje sin quemar puentes; el día 0 es el día en que se envió la cotización, la muestra o empezó la negociación del precio, un ancla distinta a la cadencia de primer contacto de followup_plan, un hilo sigue una sola línea; `--channel whatsapp/email/both` / `--format json` / `--out`) + `docs/nudge.md` (uso + cómo encaja con followup_plan + 2 salidas reales pegadas tal cual) + una línea en `docs/00-getting-started.md` (lista de scripts 6 → 7) + `tests/` con 152 pruebas + 40 prompts sin cambios (28 básicos + 12 avanzados) + 10 scripts |
+| **V15** | ✅ Listo (2026-11-07) | Herramienta de ferias (`scripts/trade_show.py`: los expositores recogidos en la feria, ordenados por interés en un plan de seguimiento de 24 horas — agradecimiento + material en 2 h, pista de cotización en 12 h, llamada/WhatsApp en 24 h; `--add` uno a uno + `--csv` por lotes, `--format json` / `--out`; el primer mensaje sigue la plantilla T0/T1/T2 de outreach_gen) + `docs/trade-show.md` (uso + 1 salida real pegada tal cual) + `examples/trade_show_example.csv` (3 expositores de ejemplo, uno por nivel de interés) + una línea en `docs/00-getting-started.md` y otra en `docs/02-find-leads.md` (qué hacer con los contactos tras la feria) + `tests/` con 127 pruebas + 40 prompts sin cambios (28 básicos + 12 avanzados) + 9 scripts |
+| **V14** | ✅ Listo (2026-11-07) | Coste en destino (`scripts/landed_cost.py`: FOB + flete + seguro → CIF, más arancel + gastos en puerto de destino → DDP; coste por unidad + totales + margen si se da precio de venta; `--qty` / `--format json` / `--audience client`) + `docs/landed-cost.md` (uso + tabla de fórmulas + 2 salidas reales pegadas tal cual) + una línea en `docs/00-getting-started.md` y otra en `docs/06-quote.md` (primero FOB/CIF con quote_engine, luego el coste total en destino con landed_cost) + `tests/` con 97 pruebas + 40 prompts sin cambios (28 básicos + 12 avanzados) + 8 scripts |
+| **V12** | ✅ Listo (2026-11-07) | Paquete de neumáticos (`scripts/tire_pack.py`: medida + mercado → puntos de certificación GCC + documentos de despacho en puerto de destino + notas del mercado; 4 medidas TBR × 8 mercados) + `docs/tire-pack.md` (uso + 2 salidas reales pegadas tal cual) + lista de scripts actualizada en `docs/00-getting-started.md` + `tests/` con 68 pruebas + 40 prompts (28 básicos + 12 avanzados) + 7 scripts |
+| **V11** | ✅ Listo (2026-11-07) | Agente de investigación de compradores (`scripts/due_diligence.py`: L1/L2/L3 + calificación A/B/C + lista de alertas + vista de cliente + salida JSON) + sección 13 en `docs/03-due-diligence.md` (salida real pegada tal cual) + prompt P03-5 + `tests/` con 52 pruebas + 40 prompts (28 básicos + 12 avanzados) + 6 scripts |
+| **V10** | ✅ Listo (2026-11-07) | 6 módulos avanzados (08 web propia / 09 matriz social / 10 ferias / 11 logística y pago / 12 riesgo y cumplimiento / 13 cuentas clave) + 3 rutas de aprendizaje + manual de resolución de problemas y flujo de colaboración + motor de cotización reforzado (vista de cliente aislada, validación de límites) + `tests/` con 30 pruebas + 39 prompts (27 básicos + 12 avanzados) + demo del navegador alineada con Python |
 | **v0.1.5** | Añadido | Demo en el navegador (`index.html`) + motor de cotización en fase alfa + manifiesto + lista de lanzamiento + Fast Path + ejemplo de venta |
 | **v0.1** | Listo | 7 documentos de etapas, 4 scripts con biblioteca estándar, 27 prompts y README bilingüe |
-| **v0.2** | En progreso (fase alfa) | Motor de cotización con IA: FOB/CIF + escalera de concesiones |
-| **v0.3** | Planeado | Agente de investigación de compradores (L1/L2/L3) |
-| **Largo plazo** | Planeado | Paquetes por industria: neumáticos, materiales de construcción, maquinaria y ferretería.<br>Mensajes de contacto en español, árabe, francés y ruso; el español es clave para llegar a Latinoamérica.<br>Conjuntos de leads reales con datos desidentificados.<br>Conexión del motor de cotización v0.2 con datos aduaneros para anclar precios de la competencia. |
+| **v0.2** | ✅ Listo (fase alfa) | Motor de cotización con IA: FOB/CIF + escalera de concesiones |
+| **Próxima versión** | Por decidir | Dirección por decidir (la ruta rápida interactiva de 7 días llegó en V19) |
+| **Largo plazo** | Planeado | Paquetes por industria: neumáticos, materiales de construcción, maquinaria y ferretería.<br>Mensajes de contacto en francés y ruso (español, portugués y árabe llegaron en V13).<br>Conjuntos de leads reales con datos desidentificados.<br>Conexión del motor de cotización con datos aduaneros para anclar precios de la competencia. |
+
+> Hoja de ruta completa: [ROADMAP.md](ROADMAP.md); historial de cambios: [CHANGELOG.md](CHANGELOG.md).
 
 ---
 

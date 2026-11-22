@@ -16,6 +16,11 @@ years/note 有就加分，没有也能跑。表头大小写、前后空格你随
 分级（满分 100）：联系方式 40 / 来源 30 / 采购信号 20 / 成熟度 10。权重集中在
 CONTACT_W / SOURCE_W / SIGNAL_W / MATURITY_W 四个常量里，想调只改那一块。
 T0 立刻打（当天）· T1 本周 · T2 排期 · T3 养着，先补信息。
+
+Market layer / 市场层（rules live in scripts/market_rules.py, not here）：
+市场不占分，只封顶——分再高也越不过市场这道坎。土耳其 / 巴西有反倾销
+壁垒，最高只到 T1（第一句先确认转口 / 保税区，确认了再按 T0 打）；
+墨西哥 / 美国 / 欧盟永久排除，分再高也只到 T3。其他国家没规则就不扣分。
 """
 
 import argparse
@@ -32,6 +37,14 @@ import uuid
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Dict, List, Optional, Tuple
+
+# Market rules live in market_rules.py (same folder, like tire_pack.py does
+# for lead_score). The sys.path line is only so `import market_rules` also
+# works when this file is run from another folder.
+# 市场规则在同目录的 market_rules.py 里（tire_pack.py 也是这么 import
+# lead_score 的）。加这一行只是为了从别的目录跑本脚本时也能找到它。
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import market_rules  # noqa: E402
 
 
 def setup_log(name):
@@ -270,6 +283,18 @@ def score_maturity(row: Dict[str, Any]) -> Tuple[int, str]:
             return MATURITY_W[label], label
     return MATURITY_W["成立不足 1 年/未知"], "成立不足 1 年/未知"
 
+def market_cap(row: Dict[str, Any]) -> Optional[str]:
+    """Market cap / 市场封顶：这条线索最高能到哪一级，None = 不封顶。
+
+    The cap comes from market_rules.verdict() — the score itself is never
+    changed, only the tier it may reach. A perfect-contact lead from an
+    excluded market keeps its 95 points but can only ever be T3.
+    封顶只看市场规则，不改分数：排除市场的线索联系方式再全也只能是 T3，
+    分数本身照样保留（它说明这个人好不好联系）。
+    """
+    return market_rules.verdict(_get(row, "country"),
+                                _get(row, "note"))["cap_tier"]
+
 def score_lead(row: Dict[str, Any]) -> Tuple[int, Dict[str, str]]:
     """给一条线索打分，返回 (总分, 各分项明细)。"""
     contact, contact_label = score_contact(row)
@@ -278,11 +303,14 @@ def score_lead(row: Dict[str, Any]) -> Tuple[int, Dict[str, str]]:
     maturity, maturity_label = score_maturity(row)
 
     total = contact + source + buying + maturity
+    market_label = market_rules.verdict(_get(row, "country"),
+                                        _get(row, "note"))["label"]
     detail = {
         "联系方式": "%s/%d" % (contact_label, contact),
         "来源": "%s/%d" % (source_label, source),
         "采购信号": "%s/%d" % ("+".join(buying_hits) or "无", buying),
         "公司成熟度": "%s/%d" % (maturity_label, maturity),
+        "市场": market_label,
     }
     return total, detail
 
@@ -292,6 +320,23 @@ def grade(total: int) -> str:
         if total >= TIER_RULES[tier][0]:
             return tier
     return "T3"
+
+def apply_market_cap(tier: str, row: Dict[str, Any]) -> Tuple[str, str, str]:
+    """Apply the market cap / 套市场封顶：返回 (分级, 下一步, 动作)。
+
+    No cap: the tier and the TIER_RULES wording pass through unchanged.
+    Capped: the tier is lowered to the cap, and next/action are replaced by
+    the market verdict's own wording, so the table never tells you to call
+    a lead the market rules say not to call today.
+    没封顶：分级和 TIER_RULES 的文案原样过。被封顶：分级降到封顶线，
+    下一步和动作换成市场结论自己的话，表格不会再让你今天去打一个
+    市场规则说别打的线索。
+    """
+    cap = market_cap(row)
+    if cap is None or TIER_ORDER.index(tier) >= TIER_ORDER.index(cap):
+        return tier, TIER_RULES[tier][1], TIER_RULES[tier][2]
+    verdict = market_rules.verdict(_get(row, "country"), _get(row, "note"))
+    return cap, verdict["cap_next"], verdict["cap_action"]
 
 
 # ---------------------------------------------------------------- 主流程
@@ -402,7 +447,7 @@ def analyze(rows: List[Dict[str, Any]], country: Optional[str] = None,
             continue
 
         total, detail = score_lead(row)
-        tier = grade(total)
+        tier, next_step, action = apply_market_cap(grade(total), row)
         item = {
             "company": _get(row, "company") or "(未填公司名)",
             "country": _get(row, "country") or "?",
@@ -411,8 +456,8 @@ def analyze(rows: List[Dict[str, Any]], country: Optional[str] = None,
             "email": _get(row, "email"),
             "tier": tier,
             "score": total,
-            "next": TIER_RULES[tier][1],
-            "action": TIER_RULES[tier][2],
+            "next": next_step,
+            "action": action,
             "dup_count": 1,
             "detail": detail,
         }
@@ -481,6 +526,17 @@ def render_table(results: List[Dict[str, Any]], duplicates: int = 0) -> str:
              "-" * 84]
     lines += [row(i, r["tier"], r["company"], r["country"], str(r["score"]),
                   r["action"]) for i, r in enumerate(results, 1)]
+    # T3 里分两种人：一种是信息不全（补完再说），一种是市场排除（别打，
+    # 不是信息的问题）。混在一行写“信息不全”，后一种会被误读成“补补就能打”。
+    # T3 holds two kinds of leads: missing info (fixable) and excluded
+    # markets (not fixable). Listing them together as "missing info" would
+    # wrongly suggest the excluded ones just need more data.
+    t3_plain = [_flat(r["company"]) for r in results
+                if r["tier"] == "T3"
+                and not r["detail"].get("市场", "").startswith("市场排除")]
+    t3_excluded = [_flat(r["company"]) for r in results
+                   if r["tier"] == "T3"
+                   and r["detail"].get("市场", "").startswith("市场排除")]
     lines += ["-" * 84,
               "  汇总: " + " / ".join("%s:%d" % (t, counts[t]) for t in TIER_ORDER)
               + "  （" + " · ".join("%s %.0f%%" % (t, counts[t] * 100.0 / total)
@@ -488,7 +544,9 @@ def render_table(results: List[Dict[str, Any]], duplicates: int = 0) -> str:
               "",
               "  今天先打: %s" % _names_of(results, "T0"),
               "  本周跟进: %s" % _names_of(results, "T1"),
-              "  先别碰  : %s（信息不全，补完再说）" % _names_of(results, "T3")]
+              "  先别碰  : %s（信息不全，补完再说）" % ("、".join(t3_plain) or "无")]
+    if t3_excluded:
+        lines += ["  市场排除: %s（不在目标市场，别打）" % "、".join(t3_excluded)]
     if duplicates:
         lines += ["", "  注意：有 %d 条重复线索已自动合并（同一家公司 + 相同联系方式）。"
                   % duplicates]
@@ -594,7 +652,11 @@ def build_parser() -> _ZhArgumentParser:
   python scripts/lead_score.py my_leads.csv --country Saudi --product tyres
 
 输入 CSV 至少要有一列叫 company，其余列（country/product/source/email/phone/
-contact/years/note）有就加分、没有也能跑。照 examples/leads_example.csv 抄表头最省事。""")
+contact/years/note）有就加分、没有也能跑。照 examples/leads_example.csv 抄表头最省事。
+
+市场规则（改规则只改 scripts/market_rules.py，不动打分代码）：
+  土耳其 / 巴西有反倾销壁垒，最高只到 T1——第一句先确认转口 / 保税区；
+  墨西哥 / 美国 / 欧盟永久排除，分再高也只到 T3。其他国家没规则就不扣分。""")
     p.add_argument("csv_path", help="线索 CSV 的路径")
     p.add_argument("--country", help="只筛某个国家（子串匹配，忽略大小写，如 Saudi）")
     p.add_argument("--product", help="只筛某类产品（子串匹配，忽略大小写，如 tyres）")

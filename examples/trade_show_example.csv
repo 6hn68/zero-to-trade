@@ -1,0 +1,7 @@
+# 本文件全部为虚构示例数据（仅用于教学演示）。公司名带「【示例】」前缀、邮箱统一用 IANA 保留域 sample.example、电话统一用占位符 +000 00 000 0000，均不对应任何真实企业 / 联系人 / 号码。请勿据此联系。
+# 展会现场录展商就按这 5 列填：company(公司名,必填) / country(国家) / product(意向产品) / contact(联系方式,邮箱或电话,必填) / interest(兴趣度,高/中/低)。email/phone/whatsapp 列也认，contact 列写职位(如 purchasing manager)不算联系方式。
+# 兴趣度没填按「低」处理；同级按录入顺序排。跑：python scripts/trade_show.py --csv examples/trade_show_example.csv
+company,country,product,contact,interest
+【示例】海湾轮胎贸易,Saudi Arabia,TBR 12.00R20,demo01@sample.example,高
+【示例】迪拜轮毂行,UAE,PCR 195/65R15,+000 00 000 0000,中
+【示例】尼罗河商贸,Egypt,PCR tubes,+000 00 000 0000,低

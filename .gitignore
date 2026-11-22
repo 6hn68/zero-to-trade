@@ -71,6 +71,8 @@ private/
 #   「先 cp 一份」的教程等于把门槛抬高了。）
 examples/*
 !examples/leads_example.csv
+!examples/leads_example_lighting.csv
+!examples/README.md
 
 # ---- 这一段是整个文件里最重要的，别删 ----
 # ⚠️ 上面那行白名单本身是个洞，所以说清楚：
@@ -156,9 +158,16 @@ out.json
 out.md
 out.txt
 quote.txt
+quote.json
 quote_*.txt
+quote_*.json
+*_quote.json
+outreach_*.md
+outreach_*.json
+followup_*.md
 drafts.md
 *.log
+trace-*.jsonl
 
 # 最省心的办法根本不是记这些文件名：把产物写进 private/ 或 internal/ 就行——
 # python scripts/lead_score.py private/my_leads.csv --out private/scored.json

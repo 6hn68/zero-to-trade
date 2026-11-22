@@ -1,6 +1,6 @@
-# AI 提示词总库 · 27 条能直接抄走的英文稿
+# AI 提示词总库 · 40 条能直接抄走的英文稿
 
-这里躺着 27 条提示词。它们的作用不是替你思考，是替你打字，以及在你脑子已经转不动的那个晚上，替你把事情一条条列出来。
+这里躺着 40 条提示词：核心 7 环节 28 条 + 进阶模块 08–13 的 12 条。它们的作用不是替你思考，是替你打字，以及在你脑子已经转不动的那个晚上，替你把事情一条条列出来。
 
 **怎么用：整段复制，粘进对话框，`[...]` 里的东西换成你自己的，回车。** 方括号别留着——留着的话，AI 会给你一篇挑不出毛病、也一句用不上的通稿。
 
@@ -23,7 +23,7 @@
 
 编号规则是 `P{环节号}-{序号}`，比如 P03-2 是环节 03 的第 2 条。
 
-一句实话：**`docs/` 里的 7 篇环节文档各自在「AI 提示词」那一节复制了整段提示词**，标题写的是「提示词 1/2/3」，跟这里的编号对不上（历史遗留，我们也知道别扭）。两边不一致的时候，**以你手上这一份为准**，也欢迎顺手提 PR 把那边的重复内容删掉改引用。数量别动：**三个 README 里都写着 27 条**，加一条它们就错了。
+一句实话：**`docs/` 里的 7 篇环节文档各自在「AI 提示词」那一节复制了整段提示词**，标题写的是「提示词 1/2/3」，跟这里的编号对不上（历史遗留，我们也知道别扭）。两边不一致的时候，**以你手上这一份为准**，也欢迎顺手提 PR 把那边的重复内容删掉改引用。数量：**三个 README 里都写着 40 条**（2026-11-07 进阶 12 条并入后从 27 条涨到 39 条、2026-11-07 背调 P03-5 并入后到 40 条）。再加一条，三个 README 和这里要一起改。
 
 ---
 
@@ -145,7 +145,7 @@ STOP: Under 800 words. Four channels, no fifth.
 **吐出来的：** 一张去重后的表 + 一张被合并记录清单。**列名必须照抄下面那行**，否则喂不进 `scripts/lead_score.py`。
 **别全信：** 它判定的"同一家公司"。同名不同国是两家，这条里写了，它偶尔还是会犯。
 
-手工整理名单最烦的是同一家公司出现五次、五种拼法。这条让 AI 归并 + 批量排优先级，排完**直接落成一 CSV 喂给 `lead_score.py` 算分**——AI 打分会手抖，脚本不会。
+手工整理名单最烦的是同一家公司出现五次、五种拼法。这条让 AI 归并 + 批量排优先级，排完**直接落成一 CSV 喂给 `lead_score.py` 算分**——AI 打分会手抖，脚本不会。入库前先过 4 条准入标准：公司名真实可搜、城市明确、主营对得上产品、至少一种公开联系方式；一条不过就先别入库。
 
 ```text
 Clean, deduplicate and priority-rank this B2B lead list. The same company appears several times with different spellings, different contact people and inconsistent country formats.
@@ -351,6 +351,33 @@ STOP: Exactly six sections. If section 4 is empty, you were not ruthless enough.
 
 ---
 
+### P03-5 · 背调报告复核：让 AI 验算脚本的评级
+
+**往里填：** `due_diligence.py` 跑出来的报告全文（表格或 JSON 都行）
+**吐出来的：** 三件事：评级验算、补材料优先级、首触主题行。全文 300 词以内。
+**别全信：** 它找的"去哪查"——只认你亲手打开过的来源，它给的链接先点开再信。
+
+脚本按规矩判，不会替你想。这一条把报告丢给 AI，让它反过来验算：A/B/C 的四个条件是不是都满足了、缺的材料按什么顺序补最省时间、首触那封邮件主题行怎么写才不像群发。评级是脚本定的，AI 只能验算不能改——它说"应该是 A"你也别信，回去看报告里的 L1/L2 那几行。
+
+```text
+Verify this due-diligence report and turn it into the next move. Do not re-grade it — the script's rating stands. Your job is to check its work and plan what is missing.
+
+REPORT (paste the full output of scripts/due_diligence.py, table or JSON):
+[PASTE REPORT HERE]
+
+Give me back:
+1. RATING CHECK — walk through the A/B/C conditions one by one (L1 all pass? import record? category match? decision-maker contact? red flags?). Say PASS or FAIL for each. If any condition contradicts the rating, say so plainly.
+2. MISSING MATERIALS, RANKED — list the missing items in the order that unblocks the deal fastest. For each: what it is, where exactly to find it (a named public source, not "search Google"), and roughly how many minutes it takes.
+3. FIRST-TOUCH SUBJECT LINE — one subject line for the first outreach email to this company, in English, under 10 words. No hype, no "Dear Sir/Madam", no exclamation marks.
+4. WHAT NOT TO SEND — one sentence: what must not go to this client yet (quote, samples, payment terms) and why, based on the report.
+
+Output plain Markdown, under 300 words, no preamble.
+ANTI-HALLUCINATION: Work only from the report I pasted. Do not invent a missing material, a source, or a subject line fact I never gave. If the report says "待核实", repeat it as "NEEDS INPUT" — do not fill it in yourself.
+STOP: Exactly four sections. If section 2 has no named source for an item, delete that item.
+```
+
+---
+
 ## 04 建联客户 · Make Contact
 
 ### P04-1 · 三线并进首触方案
@@ -458,7 +485,7 @@ STOP: Touches #2 and #3 only. Do not propose a #4.
 
 到第 3 封还没回，答案是收尾，不是再发一封。这条给你一句不卑不亢的收尾，外加一个具体到能写进日历的重新联系条件——不接受"等市场好转"这种回答。
 
-> 排期别自己造：`python scripts/followup_plan.py --tier T1 --start 2026-03-02 --market gcc` 会按对方的工作日帮你算，周五主麻日它也会避开。
+> 排期别自己造：`python scripts/followup_plan.py --tier T1 --start 2026-03-02 --market gcc --avoid-weekend` 会按对方的工作日帮你算，周五主麻日它也会避开（`--avoid-weekend` 不加，触达可能落在周末）。
 
 ```text
 A prospect got my three allowed touches and stayed silent for 35 days. I need to decide whether to close the file, and what would justify reopening it.
@@ -654,7 +681,7 @@ STOP: Three rungs. Under 700 words.
 **吐出来的：** 八种说法，每种五行。上限 700 词。
 **别全信：** 它说"这句话是虚张声势"。**它可能是对的，但你别当场把它当对的用。**
 
-"你们比别家贵 30%"——这句话也许是真话，也许他今天就跟二十个供应商说过。这条按话术分门别类给回应，并且告诉你哪句大概率是试探。
+"你们比别家贵 30%"——这句话也许是真话，也许他今天就跟二十个供应商说过。这条按话术分门别类给回应，并且告诉你哪句大概率是试探。还价记住三选一：加量换降价、价格不动加价值（更快船期/免费备件/能力范围内的延保）、小幅降价换标准付款条件；绝不跌破底价、绝不编虚假稀缺。
 
 ```text
 Coach me through a price negotiation. A buyer is applying pressure. For each tactic below I need a response that holds my position without losing the deal.
@@ -856,6 +883,368 @@ ANTI-HALLUCINATION: Base this only on what I wrote above. Do not assume the buye
 
 ---
 
+## 08–13 进阶 · Advanced Modules
+
+12 条，08–13 每模块 2 条。编号接着核心 7 环节往下走：`P{模块号}-{序号}`，比如 P11-1 是模块 11 的第 1 条。用法跟前面一样：整段英文复制，`[...]` 换成你自己的。中文翻译只作对照，喂给 AI 的还是英文那段。
+
+## 08 独立站与 B2B 平台 · Independent Station & B2B Platforms
+
+先有个能接单的门面：平台拿流量，独立站拿信任。对应文档见 [docs/advanced/08-independent-station.md](../docs/advanced/08-independent-station.md)。
+
+### P08-1 · B2B 产品标题生成
+
+**往里填：** `[YOUR PRODUCT]`、`[BUYER TYPE]`、`[COUNTRY]`
+**吐出来的：** 5 个产品标题，按可搜索性排 1–5 名并说清第一名为什么赢。上限 300 词。
+**别全信：** 它排的"可搜索性"名次。平台算法会变，标题自己去平台上搜一遍验证。
+
+B2B Product Title Generator。
+
+```text
+I sell [YOUR PRODUCT] on Alibaba / Made-in-China. My target buyers are [BUYER TYPE, e.g. distributors] in [COUNTRY].
+Write 5 product titles following the formula: core keyword + specs + use scenario.
+Rules: no adjectives like "high quality" or "best price"; include numbers/specs; under 120 characters each.
+Then rank them 1-5 by searchability and tell me why #1 wins.
+ANTI-HALLUCINATION: Do not invent search volumes or ranking data. If you do not know how a title ranks, say so.
+STOP: 5 titles + ranking. Under 300 words.
+```
+
+**中文翻译（对照用，喂给 AI 的还是上面英文那段）：**
+
+```text
+我在 Alibaba / Made-in-China 上卖[你的产品]，目标买家是[国家]的[买家类型，如经销商]。
+按"核心关键词+规格+使用场景"公式写 5 个产品标题。
+要求：不许用 high quality、best price 这类形容词；带数字/规格；每个不超过 120 字符。
+然后按"可搜索性"排 1-5 名，并说清第一名为什么赢。
+```
+
+### P08-2 · 独立站信任页检查
+
+**往里填：** 你的独立站网址，或粘贴首页文案
+**吐出来的：** 5 项信任元素各打 0–2 分 + 缺失清单 + 重写首屏一句话。上限 400 词。
+**别全信：** 它判的认证和评价。证书真伪、评价真假自己核，它只看"有没有"，不看"是不是真的"。
+
+Trust-Page Audit for Independent Station。
+
+```text
+Audit my independent station's trust elements as a first-time B2B buyer would. My site: [URL or paste homepage copy].
+Checklist: (1) factory photos (workshop/warehouse/loading), (2) certifications displayed, (3) customer reviews visible,
+(4) inquiry form has max 3 fields, (5) hero section says who I am + what I sell + who it's for in one line.
+Score each 0-2, list what's missing, and rewrite my hero one-liner.
+ANTI-HALLUCINATION: Do not invent certifications or reviews I do not have. Missing means missing.
+STOP: Scores + missing list + one rewritten line. Under 400 words.
+```
+
+**中文翻译（对照用，喂给 AI 的还是上面英文那段）：**
+
+```text
+以一个第一次来的 B2B 买家的视角，审核我独立站的信任元素。我的站：[网址或粘贴首页文案]。
+检查项：(1) 工厂实拍（车间/仓库/装货），(2) 认证证书展示，(3) 客户评价可见，
+(4) 询盘表单最多 3 个字段，(5) 首屏一句话说清我是谁+卖什么+卖给谁。
+每项打 0-2 分，列出缺的，并帮我重写首屏一句话。
+```
+
+## 09 社媒矩阵获客 · Social Media Matrix
+
+让社媒变成 24 小时不打烊的业务员。对应文档见 [docs/advanced/09-social-matrix.md](../docs/advanced/09-social-matrix.md)。
+
+### P09-1 · 一周内容计划
+
+**往里填：** `[YOUR PRODUCT]`、`[BUYER TYPE]`、`[COUNTRY]`
+**吐出来的：** 7 天内容计划，每天 1 条，标平台、调性、国家+产品标签。上限 500 词。
+**别全信：** 它给的标签热度。标签是会过期的，动手前自己搜一下当下的热度。
+
+One-Week B2B Content Plan。
+
+```text
+I sell [YOUR PRODUCT] to [BUYER TYPE] in [COUNTRY]. I use LinkedIn, Facebook, Instagram, and TikTok/YouTube.
+Make me a 7-day content plan: 1 post per day, each assigned to the right platform with the right tone.
+Rules: max 2 pure product posts per week; the rest must be factory footage, customer cases, or useful industry info.
+Include country+product hashtags for each post, e.g. #NigeriaDistributor #LEDFloodLight.
+ANTI-HALLUCINATION: Do not invent hashtag popularity or platform statistics.
+STOP: 7 posts. Under 500 words.
+```
+
+**中文翻译（对照用，喂给 AI 的还是上面英文那段）：**
+
+```text
+我卖[你的产品]给[国家]的[买家类型]。我用 LinkedIn、Facebook、Instagram 和 TikTok/YouTube。
+给我排一份 7 天内容计划：每天 1 条，分配到合适的平台、用合适的调性。
+要求：纯产品帖每周最多 2 条；其余必须是工厂实拍、客户案例或有用行业信息。
+每条配上"国家+产品"标签，如 #NigeriaDistributor #LEDFloodLight。
+```
+
+### P09-2 · 社媒简介重写
+
+**往里填：** `[YOUR NAME]`、`[YOUR PRODUCT]`、`[BUYER TYPE]`、`[REGION]`
+**吐出来的：** 3 版简介（LinkedIn 正式版 / Facebook·Instagram 亲切版 / TikTok 短辣版），每版附中文翻译。上限 300 词。
+**别全信：** 它写的"正式版"。LinkedIn 上太正式等于没人味，读一遍再发。
+
+Profile Bio Rewrite。
+
+```text
+Rewrite my social media bio. I am [YOUR NAME], selling [YOUR PRODUCT] factory-direct from China to [BUYER TYPE] in [REGION, e.g. Africa & Middle East].
+Rules: one line; say who I am + what I sell + who it's for; end with a contact hook (e.g. "WhatsApp in bio").
+Give me 3 versions: professional (LinkedIn), friendly (Facebook/Instagram), punchy (TikTok).
+Then Chinese translation of each for my review.
+ANTI-HALLUCINATION: Do not invent credentials, clients or numbers I did not give you.
+STOP: 3 versions + translations. Under 300 words.
+```
+
+**中文翻译（对照用，喂给 AI 的还是上面英文那段）：**
+
+```text
+重写我的社媒简介。我是[你的名字]，中国工厂直供[你的产品]，卖给[地区，如非洲和中东]的[买家类型]。
+要求：一句话；说清我是谁+卖什么+卖给谁；结尾带联系钩子（如"WhatsApp见简介"）。
+给我 3 个版本：正式版（LinkedIn）、亲切版（Facebook/Instagram）、短辣版（TikTok）。
+每个附中文翻译供我审核。
+```
+
+## 10 展会实战 · Trade Shows
+
+把一次展会变成 3 个月的订单 pipeline。对应文档见 [docs/advanced/10-trade-shows.md](../docs/advanced/10-trade-shows.md)。
+
+### P10-1 · 展前邀约邮件
+
+**往里填：** `[YOUR NAME]`、公司类型、`[YOUR PRODUCT]`、展会名、展位号、日期、收件人姓名职位公司国家
+**吐出来的：** 3 段内邀约邮件 + 逐句中文翻译。上限 300 词。
+**别全信：** 它编的"钩子"。新东西必须真是你带的，别让它替你编一个。
+
+Pre-Show Invitation Email。
+
+```text
+Write a pre-show invitation email. I am [YOUR NAME] from [YOUR COMPANY TYPE, e.g. a factory], selling [YOUR PRODUCT].
+Show: [SHOW NAME], booth [NUMBER], [DATES]. Recipient: [NAME, TITLE] at [COMPANY] in [COUNTRY].
+Structure (3 paragraphs max): (1) who I am in one line, (2) one hook — the new thing I'm bringing that solves [THEIR LIKELY PAIN],
+(3) propose a specific 15-minute slot, e.g. "10:00 AM on [DATE]".
+Tone: confident, short, no flattery. Then Chinese translation line by line.
+ANTI-HALLUCINATION: Do not invent the new product, the booth number or the show dates. Anything missing goes in as [ASK ME].
+STOP: One email, 3 paragraphs max. Under 300 words.
+```
+
+**中文翻译（对照用，喂给 AI 的还是上面英文那段）：**
+
+```text
+写一封展前邀约邮件。我是[你的名字]，来自[你的公司类型，如一家工厂]，卖[你的产品]。
+展会：[展会名]，展位[编号]，[日期]。收件人：[国家][公司][姓名][职位]。
+结构（最多 3 段）：(1) 一句话我是谁，(2) 一个钩子——这次带的新东西能解决[他可能的痛点]，
+(3) 约一个具体的 15 分钟时段，如"[日期]上午 10 点"。
+语气：自信、短、不拍马屁。然后逐句给中文翻译。
+```
+
+### P10-2 · 展后 48 小时跟进
+
+**往里填：** 名片背面的 3 行：需求 / 预算信号 / 决策人
+**吐出来的：** 3 句话跟进邮件 + 一个引用了具体对话的标题 + 中文翻译。上限 250 词。
+**别全信：** 它引用的"我们聊过的具体事"。必须是你名片上真记了的，没记就别让它编。
+
+48-Hour Post-Show Follow-Up。
+
+```text
+Write a post-show follow-up email to send within 48 hours. Context from my booth notes: [PASTE the 3 lines from the business card — need / budget signal / decision maker].
+Structure (3 sentences): thanks for visiting + attach what they asked for (quote/specs) + confirm the next step we agreed on.
+Add a subject line that references something specific from our conversation, not "Nice to meet you at the show".
+Then Chinese translation.
+ANTI-HALLUCINATION: Only reference things from my booth notes. Do not invent what we discussed.
+STOP: 3 sentences + subject line. Under 250 words.
+```
+
+**中文翻译（对照用，喂给 AI 的还是上面英文那段）：**
+
+```text
+写一封展后 48 小时内发出的跟进邮件。背景是我的展位笔记：[粘贴名片背面的 3 行——需求/预算信号/决策人]。
+结构（3 句话）：感谢到访 + 附上他要的东西（报价/规格）+ 确认我们约好的下一步。
+标题要引用我们聊过的具体事，别写"很高兴在展会上见到您"。
+然后给中文翻译。
+```
+
+## 11 物流与支付 · Logistics & Payment
+
+货发得出去，钱收得回来。对应文档见 [docs/advanced/11-logistics-payment.md](../docs/advanced/11-logistics-payment.md)。
+
+### P11-1 · 报价术语换算（FOB→CIF/DAP）
+
+**往里填：** `[YOUR PRODUCT]`、FOB 港口与价格、数量、目的港、运费（没有就让它问你要货代价）
+**吐出来的：** FOB / CIF / DAP 对照表，每档列价格构成，标出哪些是估算值 + 中文表头与备注。上限 400 词。
+**别全信：** 它估的海运费和保险。估算值发客户前必须跟货代确认，表里标出来的就是它。
+
+Quote Terms Converter (FOB → CIF/DAP)。
+
+```text
+Convert my FOB quote to CIF and DAP. My product: [YOUR PRODUCT], FOB [PORT] price [AMOUNT] for [QTY].
+Destination: [PORT, COUNTRY]. Estimate: ocean freight [or ask me for the forwarder's rate], insurance 110% of cargo value × 0.3%.
+Output a table: FOB / CIF / DAP, each with price breakdown (goods + freight + insurance + margin).
+Flag: which costs are estimates I must confirm with my forwarder before sending to the customer.
+Then Chinese translation of the table headers and notes.
+ANTI-HALLUCINATION: Freight and insurance are estimates unless I gave you the forwarder's rate. Mark every estimate as [ESTIMATE — confirm with forwarder]. Do not present an estimate as a quoted price.
+STOP: One table + notes. Under 400 words.
+```
+
+**中文翻译（对照用，喂给 AI 的还是上面英文那段）：**
+
+```text
+把我的 FOB 报价换算成 CIF 和 DAP。产品：[你的产品]，FOB[港口]价[金额]，数量[数量]。
+目的港：[港口，国家]。估算：海运费[或让我去问货代]，保险按货值 110% × 0.3%。
+输出表格：FOB / CIF / DAP 三档，每档列出价格构成（货值+运费+保险+利润）。
+标出：哪些是估算值，发给客户前必须跟货代确认。
+表格表头和备注给中文翻译。
+```
+
+### P11-2 · 付款风险检查
+
+**往里填：** `[COMPANY, COUNTRY]`、`[PRODUCT, QTY, AMOUNT]`、付款方式
+**吐出来的：** 风险等级（低/中/高）+ 触发了哪几条 + 生产前必须核实什么。上限 400 词。
+**别全信：** 它给的 LOW。LOW 不是"可以发货"——它没见过水单、没查过账，钱到账才是。
+
+Payment Risk Check。
+
+```text
+Risk-check this deal before I proceed. Customer: [COMPANY, COUNTRY]. Deal: [PRODUCT, QTY, AMOUNT].
+Payment proposed: [e.g. T/T 30% deposit + 70% against B/L copy].
+Red flags to scan: sudden payment-term changes, price-insensitive + rushing shipment, free-email domain claiming to be a big company,
+doctored payment slip, ship-to address differing from contract, first order unusually large with credit terms.
+Output: risk level (LOW/MEDIUM/HIGH), which flags triggered, and exactly what to verify before producing.
+Be blunt — I'd rather lose this order than lose my money.
+ANTI-HALLUCINATION: Do not clear a deal as safe. You have not seen the payment slip or the bank account.
+STOP: Risk level + triggered flags + verification list. Under 400 words.
+```
+
+**中文翻译（对照用，喂给 AI 的还是上面英文那段）：**
+
+```text
+生产前帮我做这笔单的风险检查。客户：[公司，国家]。订单：[产品，数量，金额]。
+付款方式：[如 T/T 30% 预付 + 70% 见提单复印件]。
+扫描这些风险信号：突然改付款方式、对价格不敏感只催发货、自称大公司却用免费邮箱、
+水单有 P 图痕迹、收货地址与合同不一致、第一次合作就要大额订单+账期。
+输出：风险等级（低/中/高）、触发了哪几条、生产前必须核实什么。
+说话直接点——我宁可丢单，不丢钱。
+```
+
+## 12 风险与合规 · Risk & Compliance
+
+先别踩坑，再谈赚钱。对应文档见 [docs/advanced/12-risk-compliance.md](../docs/advanced/12-risk-compliance.md)。
+
+### P12-1 · 骗局风险评估
+
+**往里填：** 询盘原文（粘贴邮件/消息、公司名、国家、订单量）
+**吐出来的：** 风险等级（低/中/高）+ 命中了哪几条及原因 + 现在该做的 3 件核实事项。上限 400 词。
+**别全信：** 它判的"不像骗局"。骗局的本事就是看起来不像骗局，6 条里没命中的不代表安全。
+
+Scam Risk Assessment。
+
+```text
+Assess this inquiry for scam risk. Inquiry details: [PASTE the email/message, company name, country, order size].
+Check against 6 common scams: (1) phishing inquiry (big+urgent order, free email), (2) fake payment slip,
+(3) tampered contract terms, (4) lookalike email domain (one letter off), (5) triangle scam (ship to third party),
+(6) fake certification agent.
+Output: risk level (LOW/MEDIUM/HIGH), which patterns match and why, and 3 concrete verification steps I should take now.
+ANTI-HALLUCINATION: Do not declare an inquiry safe. State what you checked and what you could not check.
+STOP: Risk level + matches + 3 verification steps. Under 400 words.
+```
+
+**中文翻译（对照用，喂给 AI 的还是上面英文那段）：**
+
+```text
+评估这封询盘的骗局风险。询盘内容：[粘贴邮件/消息、公司名、国家、订单量]。
+对照 6 种常见骗局检查：(1) 钓鱼询盘（大单+急单+免费邮箱），(2) 假水单，
+(3) 合同调包（藏不利条款），(4) 高仿邮箱（差一个字母），(5) 三角骗局（货发第三方），
+(6) 认证骗局（包过中介）。
+输出：风险等级（低/中/高）、命中了哪几条及原因、我现在该做的 3 件核实事项。
+```
+
+### P12-2 · 反倾销与认证自查
+
+**往里填：** `[YOUR PRODUCT]`、`[COUNTRY]`
+**吐出来的：** 3 条可直接粘贴的英文搜索词 + 强制认证清单（谁出钱/办多久/接单前要不要）+ 接/不接建议。上限 500 词。
+**别全信：** 它列的认证和税率。认证名、税率数字全部自己去官网核，一个字母差一张证就是废纸。
+
+Anti-Dumping & Certification Self-Check。
+
+```text
+Do a pre-order compliance self-check. My product: [YOUR PRODUCT]. Target market: [COUNTRY].
+(1) Search-style check: what would I Google to find anti-dumping duties on this product in this country? Give me 3 exact search queries in English.
+(2) List the likely mandatory certifications for this product in this market (e.g. CE for EU, SABER for Saudi Arabia, SONCAP for Nigeria).
+(3) For each cert: who pays, how long it takes, and whether I must have it BEFORE accepting the order.
+End with a go / no-go recommendation and the single biggest risk.
+ANTI-HALLUCINATION: Do not invent duty rates, certification names or legal requirements. Anything uncertain goes in as [VERIFY WITH OFFICIAL SOURCE].
+STOP: 3 search queries + cert list + recommendation. Under 500 words.
+```
+
+**中文翻译（对照用，喂给 AI 的还是上面英文那段）：**
+
+```text
+接单前帮我做合规自查。产品：[你的产品]。目标市场：[国家]。
+(1) 告诉我该怎么查反倾销税：给我 3 条可直接粘贴到 Google 的英文搜索词。
+(2) 列出这个产品进这个市场可能需要的强制认证（如欧盟 CE、沙特 SABER、尼日利亚 SONCAP）。
+(3) 每个证：谁出钱、办多久、是不是接单前必须有。
+最后给"接/不接"的建议，并指出最大的一个风险。
+```
+
+## 13 大客户开发 · Key Accounts
+
+把一家大客户当成一个市场来打。对应文档见 [docs/advanced/13-key-accounts.md](../docs/advanced/13-key-accounts.md)。
+
+### P13-1 · ABM 作战图
+
+**往里填：** `[COMPANY, COUNTRY]`、对方采购品类、`[YOUR PRODUCT]`、为什么要打他
+**吐出来的：** 决策链地图 + 切入点建议 + 样品策略 + 90 天进攻时间表。上限 700 词。
+**别全信：** 它画的决策链。职位是猜的，人名必须自己在 LinkedIn 上核实。
+
+ABM Battle Plan for One Target Account。
+
+```text
+Build an ABM battle plan for this target account. Company: [COMPANY, COUNTRY]. What they buy: [PRODUCT CATEGORY].
+What I sell: [YOUR PRODUCT]. Why I want them: [e.g. 10x my average order, regional leader].
+Output:
+1. Decision chain map: likely roles from end user → purchaser → manager → decision maker (with what each cares about)
+2. Entry point recommendation: which role to approach first and the one-line opener
+3. Sample strategy: what sample to send, free or paid, and the 3-step follow-up after sending
+4. 90-day attack timeline: week by week, what I do
+Keep it realistic for a one-person operation — no "hire a team" advice.
+ANTI-HALLUCINATION: Do not invent names, titles or org charts. Roles are guesses until I verify them.
+STOP: Map + entry point + sample plan + 90-day timeline. Under 700 words.
+```
+
+**中文翻译（对照用，喂给 AI 的还是上面英文那段）：**
+
+```text
+为这家目标大客户制定 ABM 作战计划。公司：[公司，国家]。他们采购：[产品品类]。
+我卖：[你的产品]。我为什么要打他：[如 10 倍于我平均订单、区域龙头]。
+输出：
+1. 决策链地图：从使用者→采购员→经理→拍板人，每级列出他关心什么
+2. 切入点建议：先打哪个角色，开场白一句话是什么
+3. 样品策略：寄什么样品、免费还是收费、寄出后的跟进 3 步
+4. 90 天进攻时间表：每周干什么
+要对一个人的作战现实可行，别给我"组个团队"这种建议。
+```
+
+### P13-2 · 拍板人消息重写
+
+**往里填：** 你现在的建联消息原文、目标 `[NAME, TITLE]`、`[COMPANY]`
+**吐出来的：** 最多 4 句话的重写版 + 逐句中文翻译。上限 300 词。
+**别全信：** 它写的"省多少钱"。数字必须是你算过的，别让它替你编一个省钱数。
+
+Decision-Maker Message Rewrite。
+
+```text
+Rewrite my outreach message for a DECISION MAKER (director/owner), not a purchaser.
+My current message: [PASTE it]. Target: [NAME, TITLE] at [COMPANY].
+Rules: max 4 sentences; zero product specs; only talk about three things — money saved, hassle removed, risk covered.
+End with one low-pressure question. Then Chinese translation line by line.
+If my original message is all specs and no business value, say so bluntly and rewrite from scratch.
+ANTI-HALLUCINATION: Do not invent savings figures or results. If my original is all specs and no business value, say so bluntly and rewrite from scratch.
+STOP: Max 4 sentences + translation. Under 300 words.
+```
+
+**中文翻译（对照用，喂给 AI 的还是上面英文那段）：**
+
+```text
+把我的建联消息改写成给拍板人（总监/老板）看的版本，不是给采购员看的。
+我现在的版本：[粘贴]。目标：[公司][姓名][职位]。
+要求：最多 4 句话；零产品参数；只谈三件事——省多少钱、省多少事、风险谁担。
+结尾一个低压力问题。然后逐句中文翻译。
+如果我原文全是参数、没有商业价值，直接骂醒我，重写。
+```
+
 ## 通用 · General
 
 ### P-GEN-1 · 环节自检（改文档时用）
@@ -934,7 +1323,7 @@ STOP: Under 800 words. Seven sections.
 - [ ] 用到的公司名一律 `【示例】` 前缀，邮箱域名只用 `sample.example`
 - [ ] 代码块围栏成对（和已有的一样，`text` 或 `bash`）
 - [ ] 如果产出要喂脚本，**列名和 `scripts/` 里的完全一致**（`lead_score.py` 认的是：company / country / product / source / email / phone / years / contact / note）
-- [ ] **别改数量**。三个 README 都写着 27 条，动一条它们就错了
+- [ ] **数量同步改**。三个 README 都写着 40 条（核心 28 + 进阶 12），动一条它们就错了
 
 ### 已知还没补的缺口
 

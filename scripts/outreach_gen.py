@@ -21,6 +21,12 @@ outreach_gen.py — 按线索分级生成中英对照建联消息
     · 正文 5-8 句；主题行 ≤40 字符、预览首句 ≤120 字符（手机端 Gmail 截断线）
     · 主题与正文不得出现 ALL CAPS 吼叫、连发感叹号、Free/Cheap/Best price 等 spam 触发词
     · note 为空导致 why them 退化成通用模板时，脚本会直接报警催你去补背调，而不是闷头出废信
+    · 三线同一口径：邮件 / LinkedIn 连接附注 / 官网表单用同一条 why them、
+      同一个 CTA、同样不报价，只换信封；check_channel_consistency() 会逐条
+      核对三线是否一致
+    · LinkedIn 连接附注 ≤200 字符（平台硬上限，超了发送按钮直接禁用）：
+      超了脚本直接报错、不擅自截断——截断会把 CTA 或唯一的那条 why them
+      齐腰砍掉，等于白发
 """
 
 import argparse
@@ -369,6 +375,90 @@ SPAM_WORDS = ["free", "cheap", "cheapest", "best price", "lowest price", "best o
 SUBJECT_LIMIT = 40      # 手机端主题行不截断
 PREVIEW_LIMIT = 120     # 手机端 Gmail 预览截断线
 
+LINKEDIN_NOTE_LIMIT = 200  # LinkedIn connection-note hard cap (chars).
+# LinkedIn 连接附注硬上限 200 字符（2026-10-09 实测：对话框计数器按 200 封顶，
+# 超了发送按钮直接禁用）。len() 按字符数算，与 LinkedIn 计数口径一致。
+
+
+class LinkedInNoteTooLongError(ValueError):
+    """LinkedIn note over the 200-char limit — raised, never silently cut.
+
+    Raised by build_linkedin_note() when the note does not fit. Callers
+    (render / main) catch it per lead and report it as a skipped draft
+    instead of killing the whole batch.
+    """
+
+
+# LinkedIn connection note: same pitch as the email, shorter envelope.
+# LinkedIn 连接附注：与邮件同一口径，只换信封——同一条 why them、同一个 CTA、
+# 同样不报价；没有主题行、没有签名档（LinkedIn 页面本身就显示你是谁）。
+# 附注一律英文：连接附注是写给采购决策人看的第一句，英文是通用工作语言；
+# 脚本不自动把它翻成 es/pt/ar，免得机器翻译在 200 字符里出错——
+# 需要本地语言附注请人工写。
+LINKEDIN_NOTE = {
+    "T0": ("{greeting} {why_them}. We make {product} and ship to {country} "
+           "regularly. What sizes and monthly volume are you running?"),
+    "T1": ("{greeting} {why_them}. Quick question: is {product} still "
+           "something you source from Asia?"),
+    "T2": ("{greeting} Updating my notes on {country} importers of {product}. "
+           "Is {company} still sourcing from Asia this year?"),
+}
+
+
+def build_linkedin_note(lead):
+    """Build the LinkedIn connection note (English only) and enforce the limit.
+
+    The note reuses the same why-them sentence and the same CTA as the email
+    body for this tier — same pitch, shorter envelope. If it runs over
+    LINKEDIN_NOTE_LIMIT we raise LinkedInNoteTooLongError instead of cutting
+    it: truncating would silently chop the CTA or the one company-specific
+    fact, which is exactly what makes the note worth sending. Shorten the
+    note column or the product string and re-run.
+    """
+    tier = lead["tier"]
+    template = LINKEDIN_NOTE.get(tier)
+    if template is None:
+        return None
+    company = one_line(lead.get("company"), 60)
+    country = one_line(lead.get("country"), 32)
+    prod_en = short_product(lead.get("product"), "en")
+    g_en, _ = greeting(lead.get("contact", ""))
+    why_en = lead["why_them"][0]
+    note = template.format(greeting=g_en, why_them=cap_first(why_en),
+                           product=prod_en, company=company,
+                           country=country or "your market")
+    if len(note) > LINKEDIN_NOTE_LIMIT:
+        raise LinkedInNoteTooLongError(
+            "LinkedIn note is %d chars (limit %d) for %s — shorten the note "
+            "column or the product string and re-run; the note is not sent "
+            "cut off. / 附注 %d 字符，超了 %d 上限（%s）——缩短 note 列或产品名"
+            "再跑，脚本不擅自截断发出。"
+            % (len(note), LINKEDIN_NOTE_LIMIT, company or "?",
+               len(note), LINKEDIN_NOTE_LIMIT, company or "?"))
+    return note
+
+
+def linkedin_checklist(note, why_generic):
+    """Pre-send checklist for a LinkedIn note: length, why-them, price, spam.
+
+    发前自查（LinkedIn 附注版）：长度、why them、价格、垃圾邮件特征四项。
+    """
+    lines = ["LinkedIn note checklist:"]
+    lines.append("  %s Note %d chars (<=%d — LinkedIn caps the note at 200)"
+                 % ("✓" if len(note) <= LINKEDIN_NOTE_LIMIT else "✗ FIX",
+                    len(note), LINKEDIN_NOTE_LIMIT))
+    if why_generic:
+        lines.append("  ✗ FIX why them is generic (note column empty) — do NOT send yet, "
+                     "run 03 back-check and write one fact only this company has")
+    else:
+        lines.append("  ✓ why them is company-specific")
+    lines.append("  %s No price number / price list in the note"
+                 % ("✓" if not _PRICE_RE.search(note) else "✗ FIX"))
+    hits = spam_scan(note)
+    lines.append("  %s No spam trigger %s"
+                 % ("✓" if not hits else "✗ FIX", ("; ".join(hits) if hits else "")))
+    return lines
+
 
 def clip(s, limit):
     """掐长度，尽量断在词边界并补省略号（原来的 [:24] 会把词切一半）。"""
@@ -629,8 +719,16 @@ def as_leads(result):
     return result
 
 
-def render(lead, sender, lang="both"):
-    """按 lang 一次性拼好整块（both/en/zh），不再靠事后扫行切段。"""
+def render(lead, sender, lang="both", channel="email"):
+    """按 lang 一次性拼好整块（both/en/zh），不再靠事后扫行切段。
+
+    channel picks the envelope, not the pitch: "email" (default, the full
+    letter with a subject line), "linkedin" (connection note, <=200 chars,
+    raises LinkedInNoteTooLongError when it does not fit), "webform" (same
+    body as the email minus the Subject: line — a web form has its own
+    subject field). All three carry the same why-them sentence, the same
+    CTA and the same no-price rule; see check_channel_consistency().
+    """
     tier = lead["tier"]
     body = BODY.get(tier)
     if body is None:
@@ -645,6 +743,21 @@ def render(lead, sender, lang="both"):
     sub_en, sub_zh, sub_fits = fit_subject(tier, prod_en, prod_zh, company)
     email = one_line(lead.get("email", ""), 64)
 
+    if channel == "linkedin":
+        # Note is English-only whatever lang is (see LINKEDIN_NOTE comment).
+        note = build_linkedin_note(lead)  # raises LinkedInNoteTooLongError
+        out = ["=" * 70]
+        out.append("%s | %s | %d pts" % (tier, TIER_LABEL_EN[tier], lead["score"]))
+        out.append("Company: %s (%s)" % (company, country or "—"))
+        out.append("Channel: LinkedIn connection note (<=%d chars)" % LINKEDIN_NOTE_LIMIT)
+        out.append("-" * 70)
+        out.append("[LinkedIn note — paste into the connection request]")
+        out.append(note)
+        out.append("")
+        out.extend(linkedin_checklist(note, why_generic))
+        out.append("")
+        return "\n".join(out)
+
     # why_them 是插在段首的，首字母必须大写，否则正文一开头就是小写
     en_text = body["en"].format(subject=sub_en, greeting=g_en, company=company,
                                 product=prod_en, sender=sender,
@@ -653,6 +766,35 @@ def render(lead, sender, lang="both"):
     zh_text = body["zh"].format(subject=sub_zh, greeting=g_zh, company=company,
                                 product=prod_zh, sender=sender,
                                 country=country or "贵司所在市场", why_them=why_zh)
+
+    if channel == "webform":
+        # Same body as the email, minus the Subject: line — the form has its
+        # own subject field, and the same subject text goes there. Same CTA,
+        # same no-price rule, same checklist (measured on the pasted body).
+        form_lines = en_text.split("\n")
+        form_body = "\n".join(form_lines[1:]).lstrip("\n")
+        out = ["=" * 70]
+        out.append("%s  |  %s  |  %d 分" % (tier, TIER_LABEL[tier], lead["score"]))
+        out.append("公司: %s (%s)" % (company, country or "—"))
+        out.append("Channel: 官网表单 (web form) — 主题行填表单自己的主题栏，正文贴下面这段")
+        out.append("-" * 70)
+        out.append("[Form subject — put this in the form's subject field]")
+        out.append(sub_en)
+        out.append("")
+        out.append("[Message — paste into the form's message box]")
+        out.append(form_body)
+        out.append("")
+        out.append("[ZH — 中文对照，仅供你审批，客户不收]")
+        out.append(zh_text)
+        out.append("")
+        # Web forms need no email address — the "To:" line would wrongly
+        # fail the checklist, so it is marked as not applicable.
+        out.extend(checklist("en", form_body, zh_text, sub_en, sub_fits,
+                             email or "web form (no email needed)", sender,
+                             why_generic, form_body,
+                             why_texts=(why_en, why_zh)))
+        out.append("")
+        return "\n".join(out)
 
     if lang in I18N_LANGS:
         why_loc = (lead.get("why_them_i18n") or {}).get(lang)
@@ -709,6 +851,71 @@ def render(lead, sender, lang="both"):
 
 
 
+def _strip_checklist(text):
+    """Cut the pre-send checklist off a rendered block before scanning it.
+
+    The checklist's own labels (e.g. "price list") would false-positive a
+    price scan — scan the message, not the labels.
+    """
+    for marker in ("Pre-send checklist:", "发送前自查:", "LinkedIn note checklist:"):
+        idx = text.find(marker)
+        if idx != -1:
+            return text[:idx]
+    return text
+
+
+def check_channel_consistency(lead, sender, lang="en"):
+    """Check the three channels say the same thing (one pitch, three envelopes).
+
+    Verifies: the same why-them sentence appears in the email, the LinkedIn
+    note and the web-form body (T0/T1); for T2 the shared fragment is the
+    confirm-sourcing question, because T2's email body has no why-them slot
+    by design. No channel may carry a price number. (Spam triggers are not
+    re-checked here — each draft's own checklist already covers them.) A
+    LinkedIn note that does not fit in 200 chars is reported as a problem
+    too — it means the pitch itself is too long for that channel, not just
+    badly wrapped. Returns (ok, problems): problems is a list of
+    plain-language strings, empty when the three channels agree.
+
+    三线口径核对：T0/T1 看同一条 why them 是否出现在邮件、LinkedIn 附注、
+    官网表单三处；T2 看确认采购的那句问话（T2 邮件正文本来就没有 why them
+    的位置——最轻触达，只确认事实）；三处都不带价格。垃圾邮件特征不重复
+    查——每份草稿自带的自查清单已经查了。附注超 200 字符也算口径问题——
+    说明这句话本身对附注来说太长了，不是排版问题。
+    """
+    problems = []
+    if lead["tier"] not in LINKEDIN_NOTE:
+        return (True, [])  # T3 needs no copy on any channel
+    why_en = lead["why_them"][0]
+    core = cap_first(why_en)
+    try:
+        note = build_linkedin_note(lead)
+    except LinkedInNoteTooLongError as e:
+        problems.append(str(e))
+        note = None
+    email_text = render(lead, sender, lang, channel="email")
+    web_text = render(lead, sender, lang, channel="webform")
+    # T0/T1 carry the why-them sentence in every channel; T2's pitch is the
+    # confirm-sourcing question itself (its email body has no why-them slot
+    # by design — lightest touch, just confirm facts), so for T2 the shared
+    # fragment is "still sourcing".
+    shared = core if lead["tier"] in ("T0", "T1") else "still sourcing"
+    texts = [("email", email_text), ("web form", web_text)]
+    if note is not None:
+        texts.append(("LinkedIn note", note))
+    for name, text in texts:
+        if text is None:
+            continue
+        if shared not in text:
+            problems.append(
+                "%s does not carry the same core line as the other channels"
+                % name)
+        if _PRICE_RE.search(_strip_checklist(text)):
+            problems.append("%s carries a price number — the other channels do not"
+                            % name)
+    return (not problems, problems)
+
+
 def main():
     p = _ZhArgumentParser(
         prog="outreach_gen.py",
@@ -719,7 +926,13 @@ def main():
                "  python scripts/outreach_gen.py examples/leads_example.csv --tier T2 --lang ar\n"
                "  python scripts/outreach_gen.py --company 'Acme Ltd' --country Nigeria "
                "--contact Adaeze --product 'LED flood lights' --tier T1\n"
-               "    (no CSV: one-off draft for a single lead; --tier is the tier to write for)")
+               "    (no CSV: one-off draft for a single lead; --tier is the tier to write for)\n"
+               "  python scripts/outreach_gen.py examples/leads_example.csv --tier T1 "
+               "--channel linkedin\n"
+               "    (LinkedIn connection note only, <=200 chars; too long = skipped, not cut)\n"
+               "  python scripts/outreach_gen.py examples/leads_example.csv --tier T1 "
+               "--channel all\n"
+               "    (email + LinkedIn note + web form for the same leads, same pitch)")
     p.add_argument("csv_path", nargs="?", default=None,
                    help="线索 CSV 路径；不填时用 --company 单条生成")
     p.add_argument("--company", default="",
@@ -734,6 +947,11 @@ def main():
                    default="both",
                    help="输出语言：both（中英对照，默认）/ en / zh / es（西语）/ pt（葡语）/"
                         "ar（阿语）；es/pt/ar 每条后附英文原文供审批")
+    p.add_argument("--channel", choices=["email", "linkedin", "webform", "all"],
+                   default="email",
+                   help="输出渠道：email（邮件，默认）/ linkedin（连接附注，≤200 字符，"
+                        "超了跳过不截断）/ webform（官网表单）/ all（三线同出，供核对口径）；"
+                        "三线用同一条 why them、同一个 CTA、同样不报价，只换信封")
     p.add_argument("--out", help="输出到 .md 文件，不填则打印到屏幕")
     args = p.parse_args()
     log = setup_log("outreach_gen")
@@ -823,16 +1041,28 @@ def main():
     blocks, drafts = [], 0
     for t in targets:
         picked = 0
+        skipped = 0
         for lead in leads:
             if lead["tier"] != t:
                 continue
-            text = render(lead, args.sender, args.lang)
-            if text is None:
-                continue
-            blocks.append(text)
-            picked += 1
+            channels = ("email", "linkedin", "webform") if args.channel == "all" \
+                else (args.channel,)
+            for ch in channels:
+                try:
+                    text = render(lead, args.sender, args.lang, channel=ch)
+                except LinkedInNoteTooLongError as e:
+                    # One lead's note too long must not kill the whole batch:
+                    # skip that channel for this lead, say why, keep going.
+                    blocks.append("[%s] %s — %s"
+                                  % (t, lead.get("company", ""), e))
+                    skipped += 1
+                    continue
+                if text is None:
+                    continue
+                blocks.append(text)
+                picked += 1
         drafts += picked
-        if picked == 0:
+        if picked == 0 and skipped == 0:
             count = sum(1 for l in leads if l["tier"] == t)
             if count > 0:
                 if args.lang in ("en", "es", "pt", "ar"):
@@ -846,9 +1076,11 @@ def main():
                               if args.lang in ("en", "es", "pt", "ar")
                               else ("[%s] 本级无线索。" % t))
 
-    log.info("RESULT drafts=%d tier=%s lang=%s", drafts, args.tier, args.lang)
+    log.info("RESULT drafts=%d tier=%s lang=%s channel=%s",
+               drafts, args.tier, args.lang, args.channel)
     write_trace("outreach_gen.py", trace_input,
-                "%d 份草稿 · tier=%s lang=%s" % (drafts, args.tier, args.lang),
+                "%d 份草稿 · tier=%s lang=%s channel=%s"
+                % (drafts, args.tier, args.lang, args.channel),
                 time.monotonic() - started)
 
     if args.lang in I18N_LANGS:
@@ -856,11 +1088,12 @@ def main():
             "# Outreach drafts (%s + English reference)\n\n"
             "- Generated from: `%s`\n"
             "- Tiers: %s\n"
+            "- Channel: %s\n"
             "- Signature: %s\n"
             "- ⚠️ Every draft ends with a checklist; clear the ✗ items before you send.\n"
             "- Every %s draft is followed by its English original — approve against the English.\n\n"
-            % (LANG_LABEL[args.lang], source_label, ", ".join(targets), args.sender,
-               LANG_LABEL[args.lang])
+            % (LANG_LABEL[args.lang], source_label, ", ".join(targets), args.channel,
+               args.sender, LANG_LABEL[args.lang])
         )
         footer = ("\n" + "-" * 70 + "\n"
                   "Generated %d draft(s). T3 needs no copy — fill the gaps first.\n" % drafts)
@@ -872,9 +1105,10 @@ def main():
             "# Outreach drafts\n\n"
             "- Generated from: `%s`\n"
             "- Tiers: %s\n"
+            "- Channel: %s\n"
             "- Signature: %s\n"
             "- ⚠️ Every draft ends with a checklist; clear the ✗ items before you send.\n\n"
-            % (source_label, ", ".join(targets), args.sender)
+            % (source_label, ", ".join(targets), args.channel, args.sender)
         )
         footer = ("\n" + "-" * 70 + "\n"
                   "Generated %d draft(s). T3 needs no copy — fill the gaps first.\n" % drafts)
@@ -886,9 +1120,10 @@ def main():
             "# 建联文案草稿\n\n"
             "- 生成自: `%s`\n"
             "- 分级: %s\n"
+            "- 渠道: %s\n"
             "- 落款: %s\n"
             "- ⚠️ 每封末尾都有自查清单，先把 ✗ 项清掉再发。\n\n"
-            % (source_label, ", ".join(targets), args.sender)
+            % (source_label, ", ".join(targets), args.channel, args.sender)
         )
         footer = ("\n" + "-" * 70 + "\n"
                   "共生成 %d 份草稿。T3 不用写文案——先把信息补齐，别对着空白客户写小作文。\n" % drafts)

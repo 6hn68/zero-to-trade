@@ -26,6 +26,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import lead_score as ls  # noqa: E402
 import outreach_gen as og  # noqa: E402
+import check_private_data as cpd  # noqa: E402
 
 
 def _write_csv(path, header, rows):
@@ -84,7 +85,148 @@ class TestCheckPrivateDataScope(unittest.TestCase):
         self.assertIn("dirty_probe_vuln.md", proc.stdout + proc.stderr)
 
 
-class TestChineseHeaders(unittest.TestCase):
+    def test_clean_repo_still_passes(self):
+        """Guard (route 07, 2026-11-22): after narrowing the SAFE_HINT
+        line skip, the repo's own files must still scan clean -- the
+        scanner must not start flagging docs that only mention the
+        words "fake" / "placeholder".
+        反向 guard：收窄豁免后，仓库自己的文件仍须扫过——只提到
+        "fake"/"placeholder" 这些词的文档不能被误报。"""
+        proc = subprocess.run(
+            [sys.executable, "scripts/check_private_data.py"],
+            capture_output=True, text=True, timeout=60, cwd=str(self.copy))
+        self.assertEqual(proc.returncode, 0)
+        self.assertIn("没查到真实客户数据", proc.stdout)
+
+
+class TestCheckPrivateDataBoundaries(unittest.TestCase):
+    """Route 07 (2026-11-22): boundary-case regressions for the privacy
+    scan -- the 2026-11-21 fix stopped the silent pass, these cases
+    stop the quieter false negatives (and one false positive) around it.
+    All fixtures are synthetic and fictional; .example / .test domains
+    are RFC 2606 reserved, phone digits are sequential patterns.
+    隐私扫描边界 case 回归：2026-11-21 修了静默假通过，这批补更安静的
+    漏报（和一处误报）。全部数据均为虚构，域名用 RFC 2606 保留域，
+    电话用顺序号段。"""
+
+    def _scan(self, text):
+        with tempfile.TemporaryDirectory() as d:
+            path = str(Path(d) / "probe.md")
+            Path(path).write_text(text, encoding="utf-8")
+            return cpd.scan_file(path)
+
+    def test_test_at_hint_no_longer_hides_real_email(self):
+        """A "test@" note on the same line must not hide a real email
+        next to it -- the old whole-line SAFE_HINT skip let it through.
+        同行写了 test@ 也不能藏住旁边的真邮箱。"""
+        hits = self._scan("contact: buyer@customer-mail.example  # test@sample\n")
+        self.assertTrue(any("customer-mail.example" in why for _, why in hits))
+
+    def test_fake_word_no_longer_hides_real_phone(self):
+        """The word "fake" on a line must not hide a real phone number.
+        同行写了 fake 也不能藏住真电话。"""
+        hits = self._scan("fake entry, call +966 55 123 4567\n")
+        self.assertTrue(any("手机" in why for _, why in hits))
+
+    def test_phone_with_zero_group_still_flagged(self):
+        """+966 50 000 1234 is a real-looking number -- the old
+        line-level "000" placeholder check wrongly let it through.
+        带 000 组的真号不能再被放过。"""
+        hits = self._scan("phone: +966 50 000 1234\n")
+        self.assertTrue(any("手机" in why for _, why in hits))
+
+    def test_spaces_around_at_flagged(self):
+        """Spaces around @ do not make an address fake.
+        @ 前后加空格仍是邮箱。"""
+        hits = self._scan("reach me at buyer @ customer-mail.example\n")
+        self.assertTrue(any("customer-mail.example" in why for _, why in hits))
+
+    def test_at_word_obfuscation_flagged(self):
+        """someone [at] domain is still a real address.
+        [at] 写法仍是真邮箱。"""
+        hits = self._scan("email me at buyer [at] customer-mail.example\n")
+        self.assertTrue(any("customer-mail.example" in why for _, why in hits))
+
+    def test_fullwidth_email_and_phone_flagged(self):
+        """Full-width digits / @ pasted from a chat app are still
+        a real phone / email. 全角数字、全角 @ 也要认出来。"""
+        self.assertTrue(self._scan("电话：１３８１２３４５６７８\n"))
+        hits = self._scan("邮箱：buyer＠customer-mail.example\n")
+        self.assertTrue(any("customer-mail.example" in why for _, why in hits))
+
+    def test_dotted_phone_flagged(self):
+        """138.1234.5678 is a phone, not a version number.
+        点分隔的号码也是电话。"""
+        hits = self._scan("call 138.1234.5678\n")
+        self.assertTrue(any("手机" in why for _, why in hits))
+
+    def test_email_in_code_comment_flagged(self):
+        """An address hiding in a code comment is still a leak.
+        藏在代码注释里的邮箱也是泄漏。"""
+        hits = self._scan("# TODO: send quote to buyer@customer-mail.example\n")
+        self.assertTrue(any("customer-mail.example" in why for _, why in hits))
+
+    def test_long_line_email_flagged_fast(self):
+        """A real email at the end of a 100k-char line must be found,
+        and fast -- the old EMAIL regex backtracked quadratically
+        here and the scan hung instead of finishing.
+        10 万字符长行末尾的邮箱必须被找到，而且要快——旧正则在这里
+        平方级回溯，扫描直接挂住。"""
+        import time
+        text = "x" * 100000 + " buyer@customer-mail.example\n"
+        started = time.monotonic()
+        hits = self._scan(text)
+        self.assertLess(time.monotonic() - started, 5)
+        self.assertTrue(any("customer-mail.example" in why for _, why in hits))
+
+    def test_long_digit_run_finishes_fast(self):
+        """A 50k-digit run must not hang the phone regex either.
+        5 万位纯数字串也不能挂住电话正则。"""
+        import time
+        text = "1" * 50000 + "\n"
+        started = time.monotonic()
+        hits = self._scan(text)
+        self.assertLess(time.monotonic() - started, 5)
+        self.assertEqual(hits, [])
+
+    def test_empty_file_clean(self):
+        """An empty file scans clean, no crash. 空文件干净、不报错。"""
+        self.assertEqual(self._scan(""), [])
+
+    def test_placeholder_phone_still_clean(self):
+        """+000 00 000 0000 stays a placeholder, not a leak.
+        +000 占位号仍不算泄漏。"""
+        self.assertEqual(self._scan("phone: +000 00 000 0000\n"), [])
+
+    def test_sample_domain_still_clean(self):
+        """sample.example addresses stay clean, including subdomains.
+        sample.example 邮箱仍干净，子域名也一样。"""
+        self.assertEqual(self._scan("mail: demo01@sample.example\n"), [])
+        self.assertEqual(self._scan("mail: info@mail.example.com\n"), [])
+
+    def test_example_marker_line_still_exempt(self):
+        """A line explicitly marked 【示例】 is still exempt.
+        明确标了【示例】的行仍豁免。"""
+        self.assertEqual(
+            self._scan("【示例】 buyer@customer-mail.example\n"), [])
+
+    def test_timestamp_and_version_not_flagged(self):
+        """A date+time and a version number are not phone numbers.
+        日期时间和版本号不是电话。"""
+        self.assertEqual(self._scan("updated 2026-11-21 10:30:45\n"), [])
+        self.assertEqual(self._scan("requires python 3.11.2 or later\n"), [])
+
+    def test_ipv4_not_flagged_as_phone(self):
+        """192.168.1.100 is an IP address, not a phone number.
+        IPv4 地址不是电话。"""
+        self.assertEqual(self._scan("server 192.168.1.100\n"), [])
+
+    def test_real_us_style_number_not_eaten_by_date_guard(self):
+        """Guard check: the date guard must not swallow a real number
+        that starts with 202 (a DC area code, fictional 555 exchange).
+        反向 guard：日期保护不能把 202 开头的真号也吞掉。"""
+        hits = self._scan("call 202-555-0147\n")
+        self.assertTrue(any("手机" in why for _, why in hits))
     """Chinese column names (lane 26-dirty-csv-tests, file 05)."""
 
     def test_partial_chinese_headers_keep_email_and_tier(self):

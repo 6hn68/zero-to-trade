@@ -156,6 +156,12 @@ python scripts/quote_engine.py --cost 28 --freight 6 --margin 15 --format json
 
 # 结果直接存文件
 python scripts/quote_engine.py --cost 28 --freight 6 --margin 15 --out quote_internal.txt
+
+# 到岸全成本：先用 quote_engine 报 FOB/CIF，再用 landed_cost 算 CIF→DDP（关税 + 目的港杂费）+ 利润空间
+python scripts/landed_cost.py --fob 33.17 --freight 6 --duty 10 --port-charges 2
+
+# 报价前先锚价：海关数据竞品价区间 + 自家成本 → 进取/中位/保守三档（先用 anchor_price 定价，再用 quote_engine 出正式报价单）
+python scripts/anchor_price.py --comp-low 38 --comp-high 46 --comp-median 42 --cost 28 --freight 6 --duty 10
 ```
 
 > **注意**：`--audience client` 只去掉成本与底价，**让步阶梯和"换回条件"仍在输出里**。所以脚本输出永远只是**内部草稿**，不要原样截图或转发给客户——照着它填你自己的报价单（见第七节模板 A）。
@@ -315,6 +321,19 @@ MOQ: 200 pcs per size / 1 x 20GP per order. Mixed sizes allowed in one container
 - 对方沉默超过 5-7 天，可以跟进一次，但**跟进不带降价**（带一个信息点）
 - 报价发出前让 AI 或同事挑一遍错：数字、单位、港口、Incoterms、有效期、拼写
 - 每次让价都留书面记录：邮件里写清「这个价格是基于 A+B+C 条件」
+
+### 谈判四招：价格之外的心理战
+
+报价是技术，谈判是心理。技术部分（成本/运费/利润）算清楚，心理部分用对话拿下：
+- **锚定**：先报高配版，再报主推款——主推显得超值。「高端款 $X，但大多数客户选标准款 $Y，性能到 80%，划算得多。你市场适合哪个？」
+- **损失规避**：不说「买了多好」，说「不买多亏」。「原材料这月涨了，上周犹豫的两家多付了 4%。现在锁价就是省钱。」
+- **承诺一致**：让他先确认小事。「规格和交期确认了对吧？那我按这个准备 PI。」——确认过的事，反悔成本就高了。
+- **稀缺性**：只用**真实**信息。「这班船只剩 3 个柜位了，我帮你留到周五。」——**编造船期/涨价/抢货是红线**。
+
+三条红线（碰了就停，转人工）：
+- **报价低于底价** → 停，不许自己降价。
+- **客户要账期/赊销/OA** → 新手不要自己批，这是公司级决策。
+- **绝不做无把握的承诺**：交期、质保、赔付，做不到的一律不说。说出去的每句话，将来都是成本。
 
 ## 三、怎么算这步过关了
 

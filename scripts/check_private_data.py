@@ -22,21 +22,87 @@ from __future__ import print_function
 import argparse
 import os
 import re
+import string
 import sys
 
-# 允许出现的邮箱域名：RFC 2606 保留域名 + 本项目约定的示例域名
+# Allowed email domains: RFC 2606 reserved domains + the example domain
+# this project agreed on. Subdomains of these count as allowed too
+# (mail.example.com is still an example address).
+# 允许出现的邮箱域名：RFC 2606 保留域名 + 本项目约定的示例域名；
+# 这些域名的子域名也算允许（mail.example.com 仍是示例地址）。
 OK_DOMAINS = {
     "sample.example", "example.com", "example.org", "example.net",
     "localhost", "test", "invalid",
 }
 
-# 允许出现的电话：占位符形态（+000 00 000 0000 之类）
-PLACEHOLDER_PHONE = re.compile(r"[+\d][\d\s()+-]*\b0{3,}\b")
+# NOTE (why no EMAIL regex here): a pattern like
+# `[A-Za-z0-9._%+-]+@...` backtracks quadratically on one very long
+# line with no "@" (a minified blob, a base64 dump) -- the scan hangs
+# instead of finishing. Email addresses are found with a linear walk
+# in _find_email_domains() below, so a 100k-char line stays fast.
+# 注意：这里故意不用 EMAIL 正则——`[...]+@` 在超长行上会平方级回溯，
+# 扫描直接挂住；下面 _find_email_domains() 用线性走查，10 万字符的行也很快。
 
-EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})")
+# A phone-looking digit run: 9-15 digits, separators may be space, dash
+# or dot (a dotted mobile still counts). An IPv4 address has the
+# same shape, so it is filtered out separately.
+# 看着像电话的数字串：9–15 位数字，分隔符可以是空格、横杠或点
+# （带点的手机号也算）；IPv4 地址形状一样，另外单独排除。
+PHONE = re.compile(r"(?<!\d)(?:\+?\d{1,3}[\s\-.]?)?(?:\d[\s\-.]?){8,13}\d(?!\d)")
+_DIGIT = re.compile(r"\d")
+_IPV4 = re.compile(r"\d{1,3}(?:\.\d{1,3}){3}")
+# A digit run that is really a date plus a time: the phone pattern
+# would happily eat the date and the first bit of the time as one
+# long number. Skip matches that start like a date, in either order,
+# and compact YYYYMMDD digit runs too.
+# 看着像日期加时间的数字串：电话 pattern 会把日期和时间开头
+# 当成一个长号码吃掉。日期形状的开头直接跳过，
+# 紧凑的 YYYYMMDD 数字串也一样。
+_DATE_LIKE = re.compile(
+    r"^(?:\d{4}[-./]\d{1,2}[-./]\d{1,2}|\d{1,2}[-./]\d{1,2}[-./]\d{4})")
+_COMPACT_DATE = re.compile(r"20\d\d(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])")
 
-# 中国/中东常见手机号形态：11 位手机、或带国家码的 +966 51xxxxxxx
-PHONE = re.compile(r"(?<!\d)(?:\+?\d{1,3}[\s-]?)?(?:\d[\s-]?){8,13}\d(?!\d)")
+# Full-width characters that sneak in when contact lines are pasted
+# from chat apps: full-width digits, @, dot, brackets, plus/minus,
+# ideographic space. They are translated to ASCII before scanning.
+# 从聊天软件粘贴联系方式时常带的全角字符：全角数字、@、点、括号、
+# 加减号、全角空格，扫描前先转成半角。
+_FULLWIDTH = str.maketrans({
+    "０": "0", "１": "1", "２": "2", "３": "3", "４": "4",
+    "５": "5", "６": "6", "７": "7", "８": "8", "９": "9",
+    "＠": "@", "．": ".", "　": " ",
+    "（": "(", "）": ")", "＋": "+", "－": "-",
+})
+
+# Obfuscated spellings people use to dodge scrapers -- still a real
+# address, so normalise them before scanning: [at] / (at) / {at} -> @,
+# [dot] / (dot) / {dot} -> ., and spaces around @ and dots are dropped.
+# 为躲爬虫写的变形写法仍是真地址，扫描前先还原：[at]/(at)/{at} -> @、
+# [dot]/(dot)/{dot} -> .，@ 和点前后的空格去掉。
+_AT_WORD = re.compile(r"\s*[\[({]at[\])}]\s*", re.IGNORECASE)
+_DOT_WORD = re.compile(r"\s*[\[({]dot[\])}]\s*", re.IGNORECASE)
+_AT_SPACE = re.compile(r"\s*@\s*")
+_DOT_SPACE = re.compile(r"(?<=[A-Za-z0-9])\s*\.\s*(?=[A-Za-z0-9])")
+
+# Characters allowed in the local part of an email address.
+# (Built from string.digits so the source line itself does not
+# contain a 10-digit run that looks like a phone number.)
+# 邮箱 @ 前面本地部分允许的字符。（用 string.digits 拼，
+# 免得源码行里出现 10 位连号、被自己当成电话。)
+_EMAIL_LOCAL_CHARS = set(string.ascii_letters + string.digits + "._%+-")
+_DOMAIN_SHAPE = re.compile(r"[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+
+# Lines explicitly marked as an example are exempt -- the whole line is
+# a placeholder, not a leak. Weak hints ("fake", "dummy", "test@" ...)
+# used to exempt the whole line too, which hid real data sitting on
+# the same line (e.g. a real phone next to "test@sample"); they no
+# longer skip anything -- the domain allow-list and the per-number
+# placeholder check below are the only exemptions now.
+# 只有明确标了示例的行才豁免——整行是占位符，不是泄漏。以前 "fake"、
+# "dummy"、"test@" 这类弱提示也会豁免整行，结果同一行里的真数据
+# （比如 test@sample 旁边的真电话）也被藏住了；现在弱提示不再豁免任何
+# 东西，只有域名白名单和下面按号码算的占位判断才豁免。
+EXAMPLE_MARKERS = ("【示例】", "[示例]", "占位", "placeholder")
 
 SCAN_EXT = (
     ".md", ".csv", ".txt", ".json", ".html", ".py", ".yml", ".yaml",
@@ -44,23 +110,92 @@ SCAN_EXT = (
 )
 SKIP_DIR = {".git", "__pycache__", "node_modules", ".venv", "venv"}
 
-# 明显的占位/示例/脱敏标记——出现在同一行就放过
-SAFE_HINT = (
-    "sample.example", "example.com", "【示例】", "[示例]", "占位", "placeholder",
-    "yourcompany", "your-email", "yourname", "test@", "fake", "dummy",
-)
+
+def _normalize(line):
+    """Normalise a line for scanning only (line numbers are untouched):
+    full-width chars -> ASCII, [at]/[dot] spellings -> @ / .,
+    spaces around @ and dots dropped, so a spaced-out address
+    is seen as the address it is.
+    只为扫描做归一化（行号不动）：全角转半角、[at]/[dot] 还原成 @ / .、
+    @ 和点前后的空格去掉，这样带空格的邮箱也会被认出来。"""
+    line = line.translate(_FULLWIDTH)
+    line = _AT_WORD.sub("@", line)
+    line = _DOT_WORD.sub(".", line)
+    line = _AT_SPACE.sub("@", line)
+    line = _DOT_SPACE.sub(".", line)
+    return line
+
+
+def _find_email_domains(line):
+    """Linear scan for email domains in a line (no regex backtracking):
+    for each "@", walk back over the local part and forward over the
+    domain, and keep the domain if it looks like a real one.
+    线性走查一行里的邮箱域名（不用正则、不回溯）：每个 @ 往前走本地部分、
+    往后走域名，域名像真的就留下。"""
+    domains = []
+    start = 0
+    while True:
+        at = line.find("@", start)
+        if at < 0:
+            break
+        i = at - 1
+        while i >= 0 and line[i] in _EMAIL_LOCAL_CHARS:
+            i -= 1
+        local = line[i + 1:at]
+        j = at + 1
+        while j < len(line) and (line[j].isalnum() or line[j] in ".-"):
+            j += 1
+        domain = line[at + 1:j].rstrip(".")
+        if local and _DOMAIN_SHAPE.fullmatch(domain or ""):
+            domains.append(domain)
+        start = at + 1
+    return domains
+
+
+def _is_ok_domain(domain):
+    """An allowed domain, or a subdomain of one (mail.example.com)."""
+    d = domain.lower()
+    return d in OK_DOMAINS or any(
+        d.endswith("." + ok) for ok in OK_DOMAINS)
+
+
+def _is_placeholder_number(digits):
+    """Is this digit run a placeholder, not a real number?
+    All the same digit (+000 00 000 0000), or mostly zeros.
+    A real number that happens to contain a 000 group is only
+    about a third zeros, so it is NOT a placeholder -- the old
+    line-level check wrongly let it through because it saw
+    "000" anywhere on the line.
+    这串数字是不是占位符：全是同一个数字（+000 00 000 0000），或
+    大半是 0。真号里带个 000 组只占三分之一左右，不算占位——
+    旧的行级检查因为行里出现 "000" 就放过，是错的。"""
+    if len(set(digits)) <= 1:
+        return True
+    return digits.count("0") * 10 >= len(digits) * 6
 
 
 def looks_like_real_phone(line):
-    """这行里的号码是不是看着像真电话（不是 +000 00 000 0000 这种占位）。"""
-    if PLACEHOLDER_PHONE.search(line):
+    """这行里的号码是不是看着像真电话（不是 +000 00 000 0000 这种占位）。
+
+    Is a number on this line a real-looking phone, not a placeholder?
+    Each candidate is judged on its own digits (see
+    _is_placeholder_number); an IPv4 address is not a phone.
+    每个候选号码按自己的数字单独判断（见 _is_placeholder_number）；
+    IPv4 地址不是电话。"""
+    if not _DIGIT.search(line):
         return False
     for m in PHONE.finditer(line):
-        digits = re.sub(r"\D", "", m.group())
+        text = m.group()
+        if _IPV4.fullmatch(text):
+            continue
+        if _DATE_LIKE.match(text):
+            continue
+        digits = re.sub(r"\D", "", text)
         if len(digits) < 9:
             continue
-        # 全是 0 / 全是同一个数字 → 占位
-        if len(set(digits)) <= 1:
+        if _COMPACT_DATE.match(digits):
+            continue
+        if _is_placeholder_number(digits):
             continue
         return True
     return False
@@ -78,15 +213,16 @@ def scan_file(path):
     for no, line in enumerate(lines, 1):
         low = line.lower()
         if any(h in line for h in ("【示例】", "[示例]")) or \
-           any(h in low for h in SAFE_HINT):
+           any(h in low for h in ("占位", "placeholder")):
             continue
+        norm = _normalize(line)
 
-        for domain in EMAIL.findall(line):
-            if domain.lower() not in OK_DOMAINS:
+        for domain in _find_email_domains(norm):
+            if not _is_ok_domain(domain):
                 hits.append((no, "邮箱域名 %s（不是保留域名，像是真人邮箱）" % domain))
                 break
 
-        if looks_like_real_phone(line):
+        if looks_like_real_phone(norm):
             hits.append((no, "手机号/座机号（看着像真号码）"))
 
     return hits

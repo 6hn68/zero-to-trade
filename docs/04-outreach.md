@@ -186,6 +186,168 @@ If you already have a supplier for this, a one-word reply is enough and I'll sto
 
 **四渠道的同一条铁律**：四个渠道说的是同一件事、同一个人设、同一个诉求，但**文案不能是同一段**。一个采购同日在四个通道看到四段一模一样的话，只会得出一个结论——群发。一致性校验见提示词 3。
 
+**第 5 步（附）：多语言建联（V13）**
+
+英语能发，但不等于对方爱看。拉美客户看西语、巴西看葡语、海湾看阿语——同一封信换成本地语言，回的概率才上去。脚本 `--lang es/pt/ar` 出的就是该语言正文，**每条后面都跟英文原文**，你按英文审批，客户只收本地语言那版。
+
+```bash
+python scripts/outreach_gen.py my_leads.csv --tier T0 --lang es   # 西语 + 英文对照
+python scripts/outreach_gen.py my_leads.csv --tier T1 --lang pt --out drafts_pt.md  # 葡语，存文件
+python scripts/outreach_gen.py my_leads.csv --tier T2 --lang ar   # 阿语 + 英文对照
+```
+
+规矩跟英文版完全一样，只是换了语言：
+
+- 模板与英文 T0/T1/T2 一一对应（同一段落结构、同样的两个要点、同一个 CTA、不报价、不带附件）；模板只在 `scripts/outreach_gen.py` 里一份内嵌字典，`prompts/` 不另建副本。
+- `--lang` 非法值（如 `fr`）直接报 argparse 错，不裸奔；缺 CSV 文件报人话错（真实例子见脚本 `--help`）。
+- 自查清单走英文，长度类检查以真正会发的那版（西/葡/阿）为准；主题行同样卡 40 字符，超了自动降级到更短的写法。
+- 发之前照样先过第 2 步送达率自检——语言换了，垃圾箱规则没变。
+
+三份真实输出（2026-11-07 实测，`examples/leads_example.csv`，逐字贴）：
+
+**西语 T0（【示例】海湾轮胎贸易）：**
+
+```text
+======================================================================
+T0 | Reach out now (multi-channel) | 95 pts
+Company: 【示例】海湾轮胎贸易 (Saudi Arabia)
+Angle: Name it specifically — the first line must reference something they said or did
+----------------------------------------------------------------------
+[Español — send this]
+Subject: TBR 12.00R20 — suministro — 【示例】海湾轮胎贸易
+
+Hola,
+
+Su nota menciona: Annual RFQ for truck tyres, looking for supplier, 40HQ container regular. Por eso le escribo directamente a usted y no a un buzón general.
+
+Fabricamos TBR 12.00R20 y enviamos a Saudi Arabia con regularidad. Si este año están comprando, puedo confirmar por escrito desde ahora:
+- Especificación: TBR 12.00R20, carga mixta en 40HQ aceptada
+- Condiciones: FOB / CIF, cotización en 48 horas
+
+¿Qué medidas y qué volumen mensual están manejando actualmente en TBR 12.00R20?
+
+Saludos cordiales,
+[Your Name] | [Company]
+
+[EN — English original, for approval]
+Subject: TBR 12.00R20 supply — 【示例】海湾轮胎贸易
+
+Hello,
+
+Your note mentioned: Annual RFQ for truck tyres, looking for supplier, 40HQ container regular. That is why I am writing to you rather than to a general inbox.
+
+We make TBR 12.00R20 and ship to Saudi Arabia on a regular basis. If you are sourcing this year, here are two things I can put in writing now:
+- Specification: TBR 12.00R20, mixed loading on 40HQ accepted
+- Terms: FOB / CIF both workable, quote turned around within 48 hours
+
+What sizes and monthly volume are you running on TBR 12.00R20 at the moment?
+
+Best regards,
+[Your Name] | [Company]
+
+Pre-send checklist:
+  ✓ To: demo01@sample.example
+  ☐ Attachments: spec sheet / one-pager (<=2 files, <3MB)
+  ✗ FIX Signature: still the placeholder '[Your Name] | [Company]' — put your real name, company, phone and WhatsApp in
+  ✓ why them is company-specific
+  ✓ Subject 38 chars (<=40 or mobile truncates)
+  ✓ Preview line 91 chars (<=120 or Gmail cuts it): "Su nota menciona: Annual RFQ for truck tyres, looking for…"
+  ✓ No price number / price list in the body
+  ✓ No leftover placeholder 
+  ✗ FIX No spam trigger 疑似吼叫大写: 00R20
+```
+
+**葡语 T1（【示例】阿曼蓝海）：**
+
+```text
+======================================================================
+T1 | First touch this week | 77 pts
+Company: 【示例】阿曼蓝海 (Oman)
+Angle: Low-friction — give them an easy reason to reply
+----------------------------------------------------------------------
+[Português — send this]
+Subject: TBR 12.00R20 — uma pergunta rápida
+
+Olá,
+
+Sua nota menciona: Tender invitation issued by Oman municipality. Só uma pergunta, e depois não vou mais incomodar.
+
+Fabricamos TBR 12.00R20 e fornecemos a outros compradores em Oman. Antes de incluir a 【示例】阿曼蓝海 na lista de contatos deste trimestre: TBR 12.00R20 continua sendo algo que compram da Ásia?
+
+Responda com uma faixa de medidas e voltarei com os números. Se responder «agora não», não escreverei novamente.
+
+Atenciosamente,
+[Your Name] | [Company]
+
+[EN — English original, for approval]
+Subject: TBR 12.00R20 — one quick question
+
+Hello,
+
+Your note mentioned: Tender invitation issued by Oman municipality. One question, and then I will leave you alone.
+
+We make TBR 12.00R20 and supply other buyers in Oman. Before I put 【示例】阿曼蓝海 on this quarter's call list — is TBR 12.00R20 still something you source from Asia?
+
+Reply with a size range and I will come back with numbers. Reply "not now" and I will not write again.
+
+Best regards,
+[Your Name] | [Company]
+
+Pre-send checklist:
+  ✓ To: sales@sample.example
+  ☐ Attachments: spec sheet / one-pager (<=2 files, <3MB)
+  ✗ FIX Signature: still the placeholder '[Your Name] | [Company]' — put your real name, company, phone and WhatsApp in
+  ✓ why them is company-specific
+  ✓ Subject 34 chars (<=40 or mobile truncates)
+  ✓ Preview line 65 chars (<=120 or Gmail cuts it): "Sua nota menciona: Tender invitation issued by Oman…"
+  ✓ No price number / price list in the body
+  ✓ No leftover placeholder 
+  ✗ FIX No spam trigger 疑似吼叫大写: 00R20
+```
+
+**阿语 T2（【示例】尼日利亚先锋）：**
+
+```text
+======================================================================
+T2 | Low-frequency nurture | 50 pts
+Company: 【示例】尼日利亚先锋 (Nigeria)
+Angle: Lightest touch — just confirm facts, do not ask for a reply
+----------------------------------------------------------------------
+[العربية — send this]
+Subject: 【示例】尼日利亚先锋 — التحقق من مشتريات PCR tubes
+
+مرحباً،
+
+أحدّث ملاحظاتي حول مستوردي PCR tubes في Nigeria.
+
+هل ما زالت 【示例】尼日利亚先锋 تشتري PCR tubes من آسيا هذا العام؟ تكفي كلمة واحدة، وإذا كانت الإجابة لا، فسأحذفكم من القائمة وأتوقف عن الكتابة.
+
+مع أطيب التحيات،
+[Your Name] | [Company]
+
+[EN — English original, for approval]
+Subject: 【示例】尼日利亚先锋 — PCR tubes sourcing check
+
+Hello,
+
+I am updating my notes on Nigeria importers of PCR tubes.
+
+Is 【示例】尼日利亚先锋 still sourcing PCR tubes from Asia this year? One word is enough, and if it is no I will take you off the list and stop writing.
+
+Best regards,
+[Your Name] | [Company]
+
+Pre-send checklist:
+  ✗ FIX To: NO EMAIL ON FILE — go fill it in before you send
+  ☐ Attachments: spec sheet / one-pager (<=2 files, <3MB)
+  ✗ FIX Signature: still the placeholder '[Your Name] | [Company]' — put your real name, company, phone and WhatsApp in
+  ✓ why them is company-specific
+  ✓ Subject 40 chars (<=40 or mobile truncates)
+  ✓ Preview line 48 chars (<=120 or Gmail cuts it): "أحدّث ملاحظاتي حول مستوردي PCR tubes في Nigeria."
+  ✓ No price number / price list in the body
+  ✓ No leftover placeholder 
+  ✓ No spam trigger
+```
 **第 6 步：做 A/B 测试（分名单测，不是给同一个人发三遍）**
 
 同一批线索、不同切入角度各写一版：
