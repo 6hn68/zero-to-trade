@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   scripts:
-    name: 四个脚本 / Python ${{ matrix.python-version }}
+    name: 十二个脚本 / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false  # 一个版本红了别掐掉其他版本，新人要看的是"到底哪个版本不行"
@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: 四个脚本能不能编译（别让新人第一步就崩）
+      - name: 十二个脚本能不能编译（别让新人第一步就崩）
         run: python -m py_compile scripts/*.py
 
       - name: 3.8 语法门禁：list[str]、dict | dict、match 这些不许偷渡进来
@@ -53,7 +53,7 @@ jobs:
               sys.exit('✗ 有脚本用了 3.8 不认的语法。最低版本是 3.8，'
                        '写成 dict[str, int] 而不是 dict | dict：\n  '
                        + '\n  '.join(bad))
-          print('  四个脚本在 3.8 的语法下都能解析 ✓')
+          print('  十二个脚本在 3.8 的语法下都能解析 ✓')
           PY
 
       - name: 只许标准库：谁 import 了第三方包，这关就过不去
@@ -61,7 +61,7 @@ jobs:
           python - <<'PY'
           import ast, glob, sys
 
-          ALLOWED = {'argparse', 'csv', 'io', 'json', 'os', 're', 'sys',
+          ALLOWED = {'argparse', 'csv', 'io', 'json', 'logging', 'os', 're', 'sys',
                      'unicodedata', 'datetime', 'decimal', 'typing', 'math',
                      'textwrap', 'collections', 'itertools', 'string'}
           LOCAL = {'lead_score', 'outreach_gen', 'followup_plan', 'quote_engine'}
@@ -84,7 +84,7 @@ jobs:
           if bad:
               sys.exit('✗ 混进非标准库依赖了。"零安装"是这个项目的卖点，'
                        '加一个 requests 就全废了：\n  ' + '\n  '.join(bad))
-          print('  四个脚本只 import 标准库和彼此 ✓')
+          print('  十二个脚本只 import 标准库和彼此 ✓')
           PY
 
       - name: 真客户数据自查脚本能不能跑（挡住 .gitignore 挡不住的那类漏网）
@@ -249,6 +249,25 @@ jobs:
           echo "5. 加新脚本记得：只用标准库、报错说人话、别往仓库里塞真实客户数据。"
           echo "6. 还是看不懂？开个 issue，把这段日志整段贴进去就行。"
           echo "=========================================================="
+
+  tests:
+    name: 452 个测试 / Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 装 Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 全量测试（452 个，标准库 unittest）
+        run: python -m unittest discover -s tests -v
 
   repo:
     name: 仓库承诺（单文件 Demo / 脱敏 / 文档链接）
