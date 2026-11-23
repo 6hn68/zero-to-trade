@@ -92,7 +92,7 @@ a.card:hover{text-decoration:none;transform:translateY(-3px)}
 .fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px 16px}
 label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
 label.f.wide{grid-column:1/-1}
-input[type=text],input[type=number],input[type=date],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;color:var(--text);min-width:0}
+input[type=text],input[type=email],input[type=number],input[type=date],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;color:var(--text);min-width:0}
 textarea{font-family:var(--mono);font-size:13px;line-height:1.5;min-height:190px;resize:vertical}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .check{display:inline-flex;align-items:center;gap:8px;font-size:15px;color:var(--text);cursor:pointer}
@@ -180,6 +180,9 @@ footer{border-top:1px solid var(--line2);padding:28px 0 40px;font-size:12px;colo
 footer .wrap{display:flex;gap:12px 28px;flex-wrap:wrap;justify-content:space-between}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);border-radius:980px;padding:10px 18px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:80;max-width:calc(100% - 32px)}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#contact textarea{font-family:inherit;font-size:16px;min-height:150px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.note{font-size:13px;color:var(--muted);margin:14px 0 0}
 </style>
 </head>
 <body>
@@ -193,6 +196,7 @@ footer .wrap{display:flex;gap:12px 28px;flex-wrap:wrap;justify-content:space-bet
 <a href="#quote"><span class="zh">报价</span><span class="en">Quote</span></a>
 <a class="opt" href="#fastpath"><span class="zh">七天</span><span class="en">7 days</span></a>
 <a class="opt" href="#cli"><span class="zh">命令行</span><span class="en">CLI</span></a>
+<a href="#contact"><span class="zh">留言</span><span class="en">Contact</span></a>
 <a class="opt" href="//github.com/6hn68/zero-to-trade">GitHub</a>
 </div>
 <button class="lang" id="lang" type="button" aria-label="切换语言 / Switch language">EN</button>
@@ -425,12 +429,27 @@ python3 -m unittest discover -s tests</code></div>
 </div>
 </div>
 </section>
+<section class="alt" id="contact">
+<div class="wrap">
+<div class="head"><h2><span class="zh">有话，直接说。</span><span class="en">Say it here.</span></h2><p><span class="zh">提问题、报 bug、想合作都行。留言只有作者能看到，会回到你留的邮箱。</span><span class="en">Questions, bugs, ideas, collaboration. Only the author sees your message, and the reply goes to the email you leave.</span></p></div>
+<div class="panel" style="max-width:640px;margin:0 auto">
+<div class="fields">
+<label class="f wide"><span class="zh">你的邮箱（用来回复你）</span><span class="en">Your email (for the reply)</span><input type="email" id="cEmail" autocomplete="email" maxlength="200"></label>
+<label class="f wide"><span class="zh">想说的话</span><span class="en">Your message</span><textarea id="cMsg" maxlength="4000"></textarea></label>
+<label class="hp" aria-hidden="true">website<input type="text" id="cWeb" tabindex="-1" autocomplete="off"></label>
+</div>
+<div class="row" style="margin-top:16px"><button class="btn btn-primary" type="button" id="cSend"><span class="zh">发送</span><span class="en">Send</span></button></div>
+<div id="cOut" role="status" aria-live="polite"></div>
+<p class="note"><span class="zh">只有点“发送”才会把这两项发出去；上面四个工具仍然不联网。</span><span class="en">Only these two fields are sent, and only when you press Send. The four tools above still make no network calls.</span></p>
+</div>
+</div>
+</section>
 </main>
 
 <footer>
 <div class="wrap">
 <span>zero-to-trade · 6hn68 · MIT License</span>
-<span><span class="zh">本页不收集任何数据。</span><span class="en">This page collects no data.</span> <a href="//github.com/6hn68/zero-to-trade">GitHub</a></span>
+<span><span class="zh">工具不上传任何数据，只有留言会发给作者。</span><span class="en">The tools upload nothing; only messages you send reach the author.</span> <a href="//github.com/6hn68/zero-to-trade">GitHub</a></span>
 </div>
 </footer>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1765,6 +1784,24 @@ start = qs? qs[1]: (localStorage.getItem("ztt-lang") || "zh");
 } catch (_) {}
 $("f-start").value = todayISO();
 applyLang(start, false);
+})();
+</script>
+<script>
+(function () {
+var b = document.getElementById("cSend"); if (!b) return;
+function zh() { return document.documentElement.lang !== "en"; }
+function say(z, e, bad) { var o = document.getElementById("cOut"); o.className = bad ? "err" : "note"; o.textContent = zh() ? z : e; }
+b.addEventListener("click", function () {
+var em = document.getElementById("cEmail").value.trim(), m = document.getElementById("cMsg").value.trim();
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { say("请填一个能收信的邮箱。", "Please enter an email you can receive.", 1); return; }
+if (m.length < 5) { say("留言至少写 5 个字。", "Please write at least 5 characters.", 1); return; }
+b.disabled = true; say("发送中…", "Sending…");
+fetch("//abwd.vercel.app/api/support", { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
+body: JSON.stringify({ message: "[zero-to-trade] " + m, email: em, topic: "zero-to-trade", lang: zh() ? "zh" : "en", page: "/zero-to-trade/", website: document.getElementById("cWeb").value }) })
+.then(function () { say("已发送，作者会回到你的邮箱。", "Sent. The author will reply by email."); document.getElementById("cMsg").value = ""; })
+.catch(function () { say("没发出去，请稍后再试。", "Could not send. Please try again later.", 1); })
+.then(function () { b.disabled = false; });
+});
 })();
 </script>
 </body>
