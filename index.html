@@ -431,11 +431,11 @@ python3 -m unittest discover -s tests</code></div>
 </section>
 <section class="alt" id="contact">
 <div class="wrap">
-<div class="head"><h2><span class="zh">有话，直接说。</span><span class="en">Say it here.</span></h2><p><span class="zh">提问题、报 bug、想合作都行。留言只有作者能看到，会回到你留的邮箱。</span><span class="en">Questions, bugs, ideas, collaboration. Only the author sees your message, and the reply goes to the email you leave.</span></p></div>
+<div class="head"><h2><span class="zh">有话，请您说吧。</span><span class="en">We'd love to hear from you.</span></h2><p><span class="zh">您有问题、发现 bug 或想合作，都欢迎留言。留言只有作者能看到，我们会回复到您留的邮箱。</span><span class="en">Questions, bugs, ideas, collaboration. Only the author sees your message, and the reply goes to the email you leave.</span></p></div>
 <div class="panel" style="max-width:640px;margin:0 auto">
 <div class="fields">
-<label class="f wide"><span class="zh">你的邮箱（用来回复你）</span><span class="en">Your email (for the reply)</span><input type="email" id="cEmail" autocomplete="email" maxlength="200"></label>
-<label class="f wide"><span class="zh">想说的话</span><span class="en">Your message</span><textarea id="cMsg" maxlength="4000"></textarea></label>
+<label class="f wide"><span class="zh">您的邮箱（用于回复您）</span><span class="en">Your email (for the reply)</span><input type="email" id="cEmail" autocomplete="email" maxlength="200"></label>
+<label class="f wide"><span class="zh">您想说的话</span><span class="en">Your message</span><textarea id="cMsg" maxlength="4000"></textarea></label>
 <label class="hp" aria-hidden="true">website<input type="text" id="cWeb" tabindex="-1" autocomplete="off"></label>
 </div>
 <div class="row" style="margin-top:16px"><button class="btn btn-primary" type="button" id="cSend"><span class="zh">发送</span><span class="en">Send</span></button></div>
@@ -1790,16 +1790,16 @@ applyLang(start, false);
 (function () {
 var b = document.getElementById("cSend"); if (!b) return;
 function zh() { return document.documentElement.lang !== "en"; }
-function say(z, e, bad) { var o = document.getElementById("cOut"); o.className = bad ? "err" : "note"; o.textContent = zh() ? z : e; }
+function say(z, e, bad) { var o = document.getElementById("cOut"); o.className = bad ? "err" : "note"; o.innerHTML = ""; var a = document.createElement("span"); a.className = "zh"; a.textContent = z; var c = document.createElement("span"); c.className = "en"; c.textContent = e; o.appendChild(a); o.appendChild(c); }
 b.addEventListener("click", function () {
 var em = document.getElementById("cEmail").value.trim(), m = document.getElementById("cMsg").value.trim();
-if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { say("请填一个能收信的邮箱。", "Please enter an email you can receive.", 1); return; }
-if (m.length < 5) { say("留言至少写 5 个字。", "Please write at least 5 characters.", 1); return; }
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { say("请您填写一个能收信的邮箱。", "Please enter an email you can receive.", 1); return; }
+if (m.length < 5) { say("请您至少写 5 个字。", "Please write at least 5 characters.", 1); return; }
 b.disabled = true; say("发送中…", "Sending…");
 fetch("//abwd.vercel.app/api/support", { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" },
 body: JSON.stringify({ message: "[zero-to-trade] " + m, email: em, topic: "zero-to-trade", lang: zh() ? "zh" : "en", page: "/zero-to-trade/", website: document.getElementById("cWeb").value }) })
-.then(function () { say("已发送，作者会回到你的邮箱。", "Sent. The author will reply by email."); document.getElementById("cMsg").value = ""; })
-.catch(function () { say("没发出去，请稍后再试。", "Could not send. Please try again later.", 1); })
+.then(function () { say("已发送，谢谢您！我们会尽快回复到您的邮箱。", "Sent. Thank you! We'll reply by email soon."); document.getElementById("cMsg").value = ""; })
+.catch(function () { say("抱歉，没有发出去，请您稍后再试。", "Could not send. Please try again later.", 1); })
 .then(function () { b.disabled = false; });
 });
 })();
