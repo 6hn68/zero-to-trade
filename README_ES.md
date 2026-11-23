@@ -1,12 +1,14 @@
 # zero-to-trade
 
+[中文](README.md) · [English](README_EN.md) · **Español** · [Português](README_PT.md) · [Français](README_FR.md) · [العربية](README_AR.md) · [Русский](README_RU.md) · [Deutsch](README_DE.md) · [日本語](README_JA.md) · [한국어](README_KO.md) · [Türkçe](README_TR.md) · [Bahasa Indonesia](README_ID.md)
+
 **Un flujo de trabajo abierto para sacar adelante tu primera exportación si empiezas de cero: 7 etapas, 14 scripts de Python sin dependencias y una demo que abre en el navegador. De elegir el mercado a cobrar el pedido.**
 
 > La idea cabe en una línea: **la IA hace el trabajo pesado; tú decides.**
 
 > **Mandaste 200 correos en frío (*cold emails*) y recibiste 0 respuestas. El correo funcionó; el proceso, no.** Este repo ordena el trabajo en 7 etapas y 14 scripts. En cada etapa te dice qué sitio abrir, qué escribir y qué resultado cuenta como «aprobado».
 
-Licencia MIT · V20 · autoría anónima: zero-to-trade · [中文版](README.md) · [English](README_EN.md)
+Licencia MIT · V20 · autoría anónima: zero-to-trade
 
 Esta versión en español es un *starter*. Buscamos a gente que la revise y la complete. Si algo suena raro, abre un issue o manda un PR; la versión de referencia sigue siendo [README_EN.md](README_EN.md).
 
@@ -47,9 +49,9 @@ Cada etapa tiene su archivo en `docs/` y sigue la misma estructura de seis parte
 
 ## Inicio rápido en 30 segundos
 
-**¿No tienes Python?** Abre [`index.html`](index.html) en el navegador, pega un CSV y mira la clasificación T0-T3. No instalas nada.
+**¿No tienes Python?** Abre el sitio: [6hn68.github.io/zero-to-trade](https://6hn68.github.io/zero-to-trade/). Tiene cuatro herramientas que funcionan en el navegador —clasificación de leads, primer contacto, plan de seguimiento y cotización— con la interfaz en 12 idiomas. Pega un CSV y mira la clasificación T0-T3. No instalas nada y tu lista no sale del navegador.
 
-Hay 12 archivos de scripts: 11 de negocio y 1 de privacidad. Uno de negocio es el motor de cotización. No usan paquetes de terceros y funcionan con Python 3.8+.
+Hay 14 archivos de scripts: 13 de negocio y 1 de privacidad. Uno de negocio es el motor de cotización. No usan paquetes de terceros y funcionan con Python 3.10+.
 
 ```bash
 python scripts/lead_score.py examples/leads_example.csv
@@ -69,7 +71,7 @@ zero-to-trade/
 ├── README.md              # README principal en chino
 ├── README_EN.md           # Versión completa en inglés (la referencia)
 ├── README_ES.md           # Esta página: starter en español; buscamos revisores
-├── index.html             # Demo en el navegador, sin instalar nada (GitHub Pages)
+├── index.html             # El sitio: 4 herramientas en el navegador, interfaz en 12 idiomas, sin dependencias (GitHub Pages)
 ├── MANIFESTO.md           # Anonimato y cero cursos de pago
 ├── CONTRIBUTING.md        # Cómo contribuir + reglas para docs y código
 ├── CHANGELOG.md           # Registro de cambios
@@ -161,7 +163,7 @@ Puedes ayudar de tres formas:
 2. Traduce el documento de una etapa.
 3. Añade detalles de tu industria o de tu país.
 
-Los PR son bienvenidos. Para el código hay una regla que no se negocia: **Python 3.8+ y solo biblioteca estándar**. El resto está en [CONTRIBUTING.md](CONTRIBUTING.md).
+Los PR son bienvenidos. Para el código hay una regla que no se negocia: **Python 3.10+ y solo biblioteca estándar**. El resto está en [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -183,6 +185,6 @@ zero-to-trade es un proyecto **de código abierto con mantenimiento activo**; lo
 
 **Abre un issue: https://github.com/6hn68/zero-to-trade/issues**
 
-¿Viste un error? Repórtalo. ¿Conoces un mercado que el repo no cubre? Manda un PR. ¿Quieres discutir el método? También sirve un issue.
+¿Viste un error? Repórtalo. ¿Conoces un mercado que el repo no cubre? Manda un PR. ¿Quieres discutir el método? También sirve un issue. Y si prefieres escribir en privado, usa el formulario al final del sitio: el mensaje llega al autor.
 
 Esta traducción al español sigue siendo un *starter* y todavía busca hablantes nativos que la revisen. La versión de referencia es [README_EN.md](README_EN.md).

@@ -1,10 +1,12 @@
 # zero-to-trade
 
-![CI](https://github.com/6hn68/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.8%2B-306998)
+**中文** · [English](README_EN.md) · [Español](README_ES.md) · [Português](README_PT.md) · [Français](README_FR.md) · [العربية](README_AR.md) · [Русский](README_RU.md) · [Deutsch](README_DE.md) · [日本語](README_JA.md) · [한국어](README_KO.md) · [Türkçe](README_TR.md) · [Bahasa Indonesia](README_ID.md)
 
-**从零做外贸的开源工作流：7步流程+12个Python工具，帮新手把找客户、背调、建联、跟单跑成可重复的动作。**
+![CI](https://github.com/6hn68/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.10%2B-306998)
 
-> **这是什么**：新手外贸员常卡在三件事上——不知道先找哪家客户、建联信不知道怎么写、跟进全靠记性。这个仓库把“选市场→找客户→背调→建联→聊单→报价→交付”拆成 7 步，每步落到具体动作，再用 12 个 Python 脚本替你干掉最枯燥的那部分。
+**从零做外贸的开源工作流：7 步流程 + 14 个 Python 脚本 + 4 个网页工具，帮新手把找客户、背调、建联、跟单跑成可重复的动作。**
+
+> **这是什么**：新手外贸员常卡在三件事上——不知道先找哪家客户、建联信不知道怎么写、跟进全靠记性。这个仓库把“选市场→找客户→背调→建联→聊单→报价→交付”拆成 7 步，每步落到具体动作，再用 14 个 Python 脚本替你干掉最枯燥的那部分。
 >
 > **怎么跑（3 条命令，30 秒看到结果）**：
 >
@@ -14,9 +16,9 @@
 > python3 scripts/followup_plan.py --tier T0 --start 2026-11-17 --csv examples/leads_example.csv   # T0 跟进计划：D0/D2/D5，3 次停手
 > ```
 >
-> **在线演示（不用装 Python）**：[https://6hn68.github.io/zero-to-trade/](https://6hn68.github.io/zero-to-trade/) ——浏览器打开，粘贴 CSV 即出分级，不上传数据。
+> **在线演示（不用装 Python）**：[https://6hn68.github.io/zero-to-trade/](https://6hn68.github.io/zero-to-trade/) ——浏览器打开就能用 4 个工具：线索分级、建联文案、跟进计划、报价，界面支持 12 种语言（右上角切换），名单不上传。
 >
-> **版本状态**：本地 V20 版（14 个脚本、452 项测试实测全绿，2026-11-22）；线上公开版仍是 V19（4 个脚本），待开写权限后推送同步。终端演示 GIF 待录制，录制脚本见 [`tape.vhs`](tape.vhs)。
+> **版本状态**：V20（14 个脚本、452 项测试全绿），仓库和网站都是这一版；网站有 4 个浏览器工具，界面 12 种语言；CI 在 Python 3.10–3.13 上跑。终端演示 GIF 待录制，录制脚本见 [`tape.vhs`](tape.vhs)。
 
 ## 7 步 Demo 导航：2 分钟跑通一次真实分级 + 建联消息
 
@@ -34,7 +36,7 @@
 
 跑完第 4 步，你手里就有一封能发的首触邮件；跑完第 5 步，你知道接下来 6 天每天该干什么。第 2 步的实际输出（一个字没改）见下面「第 1 条命令真的会打印这些」。
 
-不想装 Python？双击 [`index.html`](index.html)，浏览器里同样 7 步：示例自动载入 → 点「开始分级」→ 找到 T0 → 点「复制邮件」→ 把 `[ ]` 换成你自己的信息 → 按 D0/D2/D5 发 → 对方回了再报价。
+不想装 Python？打开[网站](https://6hn68.github.io/zero-to-trade/)（或在本地双击 [`index.html`](index.html)），浏览器里同样走一遍：点「载入轮胎示例」→ 点「打分」→ 找到 T0 → 生成首触文案并复制 → 把 `[ ]` 换成你自己的信息 → 排 D0/D2/D5 跟进 → 对方回了再报价。网页版首触文案是英文正文 + 中文对照；要西语、葡语、阿语文案，用命令行 `outreach_gen.py --lang es/pt/ar`。
 
 - **要花多久**：不装任何东西，2 分钟能在浏览器里看到第一版分级结果；想跑脚本就装一次 Python（约 20 分钟，大半时间在等下载），之后每条命令 30 秒。7 步全走完、发出第一次真实触达，按 [`docs/fast-path.md`](docs/fast-path.md) 是 7 天、每天 1–2 小时。
 - **你能得到什么**：7 个环节的清单（每步只回答"打开哪个网站、填什么、看到什么算过关"）+ 14 个脚本文件（13 个能直接跑的业务脚本 + 1 个脱敏自查脚本）+ 40 条可粘贴的 AI 提示词。
@@ -103,9 +105,9 @@
 
 ## 30 秒上手
 
-**不想装 Python 就别装。** 双击 [`index.html`](index.html)，浏览器里粘贴 CSV 就能看到 T0–T3 分级，不联网、不装东西。（推到 GitHub 后由 Pages 自动托管，别人也能直接打开。）
+**不想装 Python 就别装。** 打开[网站](https://6hn68.github.io/zero-to-trade/)，4 个工具（线索分级、建联文案、跟进计划、报价）直接在浏览器里跑，规则和脚本一致；粘贴 CSV 就能看到 T0–T3 分级，不装东西，名单不离开你的浏览器。界面支持 12 种语言。
 
-愿意装的话，下面 9 个业务脚本全是标准库写的，零第三方依赖，Python 3.8+ 就能跑；再加 1 个脱敏自查脚本 `check_private_data.py`（提交前扫一遍有没有真实客户数据）。报价引擎在 V10 已落地（FOB/CIF 区间 + 三档让步阶梯）；背调 Agent 在 V11 已落地（L1/L2/L3 三级 + A/B/C 评级 + 红旗清单）；轮胎行业包在 V12 已落地（规格 + 市场 → GCC 要点 + 清关单证 + 注意事项）；多语言建联在 V13 已落地（`--lang es/pt/ar`，西/葡/阿正文 + 英文原文对照）；到岸成本估算在 V14 已落地（FOB + 运费 + 保险 → CIF，再加关税 + 目的港杂费 → DDP）；展会实战工具在 V15 已落地（现场收的名片按兴趣度排会后 24 小时跟进计划）；催单话术库在 V16 已落地（D3/D7/D14/D30 × 已报价未回/已发样未回/已谈价未定，WhatsApp 短版 + 邮件长版，中英对照）。
+愿意装的话，13 个业务脚本全是标准库写的，零第三方依赖，Python 3.10+ 就能跑；再加 1 个脱敏自查脚本 `check_private_data.py`（提交前扫一遍有没有真实客户数据）。报价引擎在 V10 已落地（FOB/CIF 区间 + 三档让步阶梯）；背调 Agent 在 V11 已落地（L1/L2/L3 三级 + A/B/C 评级 + 红旗清单）；轮胎行业包在 V12 已落地（规格 + 市场 → GCC 要点 + 清关单证 + 注意事项）；多语言建联在 V13 已落地（`--lang es/pt/ar`，西/葡/阿正文 + 英文原文对照）；到岸成本估算在 V14 已落地（FOB + 运费 + 保险 → CIF，再加关税 + 目的港杂费 → DDP）；展会实战工具在 V15 已落地（现场收的名片按兴趣度排会后 24 小时跟进计划）；催单话术库在 V16 已落地（D3/D7/D14/D30 × 已报价未回/已发样未回/已谈价未定，WhatsApp 短版 + 邮件长版，中英对照）。
 
 **先花 10 秒做一件事**：把示例数据复制一份成自己的 `my_leads.csv`，**真名单只往这份里填**：
 
@@ -192,7 +194,7 @@ company,country,product,source,email,phone,years,contact,note
 不要。MIT 开源，没有付费版、没有进阶课、也没有"留邮箱领资料"这一步。
 
 **完全不懂 Python 能用吗？**
-能。双击 `index.html`，浏览器里粘贴 CSV 就能看到分级结果，不装任何东西。想跑脚本再考虑装 Python，首次约 20 分钟。
+能。打开网站或双击 `index.html`，浏览器里粘贴 CSV 就能看到分级结果，不装任何东西。想跑脚本再考虑装 Python，首次约 20 分钟。
 
 **示例里的公司是真实的吗？**
 全是虚构的。公司名统一带「【示例】」前缀，邮箱域名用 IANA 保留域 `sample.example`，电话是占位符。请不要照着去联系任何人。
@@ -213,9 +215,11 @@ company,country,product,source,email,phone,years,contact,note
 ```
 zero-to-trade/
 ├── README.md              # 你正在读的中文主门面
-├── README_EN.md           # 完整英文版
-├── README_ES.md           # 西班牙语版（starter，招募校对）
-├── index.html             # 零安装浏览器 Demo（GitHub Pages 自动托管）
+├── README_EN.md           # 完整英文版（各语种译本以它为准）
+├── README_ES.md / README_PT.md / README_FR.md / README_AR.md / README_RU.md
+├── README_DE.md / README_JA.md / README_KO.md / README_TR.md / README_ID.md
+│                          # 西 / 葡 / 法 / 阿（RTL）/ 俄 / 德 / 日 / 韩 / 土 / 印尼语版
+├── index.html             # 网站：4 个浏览器工具，界面 12 种语言，零依赖（GitHub Pages 托管）
 ├── MANIFESTO.md           # 匿名不卖课：品牌主张
 ├── GITHUB_LAUNCH.md       # 上线 + 推广执行清单（Topics/About/PR/Show HN）
 ├── CONTRIBUTING.md        # 贡献方式 + 文档/代码规范
@@ -251,10 +255,13 @@ zero-to-trade/
 │   ├── nudge.py           # V16 催单话术：D3/D7/D14/D30 × 已报价未回/已发样未回/已谈价未定 → WhatsApp 短版 + 邮件长版（中英对照）
 │   ├── anchor_price.py    # V18 竞品锚价：海关数据竞品价区间 + 自家成本 → 进取/中位/保守三档 CIF 锚价 + 5 项复核清单
 │   ├── fast_path.py     # V19 七天快路径互动版：每天 --day N 看任务，干完 --done N 打卡，--progress 看进度（与 docs/fast-path.md 逐条对齐）
+│   ├── market_rules.py    # 市场规则表：目标市场、土耳其/巴西壁垒、墨西哥/美国/欧盟排除
+│   ├── daily_video_list.py  # 每日 5 条视频清单：上午 3 条、下午 2 条，带规格、市场、卖点和拍摄检查项
 │   └── check_private_data.py  # 提交前自查：扫真实客户数据，抓到就挡住
-├── tests/                 # 标准库 unittest，`python3 -m unittest discover -s tests`
+├── tests/                 # 452 项标准库 unittest，`python3 -m unittest discover -s tests`
 ├── examples/
 │   ├── leads_example.csv  # 示例数据（复制成 my_leads.csv 再填自己的）
+│   ├── leads_example_lighting.csv  # 非轮胎示例：8 条 LED 灯具线索
 │   └── trade_show_example.csv  # 展会示例数据（3 家，高/中/低各一）
 ├── prompts/
 │   └── AI_PROMPTS.md      # 40 条可直接粘贴的提示词（核心 28 + 进阶 12），按环节分组
@@ -316,7 +323,7 @@ V20 不等下一版：10 轮打磨已经能直接用（坏 CSV 给人话报错�
 2. 翻译环节文档。西班牙语、阿拉伯语、葡萄牙语、俄语、法语、越南语——你会哪个就翻哪个。六段结构别动，只换语言，术语在 [GLOSSARY.md](GLOSSARY.md) 里对齐就行。
 3. 补你所在行业 / 国家的环节细节。这是最缺的。要求只有一条：写你真跑过的，别写你觉得应该这样的。具体到字段名、单证名、渠道结构、付款习惯、常见拒付理由。
 
-代码也可以直接改，但硬约束是 Python 3.8+、零第三方依赖，理由见 CONTRIBUTING。
+代码也可以直接改，但硬约束是 Python 3.10+、零第三方依赖，理由见 CONTRIBUTING。
 
 ---
 
@@ -327,7 +334,7 @@ V20 不等下一版：10 轮打磨已经能直接用（坏 CSV 给人话报错�
 - 想换打分权重？改 `lead_score.py` 顶部的 `CONTACT_W / SOURCE_W / SIGNAL_W / MATURITY_W` 四个常量，满分还是 100。
 - 想接自己的海关数据？CSV 表头对齐 `company,country,product,source,email,phone,years,contact,note`，直接喂进去。
 - 想嵌进自己的工具链？每个脚本都能 `import`，`score_lead()` / `render()` / `plan_followups()` / `build_quote()` 都是纯函数，返回字典或列表，不碰网络、不写文件。
-- CI 在 GitHub Actions 上跑 `py_compile` + 冒烟测试（py3.8–3.13）+ 脱敏门禁，改完提 PR 不会悄悄坏掉。
+- CI 在 GitHub Actions 上跑 `py_compile` + 全部测试（Python 3.10–3.13）+ 脱敏门禁，改完提 PR 不会悄悄坏掉。
 
 > 你不用信我说的。复制一份示例数据，跑一遍 `python scripts/lead_score.py my_leads.csv` 自己看结果——这玩意儿好不好使，30 秒就能验证，用不着我在这儿吹。
 
@@ -347,10 +354,21 @@ V20 不等下一版：10 轮打磨已经能直接用（坏 CSV 给人话报错�
 
 ## 多语言
 
-- 🇺🇸 [English](README_EN.md)（完整版，已就绪）
-- 🇧🇷 [Português](README_PT.md)（完整版，已就绪，巴西葡语）
-- 🇸🇦 [العربية](README_AR.md)（完整版，已就绪，RTL 排版）
-- 🇪🇸 [Español](README_ES.md)（starter，招募校对）· 🇷🇺 🇫🇷 🇻🇳 招募中 —— 任意语言熟就可以翻，结构不变、术语对齐 [GLOSSARY.md](GLOSSARY.md)，详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+README 有 12 种语言，网站界面也是这 12 种。各译本以英文版为准。
+
+- [English](README_EN.md)（英语，完整版）
+- [Español](README_ES.md)（西班牙语，starter，招募校对）
+- [Português](README_PT.md)（巴西葡语，完整版）
+- [Français](README_FR.md)（法语，完整版）
+- [العربية](README_AR.md)（阿拉伯语，完整版，RTL 排版）
+- [Русский](README_RU.md)（俄语，完整版）
+- [Deutsch](README_DE.md)（德语，完整版）
+- [日本語](README_JA.md)（日语，完整版）
+- [한국어](README_KO.md)（韩语，完整版）
+- [Türkçe](README_TR.md)（土耳其语，完整版）
+- [Bahasa Indonesia](README_ID.md)（印尼语，完整版）
+
+`docs/` 里的环节文档目前只有中文。你会哪种语言就翻哪篇，结构不变、术语对齐 [GLOSSARY.md](GLOSSARY.md)；母语者帮忙校对 README 也非常欢迎，详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ---
 
@@ -390,7 +408,7 @@ The premise: **AI does the heavy lifting, you make the calls.** Most tutorials t
 | **06 Quote & negotiate** | Quote discipline: every concession buys something | Quote sheet + concession ladder + scripts |
 | **07 Deliver the order** | Contract, production, inspection, documents, payment, freight | Closed delivery loop + repurchase plan |
 
-**30-second demo** (Python 3.8+, no third-party packages):
+**30-second demo** (Python 3.10+, no third-party packages):
 
 ```bash
 cp examples/leads_example.csv my_leads.csv
@@ -403,7 +421,7 @@ Ten sample leads come back tiered T0:2 / T1:5 / T2:1 / T3:2, each with its own n
 
 **What makes it different:** discipline, not tooling. The rules are what carry value — T0 gets contacted today, T3 goes in the cold pool, a concession without a condition is a donation. Anything that can be an `if/else` lives in a script, anything that needs judgment lives in the docs, anything that needs to sound like a human lives in `prompts/`.
 
-**Roadmap:** v0.1 (docs + scripts + 27 prompts) → v0.2 AI quoting engine → V19 (advanced modules, learning paths, 226 tests, 40 prompts, background-check agent, tire industry pack, multilingual outreach, landed cost estimation, trade show follow-up, nudge library, full Portuguese and Arabic READMEs, competitor anchor pricing, interactive 7-day fast path) → V20 (251 tests, local-increment merge, 10 hardening rounds: unified CLI, bad-CSV friendly errors, run tracing, shared helpers) → next: to be decided → long term: industry packs, more languages, real lead datasets.
+**Roadmap:** v0.1 (docs + scripts + 27 prompts) → v0.2 AI quoting engine → V19 (advanced modules, learning paths, 226 tests, 40 prompts, background-check agent, tire industry pack, multilingual outreach, landed cost estimation, trade show follow-up, nudge library, full Portuguese and Arabic READMEs, competitor anchor pricing, interactive 7-day fast path) → V20 (452 tests, local-increment merge, 10 hardening rounds: unified CLI, bad-CSV friendly errors, run tracing, shared helpers) → next: to be decided → long term: industry packs, more languages, real lead datasets.
 
 **Contributing:** the biggest gap here is country-specific field detail. If you actually sell into a market this repo knows nothing about, that's the highest-value contribution you can make. Read [CONTRIBUTING.md](CONTRIBUTING.md).
 

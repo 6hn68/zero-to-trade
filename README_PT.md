@@ -1,8 +1,10 @@
 # zero-to-trade
 
-![CI](https://github.com/6hn68/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.8%2B-306998)
+[中文](README.md) · [English](README_EN.md) · [Español](README_ES.md) · **Português** · [Français](README_FR.md) · [العربية](README_AR.md) · [Русский](README_RU.md) · [Deutsch](README_DE.md) · [日本語](README_JA.md) · [한국어](README_KO.md) · [Türkçe](README_TR.md) · [Bahasa Indonesia](README_ID.md)
 
-**Sete etapas, de "que país eu escolho" até "o dinheiro chegou." Mais doze scripts Python que fazem o trabalho chato. Não se presume nenhuma experiência. É esse o ponto.**
+![CI](https://github.com/6hn68/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.10%2B-306998)
+
+**Sete etapas, de "que país eu escolho" até "o dinheiro chegou." Mais catorze scripts Python que fazem o trabalho chato, e um site com quatro ferramentas que rodam direto no seu navegador. Não se presume nenhuma experiência. É esse o ponto.**
 
 > Você mandou 200 e-mails frios e recebeu zero respostas. Não é o seu inglês. É a ordem das operações.
 >
@@ -10,7 +12,7 @@
 
 > A única regra por trás de tudo aqui: **a IA faz o trabalho pesado, você toma as decisões.**
 
-Sem curso para comprar. Sem plano pago. Sem pedir e-mail. Licença MIT, V20 · [中文版](README.md) · [English](README_EN.md) · [Español](README_ES.md)
+Sem curso para comprar. Sem plano pago. Sem pedir e-mail. Licença MIT, V20.
 
 > PRs são bem-vindos, especialmente de quem vende para um mercado que este repositório nunca ouviu falar. Veja [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -62,9 +64,9 @@ Os documentos das etapas ficam em `docs/`, um arquivo por etapa, todos seguindo 
 ---
 ## Início rápido em 30 segundos
 
-**Não quer instalar Python?** Abra [`index.html`](index.html) no navegador. Cole um CSV e veja a classificação T0-T3. Nada para instalar. (Depois de publicado, o GitHub Pages hospeda a página, então você pode mandar o link para outra pessoa.)
+**Não quer instalar Python?** Abra o site: [6hn68.github.io/zero-to-trade](https://6hn68.github.io/zero-to-trade/). São quatro ferramentas no navegador — classificação de leads, primeiro contato, plano de follow-up e cotação — com a interface em 12 idiomas. Cole um CSV e veja a classificação T0-T3. Nada para instalar, e a sua lista não sai do navegador.
 
-São 14 arquivos de script: treze scripts de negócio, um deles o motor de cotação, mais um script guarda de privacidade (`check_private_data.py`, verifica se há dados reais de clientes antes de você commitar). Só biblioteca padrão. Python 3.8+.
+São 14 arquivos de script: treze scripts de negócio, um deles o motor de cotação, mais um script guarda de privacidade (`check_private_data.py`, verifica se há dados reais de clientes antes de você commitar). Só biblioteca padrão. Python 3.10+.
 
 ```bash
 # 1. Classifique seus leads. CSV entra, T0-T3 sai, cada nível com seu próximo passo.
@@ -105,7 +107,7 @@ company,country,product,source,email,phone,years,contact,note
 
 Só `company` é obrigatório. Todo o resto pode ficar em branco, e brancos pontuam no mínimo. `source` é o que mais mexe na nota: `referral` / `trade_show` / `customs` / `linkedin` / `search`.
 
-Todos os doze scripts aceitam `--help`. O `lead_score.py` também tem `--format json` e filtros `--country` / `--product`, caso você queira jogar o resultado numa planilha.
+Todos os catorze scripts aceitam `--help`. O `lead_score.py` também tem `--format json` e filtros `--country` / `--product`, caso você queira jogar o resultado numa planilha.
 
 Os scripts só decidem o que uma máquina pode decidir: se há e-mail, se há site, se passa da barra do T0. Se um lead merece a sua tarde, isso está nos documentos — e na sua cabeça.
 
@@ -120,7 +122,7 @@ zero-to-trade/
 ├── README_ES.md           # Versão em espanhol (starter, buscando revisores)
 ├── README_PT.md           # Este arquivo: versão completa em português brasileiro
 ├── README_AR.md           # Versão completa em árabe (RTL)
-├── index.html             # Demo no navegador, sem instalar nada (GitHub Pages)
+├── index.html             # O site: 4 ferramentas no navegador, interface em 12 idiomas, zero dependências (GitHub Pages)
 ├── MANIFESTO.md           # Anonimato, sem curso pago: a posição da marca
 ├── GITHUB_LAUNCH.md       # Lançamento + lista de divulgação (Topics/About/PR/Show HN)
 ├── CONTRIBUTING.md        # Como contribuir + convenções de docs e código
@@ -212,7 +214,7 @@ Três jeitos de entrar, do mais barato ao mais caro:
 2. **Traduzir uma etapa.** Espanhol, árabe, português, russo, francês, vietnamita — o que você realmente fala. Mantenha a estrutura de seis partes, troque o idioma, alinhe os termos com o [GLOSSARY.md](GLOSSARY.md).
 3. **Acrescentar seu país ou setor.** Esta é a parte que falta. Escreva o que você já fez, não o que você acha que deveria ser feito. Nomes de campos, nomes de documentos, como o canal é construído, como as pessoas pagam e por que se recusam a pagar.
 
-Código também, com uma regra dura: **Python 3.8+, só biblioteca padrão.** O raciocínio está em [CONTRIBUTING.md](CONTRIBUTING.md).
+Código também, com uma regra dura: **Python 3.10+, só biblioteca padrão.** O raciocínio está em [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -223,7 +225,7 @@ Todos os treze scripts de negócio (`lead_score` / `outreach_gen` / `followup_pl
 - Os pesos parecem errados? Quatro constantes no topo do `lead_score.py` (`CONTACT_W / SOURCE_W / SIGNAL_W / MATURITY_W`). Continua com teto em 100.
 - Tem seus próprios dados aduaneiros? Alinhe o cabeçalho (`company,country,product,source,email,phone,years,contact,note`) e jogue dentro.
 - Quer colocar dentro da sua própria ferramenta? Cada script importa de forma limpa. `score_lead()`, `render()`, `plan_followups()`, `build_quote()` são funções puras que devolvem dicionários e listas. Sem rede, sem arquivos escritos.
-- O CI roda `py_compile` mais testes de fumaça (py3.8–3.13) mais um portão de privacidade em cada PR, então uma edição ruim não passa escondida.
+- O CI roda `py_compile` mais a suíte de testes completa (Python 3.10–3.13) mais um portão de privacidade em cada PR, então uma edição ruim não passa escondida.
 
 > O viés aqui é **verificável acima de esperto.** Não acredite na minha palavra: rode `python scripts/lead_score.py examples/leads_example.csv` e leia o que sai.
 
@@ -241,12 +243,22 @@ Dê uma estrela. No canto superior direito. É só isso que peço. É também co
 
 ## Traduções
 
-- 🇨🇳 [中文版](README.md) (completa, pronta)
-- 🇺🇸 [English](README_EN.md) (completa, pronta — a referência)
-- 🇧🇷 [Português](README_PT.md) (completa, pronta — esta página, português brasileiro)
-- 🇸🇦 [العربية](README_AR.md) (completa, pronta — RTL)
-- 🇪🇸 [Español](README_ES.md) (starter, buscando revisores)
-- 🇷🇺 🇫🇷 🇻🇳 em busca de tradutores — traduza qualquer documento de etapa no idioma que você domina; mantenha a estrutura de seis partes e alinhe os termos com o [GLOSSARY.md](GLOSSARY.md). Veja [CONTRIBUTING.md](CONTRIBUTING.md).
+O README existe em 12 idiomas, e a interface do site também. A versão em inglês é a referência.
+
+- [中文](README.md) (chinês, completa)
+- [English](README_EN.md) (inglês, completa — a referência)
+- [Español](README_ES.md) (espanhol, starter, buscando revisores)
+- [Português](README_PT.md) (português brasileiro, completa — esta página)
+- [Français](README_FR.md) (francês, completa)
+- [العربية](README_AR.md) (árabe, completa, RTL)
+- [Русский](README_RU.md) (russo, completa)
+- [Deutsch](README_DE.md) (alemão, completa)
+- [日本語](README_JA.md) (japonês, completa)
+- [한국어](README_KO.md) (coreano, completa)
+- [Türkçe](README_TR.md) (turco, completa)
+- [Bahasa Indonesia](README_ID.md) (indonésio, completa)
+
+Os documentos de etapa em `docs/` ainda estão só em chinês. Traduza qualquer etapa no idioma que você domina; mantenha a estrutura de seis partes e alinhe os termos com o [GLOSSARY.md](GLOSSARY.md). Falantes nativos que possam revisar um README são muito bem-vindos. Veja [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -286,4 +298,4 @@ Use, mude, venda com isto. Mantenha a linha de crédito. Uma ressalva: nada dist
 
 Tem algo errado aqui? Diga — isso já conta como contribuição. Vende para um mercado que este repositório nunca ouviu falar? Esse é o PR que eu realmente quero. Acha que o método inteiro está errado? Discuta comigo numa issue; prefiro estar errado em voz alta.
 
-Sem biografia do autor, de propósito. **O conteúdo é que deve convencer você, não quem o escreveu.** Precisa falar comigo: mencione o mantenedor (@) numa issue. O GitHub coloca na caixa de entrada dele.
+Sem biografia do autor, de propósito. **O conteúdo é que deve convencer você, não quem o escreveu.** Precisa falar comigo: mencione o mantenedor (@) numa issue ou deixe uma mensagem pelo formulário no fim do site. De um jeito ou de outro, chega ao autor.

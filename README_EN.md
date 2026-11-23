@@ -1,8 +1,10 @@
 # zero-to-trade
 
-![CI](https://github.com/6hn68/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.8%2B-306998)
+[中文](README.md) · **English** · [Español](README_ES.md) · [Português](README_PT.md) · [Français](README_FR.md) · [العربية](README_AR.md) · [Русский](README_RU.md) · [Deutsch](README_DE.md) · [日本語](README_JA.md) · [한국어](README_KO.md) · [Türkçe](README_TR.md) · [Bahasa Indonesia](README_ID.md)
 
-**Seven stages, from "which country do I even pick" to "the money arrived." Plus twelve Python scripts that do the boring parts. No experience assumed. That's the point.**
+![CI](https://github.com/6hn68/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.10%2B-306998)
+
+**Seven stages, from "which country do I even pick" to "the money arrived." Plus fourteen Python scripts that do the boring parts, and a website with four tools that run right in your browser. No experience assumed. That's the point.**
 
 > You sent 200 cold emails and got zero replies. That's not your English. That's your order of operations.
 >
@@ -10,7 +12,7 @@
 
 > The one rule underneath everything here: **AI does the heavy lifting, you make the calls.**
 
-No course to buy. No paid tier. No email wall. MIT licensed, V20 · [中文版](README.md)
+No course to buy. No paid tier. No email wall. MIT licensed, V20.
 
 > PRs welcome, especially from people who sell into a market this repo has never heard of. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -30,7 +32,7 @@ No need to read the docs first. Seven steps, one line each, one copy-paste comma
 
 After step 4 you hold a first-touch email you can actually send; after step 5 you know what to do each day for the next 6 days.
 
-No Python? Double-click [`index.html`](index.html) and do the same 7 steps in the browser: sample auto-loads → click "开始分级" (Score) → find your T0s → click "复制邮件" (Copy email) → replace the `[ ]` placeholders with your own name, company and WhatsApp → follow up D0/D2/D5 → quote when they reply.
+No Python? Open the website, [6hn68.github.io/zero-to-trade](https://6hn68.github.io/zero-to-trade/) (or double-click [`index.html`](index.html) in a local copy). It has four tools that run in the browser — lead scoring, outreach, follow-up plan and quote — with the same rules as the scripts, and the interface comes in 12 languages (top-right menu). Load the sample list → score it and find your T0s → generate the first-touch message and copy it → replace the `[ ]` placeholders with your own name, company and WhatsApp → plan the D0/D2/D5 follow-ups → quote when they reply. Nothing is uploaded: your list never leaves the browser. The first-touch copy on the website comes in English with a Chinese reference; for Spanish, Portuguese or Arabic copy, use `outreach_gen.py --lang es/pt/ar`.
 
 ---
 
@@ -49,11 +51,11 @@ This repo does the opposite: **take one task and keep breaking it down until it'
 | "Do background research" | L1 screen, three checks: does the site exist, how long has the company been registered, are the social accounts alive. Fail any one and the lead is dead. |
 | "Quality matters more than quantity" | 10 leads get sorted into T0/T1/T2/T3, each tier with its own next move and its own time budget. |
 | "Follow up with them" | Day 1, 3, 5, 7. A different angle each time, and day 7 ends with a decision: push or drop. |
-| "AI is changing trade" | Ten stdlib-only Python scripts (one alpha quoting engine). `python scripts/lead_score.py examples/leads_example.csv` and you have the full tiering in about thirty seconds. |
+| "AI is changing trade" | Fourteen stdlib-only Python scripts (thirteen business scripts, one of them a quoting engine, plus one privacy guard). `python scripts/lead_score.py examples/leads_example.csv` and you have the full tiering in about thirty seconds. |
 
 Same information. Different **grain size**. That's the entire difference. Every claim in here has to survive one question: what do I open this afternoon, and what do I type?
 
-So no, this isn't motivation. It's a checklist and twelve script files (eleven business scripts + one privacy guard).
+So no, this isn't motivation. It's a checklist and fourteen script files (thirteen business scripts + one privacy guard).
 
 ---
 
@@ -79,9 +81,9 @@ Stage docs live in `docs/`, one file per stage, all following the same six-part 
 
 ## 30-second quickstart
 
-**Don't want to install Python?** Open [`index.html`](index.html) in a browser. Paste a CSV, get the T0-T3 tiering. Nothing to install. (Once it's pushed, GitHub Pages hosts it, so you can send the link to someone else.)
+**Don't want to install Python?** Open the website: [6hn68.github.io/zero-to-trade](https://6hn68.github.io/zero-to-trade/). Four browser tools — lead scoring, outreach, follow-up plan and quote — in 12 interface languages. Paste a CSV, get the T0-T3 tiering, then the first touch, the follow-up dates and the quote. Nothing to install, and nothing leaves your browser.
 
-Twelve script files: eleven business scripts, one of them the quoting engine, plus a privacy guard script (`check_private_data.py`, scans for real customer data before you commit). Standard library only. Python 3.8+.
+Fourteen script files: thirteen business scripts, one of them the quoting engine, plus a privacy guard script (`check_private_data.py`, scans for real customer data before you commit). Standard library only. Python 3.10+.
 
 ```bash
 # 1. Tier your leads. CSV in, T0-T3 out, each tier with its next move.
@@ -122,7 +124,7 @@ company,country,product,source,email,phone,years,contact,note
 
 Only `company` is required. Everything else can be blank, and blanks score at the floor. `source` moves the needle most: `referral` / `trade_show` / `customs` / `linkedin` / `search`.
 
-All twelve scripts take `--help`. `lead_score.py` also has `--format json` and `--country` / `--product` filters, if you want to pipe it into a spreadsheet.
+All fourteen scripts take `--help`. `lead_score.py` also has `--format json` and `--country` / `--product` filters, if you want to pipe it into a spreadsheet.
 
 The scripts only decide what a machine can decide: is there an email, is there a website, does this clear the T0 bar. Whether a lead deserves your afternoon lives in the docs, and in your head.
 
@@ -133,8 +135,11 @@ The scripts only decide what a machine can decide: is there an email, is there a
 ```
 zero-to-trade/
 ├── README.md              # Full Chinese version
-├── README_EN.md           # This file
-├── index.html             # Zero-install browser demo (GitHub Pages)
+├── README_EN.md           # This file (the reference for every translation)
+├── README_ES.md / README_PT.md / README_FR.md / README_AR.md / README_RU.md
+├── README_DE.md / README_JA.md / README_KO.md / README_TR.md / README_ID.md
+│                          # Spanish, Portuguese, French, Arabic (RTL), Russian, German, Japanese, Korean, Turkish, Indonesian
+├── index.html             # The website: 4 browser tools, 12 interface languages, zero dependencies (GitHub Pages)
 ├── MANIFESTO.md           # Anonymous, no paid course: the brand stance
 ├── GITHUB_LAUNCH.md       # Launch + promo checklist (Topics/About/PR/Show HN)
 ├── CONTRIBUTING.md        # How to contribute + doc and code conventions
@@ -164,10 +169,14 @@ zero-to-trade/
 │   ├── nudge.py           # Nudge library, V16: D3/D7/D14/D30 × quoted/sampled/negotiating → short WhatsApp version + longer email version (English + Chinese)
 │   ├── anchor_price.py    # Competitor anchor pricing, V18: customs-data competitor price range + your own cost → aggressive/median/conservative CIF tiers + 5-item checklist
 │   ├── fast_path.py     # V19 interactive 7-day fast path: --day N shows tasks, --done N checks off, --progress totals (aligned with docs/fast-path.md)
+│   ├── market_rules.py    # Market rules: target markets, Turkey/Brazil barriers, Mexico/US/EU exclusions
+│   ├── daily_video_list.py  # Daily list of 5 videos (3 in the morning, 2 in the afternoon) with size, market, selling point and shot checks
 │   └── check_private_data.py  # Privacy guard: scans for real customer data before commit
 ├── examples/
 │   ├── leads_example.csv  # Sample data, runnable as-is
+│   ├── leads_example_lighting.csv  # Non-tyre sample: 8 LED lighting leads
 │   └── trade_show_example.csv  # Sample exhibitors, one per interest level
+├── tests/                 # 452 standard-library tests
 ├── prompts/
 │   └── AI_PROMPTS.md      # 40 copy-paste prompts (28 core + 12 advanced), grouped by stage
 └── assets/                # Screenshots, diagrams
@@ -228,18 +237,18 @@ Three ways in, cheapest first:
 2. **Translate a stage.** Spanish, Arabic, Portuguese, Russian, French, Vietnamese — whatever you actually speak. Keep the six-part structure, swap the language, match terms against [GLOSSARY.md](GLOSSARY.md).
 3. **Add your country or industry.** This is the missing part. Write what you've done, not what you think should be done. Field names, document names, how the channel is built, how people pay, and why they refuse to pay.
 
-Code too, with one hard rule: **Python 3.8+, standard library only.** The reasoning is in [CONTRIBUTING.md](CONTRIBUTING.md).
+Code too, with one hard rule: **Python 3.10+, standard library only.** The reasoning is in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
 ## For developers: hackable, and it has no dependencies
 
-All eleven business scripts (`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine` / `due_diligence` / `tire_pack` / `landed_cost` / `trade_show` / `nudge` / `anchor_price` / `fast_path`, plus the privacy guard `check_private_data.py`) are standard library only. There is no `pip install`. Fork it, change it, drop it into your own stuff:
+All thirteen business scripts (`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine` / `due_diligence` / `tire_pack` / `landed_cost` / `trade_show` / `nudge` / `anchor_price` / `fast_path` / `market_rules` / `daily_video_list`, plus the privacy guard `check_private_data.py`) are standard library only. There is no `pip install`. Fork it, change it, drop it into your own stuff:
 
 - Weights feel wrong? Four constants at the top of `lead_score.py` (`CONTACT_W / SOURCE_W / SIGNAL_W / MATURITY_W`). Still caps at 100.
 - Got your own customs data? Match the header (`company,country,product,source,email,phone,years,contact,note`) and feed it in.
 - Want it inside your own tool? Every script imports clean. `score_lead()`, `render()`, `plan_followups()`, `build_quote()` are pure functions returning dicts and lists. No network, no files written.
-- CI runs `py_compile` plus smoke tests (py3.8–3.13) plus a privacy gate on every PR, so a bad edit doesn't sneak through.
+- CI runs `py_compile` plus the test suite (Python 3.10–3.13) plus a privacy gate on every PR, so a bad edit doesn't sneak through.
 
 > The bias here is **verifiable over clever.** Don't take my word for it: run `python scripts/lead_score.py examples/leads_example.csv` and read what comes out.
 
@@ -257,11 +266,21 @@ Star it. Top-right corner. That's the whole ask. It's also how you find this aga
 
 ## Translations
 
-- 🇨🇳 [中文版](README.md) (full, ready)
-- 🇧🇷 [Português](README_PT.md) (full, ready — Brazilian Portuguese)
-- 🇸🇦 [العربية](README_AR.md) (full, ready — RTL)
-- 🇪🇸 [Español](README_ES.md) (starter, looking for reviewers)
-- 🇷🇺 🇫🇷 🇻🇳 wanted — translate any stage doc you're fluent in; keep the six-part structure and align terms against the [GLOSSARY.md](GLOSSARY.md). See [CONTRIBUTING.md](CONTRIBUTING.md).
+The README comes in 12 languages, and so does the website's interface. English is the reference text.
+
+- [中文](README.md) (Chinese, full)
+- [Español](README_ES.md) (Spanish, starter, looking for reviewers)
+- [Português](README_PT.md) (Brazilian Portuguese, full)
+- [Français](README_FR.md) (French, full)
+- [العربية](README_AR.md) (Arabic, full, RTL)
+- [Русский](README_RU.md) (Russian, full)
+- [Deutsch](README_DE.md) (German, full)
+- [日本語](README_JA.md) (Japanese, full)
+- [한국어](README_KO.md) (Korean, full)
+- [Türkçe](README_TR.md) (Turkish, full)
+- [Bahasa Indonesia](README_ID.md) (Indonesian, full)
+
+The stage docs in `docs/` are still Chinese only. Translate any stage you're fluent in; keep the six-part structure and align terms against the [GLOSSARY.md](GLOSSARY.md). Native speakers who can review a README are very welcome too. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -279,4 +298,4 @@ Use it, change it, sell with it. Keep the credit line. One caveat: none of this 
 
 Something in here wrong? Say so, that counts as a contribution. Selling into a market this repo has never heard of? That's a PR I actually want. Think the whole method is off? Argue with me in an issue, I'd rather be wrong out loud.
 
-No author bio, on purpose. **The content should be what convinces you, not who wrote it.** Need to reach me: @ the maintainer in an issue. GitHub puts it in their inbox.
+No author bio, on purpose. **The content should be what convinces you, not who wrote it.** Need to reach me: @ the maintainer in an issue, or leave a message through the form at the bottom of the website. Either way, it reaches the author.
