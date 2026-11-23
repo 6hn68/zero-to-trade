@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   scripts:
-    name: 十二个脚本 / Python ${{ matrix.python-version }}
+    name: 十四个脚本 / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false  # 一个版本红了别掐掉其他版本，新人要看的是"到底哪个版本不行"
@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: 十二个脚本能不能编译（别让新人第一步就崩）
+      - name: 十四个脚本能不能编译（别让新人第一步就崩）
         run: python -m py_compile scripts/*.py
 
       - name: 3.8 语法门禁：list[str]、dict | dict、match 这些不许偷渡进来
@@ -53,18 +53,20 @@ jobs:
               sys.exit('✗ 有脚本用了 3.8 不认的语法。最低版本是 3.8，'
                        '写成 dict[str, int] 而不是 dict | dict：\n  '
                        + '\n  '.join(bad))
-          print('  十二个脚本在 3.8 的语法下都能解析 ✓')
+          print('  十四个脚本在 3.8 的语法下都能解析 ✓')
           PY
 
       - name: 只许标准库：谁 import 了第三方包，这关就过不去
         run: |
           python - <<'PY'
-          import ast, glob, sys
+          import ast, glob, os, sys
 
           ALLOWED = {'argparse', 'csv', 'io', 'json', 'logging', 'os', 're', 'sys',
                      'unicodedata', 'datetime', 'decimal', 'typing', 'math',
-                     'textwrap', 'collections', 'itertools', 'string'}
-          LOCAL = {'lead_score', 'outreach_gen', 'followup_plan', 'quote_engine'}
+                     'textwrap', 'collections', 'itertools', 'string',
+                     'time', 'uuid'}
+          # 本仓库自己的脚本互相 import 不算依赖：按 scripts/ 里的文件名自动生成，加新脚本不用改这里
+          LOCAL = {os.path.basename(f)[:-3] for f in glob.glob('scripts/*.py')}
 
           bad = []
           for f in sorted(glob.glob('scripts/*.py')):
@@ -84,7 +86,7 @@ jobs:
           if bad:
               sys.exit('✗ 混进非标准库依赖了。"零安装"是这个项目的卖点，'
                        '加一个 requests 就全废了：\n  ' + '\n  '.join(bad))
-          print('  十二个脚本只 import 标准库和彼此 ✓')
+          print('  十四个脚本只 import 标准库和彼此 ✓')
           PY
 
       - name: 真客户数据自查脚本能不能跑（挡住 .gitignore 挡不住的那类漏网）
@@ -307,11 +309,16 @@ jobs:
 
           # 白名单 = RFC 2606 保留域名 + 本项目约定的示例域名
           OK = {'sample.example', 'example.com', 'example.org', 'example.net'}
+          # RFC 2606 保留后缀（*.example / *.test / *.invalid）和 example.* 的子域名同样永远不是真域名
+          def is_ok(d):
+              return (d in OK or d.endswith(('.example', '.test', '.invalid'))
+                      or d.endswith(('.example.com', '.example.org', '.example.net')))
           pat = re.compile(r'[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})')
 
           seen, bad = set(), []
           for root, dirs, files in os.walk('.'):
-              dirs[:] = [d for d in dirs if d not in {'.git', '__pycache__'}]
+              # tests/ 里故意放了几个假的“真域名”当诱饵，专门测隐私扫描能不能抓到它们；那是测试夹具，不是客户数据
+              dirs[:] = [d for d in dirs if d not in {'.git', '__pycache__'} and not (root == '.' and d == 'tests')]
               for fn in files:
                   # .example 也扫：万一有人加带这个后缀的文件，别让它成为盲区。
                   if not fn.endswith(('.md', '.csv', '.example', '.html', '.py', '.txt', '.json', '.yml')):
@@ -324,7 +331,7 @@ jobs:
                   for dom in pat.findall(text):
                       d = dom.lower()
                       seen.add(d)
-                      if d not in OK:
+                      if not is_ok(d):
                           bad.append((p, d))
           print('  扫到的邮箱域名：%s' % sorted(seen))
           if bad:
