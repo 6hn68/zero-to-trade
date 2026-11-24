@@ -231,7 +231,7 @@ html[dir=rtl] code,html[dir=rtl] pre.doc,html[dir=rtl] #csv,html[dir=rtl] .cmd h
 </div>
 <div class="stats">
 <div class="stat"><b>14</b><span class="zh">个 Python 脚本</span><span class="en">Python scripts</span></div>
-<div class="stat"><b>452</b><span class="zh">项单元测试</span><span class="en">unit tests</span></div>
+<div class="stat"><b>586</b><span class="zh">项单元测试</span><span class="en">unit tests</span></div>
 <div class="stat"><b>0</b><span class="zh">个第三方依赖</span><span class="en">dependencies</span></div>
 <div class="stat"><b>MIT</b><span class="zh">开源许可</span><span class="en">open-source license</span></div>
 </div>
@@ -509,8 +509,8 @@ var ZTT = (function () {
     uae: ["阿联酋", "United Arab Emirates"]
   };
   var BARRIERS = {
-    turkey: { name: "土耳其", name_en: "Turkey", product: "TBR", rate_pct: 60, until: "2029" },
-    brazil: { name: "巴西", name_en: "Brazil", product: "TBR", rate_pct: null, until: null }
+    turkey: { name: "土耳其", name_en: "Turkey", product: "TBR", rate_pct: 60, until: "2029-02-06" },
+    brazil: { name: "巴西", name_en: "Brazil", product: "TBR", rate_pct: null, until: null, rate_specific_usd_per_kg: "1.05-2.59" }
   };
   var EXCLUDED_MARKETS = {
     mexico: { name: "墨西哥", name_en: "Mexico", reason: "对华 TBR 反倾销税至 2029，永久排除",
@@ -563,12 +563,18 @@ var ZTT = (function () {
   }
   function barrierLabel(code) {
     var b = BARRIERS[code];
-    if (b.rate_pct === null) return b.name + "：对华" + b.product + "有反倾销税，税率没核实，出货前查官方原文";
+    if (b.rate_pct === null) {
+      if (b.rate_specific_usd_per_kg) return b.name + "：对华" + b.product + "反倾销税 US$" + b.rate_specific_usd_per_kg + "/kg（按生产商分档，Gecex 198/2021 号决议）；五年期至 2026 年 5 月前后，日落复审状态没核实，出货前查官方原文";
+      return b.name + "：对华" + b.product + "有反倾销税，税率没核实，出货前查官方原文";
+    }
     return b.name + "：对华" + b.product + "反倾销税 " + b.rate_pct + "% 至 " + b.until;
   }
   function barrierLabelEn(code) {
     var b = BARRIERS[code];
-    if (b.rate_pct === null) return b.name_en + ": anti-dumping duty on Chinese " + b.product + ", rate not verified — check the official text before shipping";
+    if (b.rate_pct === null) {
+      if (b.rate_specific_usd_per_kg) return b.name_en + ": anti-dumping duty on Chinese " + b.product + " of US$" + b.rate_specific_usd_per_kg + "/kg by producer (Gecex Resolution 198/2021); 5-year term to around May 2026, sunset-review status not verified — check the official text before shipping";
+      return b.name_en + ": anti-dumping duty on Chinese " + b.product + ", rate not verified — check the official text before shipping";
+    }
     return b.name_en + ": " + b.rate_pct + "% anti-dumping duty on Chinese " + b.product + " until " + b.until;
   }
   function verdict(country, note) {

@@ -39,7 +39,7 @@
     相邻两次至少间隔 MIN_GAP_DAYS 个自然日；同一批线索绝不用同一份文案群发
     （同文案群发会被判垃圾邮件，域名进黑名单后所有客户都受影响）。
 
-只用标准库，Python 3.8+ 可直接跑。
+只用标准库，Python 3.10+ 可直接跑。
 
 用法:
     python scripts/followup_plan.py --tier T0 --start 2026-10-08
@@ -47,6 +47,17 @@
     python scripts/followup_plan.py --tier T0 --start 2026-10-08 --format csv --out plan.csv
     python scripts/followup_plan.py --tier T0 --start 2026-10-08 --format json --out plan.json
     python scripts/followup_plan.py --tier T2 --start 2026-10-08 --market gcc --avoid-weekend
+    python scripts/followup_plan.py --tier T1 --start 2026-10-08 --csv examples/leads_example.csv --today
+    python scripts/followup_plan.py --tier T1 --start 2026-10-08 --today 2026-10-11 --sent D0
+
+--today（今日清单，报价前的跟进才用）:
+    每天早上跑一遍，只看今天该发谁：过期（日期过了、没标记已发）的置顶，
+    其次今天到期，再是下一次还有几天。不带值就是今天（--today），带值就
+    算那一天（--today 2026-10-11，测试、补算旧账时用）。--sent D0,D2 把
+    已经发过的触达标记掉，标记过的不再出现；本脚本不读你的邮箱，OVERDUE
+    只代表“日期过了且你没标记已发”，发过了就加进 --sent，别当成没发。
+    报价/发样/谈价之后（Day 0 是报价那天）的每日清单走 nudge.py --list，
+    同一客户同一线程只走一条线，别两边同时发。
 
 --start 必填，而且不吃你电脑的当天日期：
     计划日期得能复现——同样的 (tier, start) 换台机器跑，结果一模一样，别人能照着重排。
@@ -439,6 +450,198 @@ def plan_with_reply(tier, start, reply=REPLY_NO_REPLY, reply_date=None,
     return [], "对方说现在不是时候：停手，进长名单，季度扫一次。"
 
 
+# ---------------------------------------------------------------------------
+# Today's list / 今日清单：每天早上只看今天该发谁
+# ---------------------------------------------------------------------------
+# The batch model: one tier + one start date = one batch of leads that were
+# first touched on the same day (the usual way a batch goes out). --today
+# filters that batch's plan down to what matters this morning: overdue
+# (date passed, not marked sent) first, most overdue on top; due today
+# next; then the next upcoming touch and how many days away.
+# 批量模型：同一级 + 同一起算日 = 同一天首触的一批线索。--today 只挑出今早
+# 该看的：过期（日期过了、没标记已发）的置顶，其次今天到期，再是下一次
+# 还有几天。
+#
+# How this differs from nudge.py --list / 和 nudge --list 怎么分工：
+# nudge --list tracks the post-quote ladder (Day 0 = the day the quote went
+# out / the sample shipped / the price talk started), one row per lead in a
+# JSON file with its own sent list. This --today tracks the pre-quote cadence
+# for a whole batch, and "sent" is passed on the command line (--sent D0,D2)
+# because the batch was sent together. One lead, one thread, one line —
+# never run both lists for the same lead on the same day.
+# nudge --list 管报价之后（Day 0 是报价/发样/谈价那天），每家一行 JSON、
+# 各记各的 sent；这里的 --today 管报价之前的一批线索，sent 走命令行
+# （--sent D0,D2），因为一批是一起发出去的。同一客户同一线程只走一条线。
+
+# Sentinel for a bare "--today" (no date given): it means today.
+# 裸写 --today（不带日期）时的标记值：意思就是今天。
+TODAY_SENTINEL = "__TODAY__"
+
+
+def parse_today(value):
+    """Resolve --today: None / "__TODAY__" means today; a YYYY-MM-DD string
+    means that day (reproducible runs and tests). Returns a datetime.date.
+    解析 --today：不给 / "__TODAY__" 就是今天；给 YYYY-MM-DD 就算那一天
+    （可复现，测试、补算旧账时用）。返回 datetime.date。
+    """
+    if value is None or value == TODAY_SENTINEL:
+        return datetime.now().date()
+    raw = str(value).strip()
+    try:
+        return datetime.strptime(raw, "%Y-%m-%d").date()
+    except ValueError:
+        raise ValueError("今天的日期格式应为 YYYY-MM-DD，收到的是 %r" % value)
+
+
+def parse_sent(value):
+    """Parse --sent "D0,D2" into a tuple of offset labels ("D0", "D2").
+    Empty / None means nothing sent yet. A bad label raises ValueError
+    instead of silently dropping a touch.
+    解析 --sent "D0,D2"：返回触达标签元组。空着 = 一封都没发过；写错的
+    标签直接报错，不会悄悄漏掉一封。
+    """
+    if value is None:
+        return ()
+    parts = [p.strip().upper() for p in str(value).split(",") if p.strip()]
+    for part in parts:
+        _day_offset(part)  # raises ValueError on a bad label, in words
+    return tuple(parts)
+
+
+def todays_followups(rows, today, sent=()):
+    """Split a planned touch list into overdue / due today / upcoming.
+
+    rows: build_plan() output. today: a date or YYYY-MM-DD string.
+    sent: offset labels already sent (e.g. ("D0",)). Sent touches never
+    show up again — neither as overdue nor as due. Returns a dict:
+      {"today": "YYYY-MM-DD", "overdue": [...], "due": [...],
+       "upcoming": row-or-None, "upcoming_in_days": int-or-None,
+       "sent": [...], "all_done": bool}
+    Overdue is most overdue first (earliest date on top). Raises ValueError
+    if a sent label is not one of the plan's offsets.
+    把计划表切成过期 / 今天到期 / 下一次三档。sent 里标记过的触达不再出现。
+    过期按最过期（日期最早）的排最前面。sent 里写了本批没有的触达就报错。
+    """
+    if isinstance(today, str):
+        today = parse_today(today)
+    sent = tuple(s.strip().upper() for s in (sent or ()))
+    for label in sent:
+        _day_offset(label)
+    known = [r["offset"] for r in rows]
+    unknown = [s for s in sent if s not in known]
+    if unknown:
+        raise ValueError("已发标记里有这批计划没有的触达：%s（本批只有 %s）"
+                         % (", ".join(unknown),
+                            "、".join(known) if known else "无"))
+    overdue, due, future = [], [], []
+    for r in rows:
+        if r["offset"] in sent:
+            continue
+        day = datetime.strptime(r["date"], "%Y-%m-%d").date()
+        if day < today:
+            overdue.append(r)
+        elif day == today:
+            due.append(r)
+        else:
+            future.append(((day - today).days, r))
+    upcoming = future[0][1] if future else None
+    return {
+        "today": today.strftime("%Y-%m-%d"),
+        "overdue": overdue,
+        "due": due,
+        "upcoming": upcoming,
+        "upcoming_in_days": future[0][0] if future else None,
+        "sent": list(sent),
+        "all_done": not overdue and not due and upcoming is None,
+    }
+
+
+def _print_today_touch(row, flag=""):
+    """One touch row in the morning list: what to say and what to bring.
+
+    一条触达：这次说什么、必须带什么新信息、文案从哪来。
+    """
+    print("%s【%s】%s 周%s" % (flag, row["offset"], row["date"], row["weekday"]))
+    print("  渠道     : %s" % row["channel"])
+    print("  这次说什么: %s" % row["angle"])
+    print("  必须带   : %s" % row["new_info"])
+    print("  文案来源 : %s" % row["draft_from"])
+    if row["stop_rule"] != "—":
+        print("  停止条件 : %s" % row["stop_rule"])
+    if row["timing_note"]:
+        print("  时间提醒 : %s" % row["timing_note"])
+    print("")
+
+
+def print_today(tier, start, result, companies, scope, market="gcc",
+                csv_path=None):
+    """Human-readable morning list: overdue first, then due today, then next.
+
+    人看的今日清单：过期置顶，其次今天到期，再是下一次还有几天。
+    """
+    counts = (len(result["overdue"]), len(result["due"]),
+              1 if result["upcoming"] else 0)
+    print("")
+    print("=" * 74)
+    print("  今日跟进 / Today's follow-ups (%s)  ·  %s (%s)"
+          % (result["today"], tier, TIER_LABEL[tier]))
+    print("  OVERDUE %d / 过期 %d 封  ·  DUE TODAY %d / 今天到期 %d 封  ·  "
+          "NOT YET %d / 还没到 %d 封"
+          % (counts[0], counts[0], counts[1], counts[1], counts[2], counts[2]))
+    print("=" * 74)
+    print("  起算日（首触日）: %s" % start)
+    print("  适用对象 : %s" % _short(scope, 48))
+    print("  已发过   : %s"
+          % ("、".join(result["sent"]) if result["sent"]
+             else "一封都没发（传 --sent D0,D2 标记已发的）"))
+    if csv_path:
+        print("  本级线索 : %d 家" % len(companies))
+    print("  止损线   : %s" % STOP_LINE)
+    print("=" * 74)
+    print("")
+    if result["all_done"]:
+        print("  本批三封都发完了：没有过期、没有今天到期、没有下一次。")
+        print("  接下来：三封发完仍无回应就停手，进长名单，季度扫一次；")
+        print("  有人回了就用 --reply replied / refused / not_now 停掉这批。")
+        print("")
+    if result["overdue"]:
+        print("⚠ OVERDUE / 过期了，先处理这 %d 封（日期过了、没标记已发）："
+              % len(result["overdue"]))
+        print("-" * 74)
+        for row in result["overdue"]:
+            _print_today_touch(row, flag="⚠ ")
+    if result["due"]:
+        print("DUE TODAY / 今天就发这 %d 封：" % len(result["due"]))
+        print("-" * 74)
+        for row in result["due"]:
+            _print_today_touch(row)
+    if result["upcoming"] is not None:
+        print("NOT YET / 下一次还有 %d 天（%s）："
+              % (result["upcoming_in_days"], result["upcoming"]["date"]))
+        print("-" * 74)
+        _print_today_touch(result["upcoming"])
+    if companies:
+        print("本级公司清单（按 lead_score 得分从高到低，即跟进优先级）:")
+        for i, c in enumerate(companies, 1):
+            print("  %d. %s" % (i, _short(c)))
+    elif csv_path:
+        print("本级公司清单: %s 里没有 %s 级线索（用 --tier 换个级别看看）。"
+              % (csv_path, tier))
+    else:
+        print("本级公司清单: 未指定 --csv；加 --csv examples/leads_example.csv 可带上名单。")
+    print("")
+    print("注意：本脚本不知道你到底发没发——OVERDUE 只代表“日期过了且你没用")
+    print("  --sent 标记已发”。发过了就加进 --sent（例：--sent D0），别当成没发")
+    print("  又发一遍；7 天内同客户最多 3 次，换渠道也算。")
+    print("  报价/发样/谈价之后的跟进走 nudge.py --list，别跟这张表双线并行。")
+    print("  复现：python scripts/followup_plan.py --tier %s --start %s --today %s%s"
+          % (tier, start, result["today"],
+             " --sent %s" % ",".join(result["sent"]) if result["sent"] else ""))
+    print("")
+    print("=" * 74)
+    print("")
+
+
 def print_stopped(reply, note):
     """Refusal / reply stop notice: no plan, just the reason. Plain words.
 
@@ -555,7 +758,13 @@ def main():
         prog="followup_plan.py",
         description="按 T0/T1/T2/T3 排一张带日期的跟进节奏表（含止损线与防骚扰提醒）",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="可直接复制的例子:\n  python scripts/followup_plan.py --tier T0 --start 2026-10-08")
+        epilog="可直接复制的例子:\n"
+               "  python scripts/followup_plan.py --tier T0 --start 2026-10-08\n"
+               "每天早上只看今天该发谁（过期置顶、其次今天到期）:\n"
+               "  python scripts/followup_plan.py --tier T1 --start 2026-10-08 "
+               "--csv examples/leads_example.csv --today\n"
+               "  python scripts/followup_plan.py --tier T1 --start 2026-10-08 "
+               "--today 2026-10-11 --sent D0")
     p.add_argument("--tier", choices=["T0", "T1", "T2", "T3"], default="T0",
                    help="要规划的层级，默认 T0（T3 不排触达）")
     p.add_argument("--start", "--start-date", required=True,
@@ -574,6 +783,14 @@ def main():
                         "30 天冷却期，可选）")
     p.add_argument("--avoid-weekend", action="store_true",
                    help="把落在周末的触达自动顺延到下一个工作日")
+    p.add_argument("--today", nargs="?", const=TODAY_SENTINEL, default=None,
+                   metavar="YYYY-MM-DD",
+                   help="今日清单模式：只打印今天该发谁（过期置顶、其次今天到期、"
+                        "再是下一次）。不带值就是今天（--today），带值就算那一天"
+                        "（--today 2026-10-11）。只出表格版，--format/--out 忽略")
+    p.add_argument("--sent", default="",
+                   help="已经发过的触达，逗号隔开（例：--sent D0,D2），只和 "
+                        "--today 一起用；标记过的不再出现在今日清单里")
     p.add_argument("--format", choices=["table", "csv", "json"], default="table")
     p.add_argument("--out", help="输出路径，仅对 --format csv / json 生效")
     if len(sys.argv) == 1:
@@ -585,10 +802,13 @@ def main():
     log = setup_log("followup_plan")
     started = time.monotonic()
     # trace 里只记参数摘要：公司名不记（--company 给了也只记“单家”）。
-    trace_input = ("tier=%s start=%s market=%s%s"
+    trace_input = ("tier=%s start=%s market=%s%s%s"
                    % (args.tier, args.start, args.market,
                       " csv=%s" % os.path.basename(args.csv) if args.csv
-                      else " 单家" if (args.company or "").strip() else " 本级全部"))
+                      else " 单家" if (args.company or "").strip() else " 本级全部",
+                      " today=%s sent=%s" % (args.today or "-",
+                                              args.sent or "-")
+                      if args.today is not None else ""))
 
     try:
         start_dt = datetime.strptime(args.start, "%Y-%m-%d")
@@ -649,6 +869,34 @@ def main():
         write_trace("followup_plan.py", trace_input, "0 行（无触达计划）",
                     time.monotonic() - started)
         print_no_plan(args.tier, args.csv, len(companies))
+        return
+
+    if args.today is not None:
+        # Morning list: only what is due today / overdue / next. Table only.
+        # 今日清单：只看过期、今天到期、下一次三档，只出表格版。
+        if args.format != "table" or args.out:
+            print("提示：--today 只出表格版，--format/--out 本次已忽略。")
+        try:
+            today = parse_today(args.today)
+            sent = parse_sent(args.sent)
+            result = todays_followups(rows, today, sent)
+        except ValueError as e:
+            write_trace("followup_plan.py", trace_input, "",
+                        time.monotonic() - started, str(e))
+            raise SystemExit("错误：%s" % e)
+        log.info("RESULT tier=%s start=%s today=%s sent=%s overdue=%d due=%d",
+                 args.tier, args.start, result["today"],
+                 ",".join(result["sent"]) or "-",
+                 len(result["overdue"]), len(result["due"]))
+        print_today(args.tier, args.start, result, companies, scope,
+                    args.market, args.csv)
+        write_trace("followup_plan.py", trace_input,
+                    "今日清单 %s：过期 %d 封，今天到期 %d 封%s"
+                    % (result["today"], len(result["overdue"]),
+                       len(result["due"]),
+                       "，下一次 %d 天后" % result["upcoming_in_days"]
+                       if result["upcoming"] is not None else "，已发完"),
+                    time.monotonic() - started)
         return
 
     if args.format in ("csv", "json"):

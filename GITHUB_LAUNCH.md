@@ -211,7 +211,7 @@ gh run list --limit 5    # 看 workflow 跑没跑、绿没绿
 或者：仓库页 → **Actions** → 点最新一条 → 看是不是绿色对勾。
 
 - 绿了 → badge 自己会变，等几分钟刷新 README 页面。
-- 红了 → 点进去看日志。脚本是纯标准库的，失败最常见的原因是 Python 版本（要 3.8+）。
+- 红了 → 点进去看日志。脚本是纯标准库的，失败最常见的原因是 Python 版本（要 3.10+）。
 - 一直灰 → 确认 workflow 文件真推上去了：`git ls-files .github/workflows/`（应该看到 `ci.yml`）。
 
 ---

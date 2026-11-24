@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/6hn68/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.10%2B-306998)
 
-**Tujuh tahap, dari "negara mana yang harus saya pilih" sampai "uangnya sudah masuk." Ditambah empat belas skrip Python yang mengerjakan bagian membosankan, dan sebuah situs web dengan empat alat yang langsung berjalan di browser Anda. Tanpa perlu pengalaman. Justru itu intinya.**
+**Tujuh tahap, dari "negara mana yang harus saya pilih" sampai "uangnya sudah masuk." Ditambah lima belas skrip Python yang mengerjakan bagian membosankan, dan sebuah situs web dengan empat alat yang langsung berjalan di browser Anda. Tanpa perlu pengalaman. Justru itu intinya.**
 
 > Anda mengirim 200 email dingin dan tidak ada satu pun balasan. Masalahnya bukan bahasa Inggris Anda. Masalahnya urutan kerja Anda.
 >
@@ -51,11 +51,11 @@ Repo ini melakukan kebalikannya: **ambil satu tugas dan terus pecah sampai menja
 | "Lakukan riset latar belakang" | Saringan L1, tiga cek: apakah situsnya ada, sudah berapa lama perusahaan terdaftar, apakah akun media sosialnya aktif. Gagal satu saja, prospek itu gugur. |
 | "Kualitas lebih penting daripada kuantitas" | 10 prospek dikelompokkan ke T0/T1/T2/T3, setiap tingkat punya langkah berikutnya dan anggaran waktunya sendiri. |
 | "Tindak lanjuti mereka" | Hari 1, 3, 5, 7. Sudut pandang berbeda setiap kali, dan hari ke-7 diakhiri dengan keputusan: lanjut atau lepas. |
-| "AI sedang mengubah perdagangan" | Empat belas skrip Python yang hanya memakai pustaka standar (tiga belas skrip bisnis, salah satunya mesin penawaran, ditambah satu penjaga privasi). Jalankan `python scripts/lead_score.py examples/leads_example.csv` dan Anda mendapat pengelompokan lengkap dalam sekitar tiga puluh detik. |
+| "AI sedang mengubah perdagangan" | Lima belas skrip Python yang hanya memakai pustaka standar (empat belas skrip bisnis, salah satunya mesin penawaran, ditambah satu penjaga privasi). Jalankan `python scripts/lead_score.py examples/leads_example.csv` dan Anda mendapat pengelompokan lengkap dalam sekitar tiga puluh detik. |
 
 Informasinya sama. **Tingkat kerinciannya** yang berbeda. Hanya itu bedanya. Setiap klaim di sini harus lolos satu pertanyaan: apa yang saya buka sore ini, dan apa yang saya ketik?
 
-Jadi bukan, ini bukan motivasi. Ini daftar periksa dan empat belas file skrip (tiga belas skrip bisnis + satu penjaga privasi).
+Jadi bukan, ini bukan motivasi. Ini daftar periksa dan lima belas file skrip (empat belas skrip bisnis + satu penjaga privasi).
 
 ---
 
@@ -83,7 +83,7 @@ Dokumen tahap ada di `docs/`, satu file per tahap, semuanya mengikuti struktur e
 
 **Tidak mau memasang Python?** Buka situs webnya: [6hn68.github.io/zero-to-trade](https://6hn68.github.io/zero-to-trade/). Empat alat browser — penilaian prospek, penjangkauan, rencana tindak lanjut, dan penawaran — dalam 12 bahasa antarmuka. Tempel CSV, dapatkan pengelompokan T0-T3, lalu sentuhan pertama, tanggal tindak lanjut, dan penawaran. Tidak ada yang perlu dipasang, dan tidak ada yang keluar dari browser Anda.
 
-Empat belas file skrip: tiga belas skrip bisnis, salah satunya mesin penawaran, ditambah skrip penjaga privasi (`check_private_data.py`, memindai data pelanggan asli sebelum Anda commit). Hanya pustaka standar. Python 3.10+.
+Lima belas file skrip: empat belas skrip bisnis, salah satunya mesin penawaran, ditambah skrip penjaga privasi (`check_private_data.py`, memindai data pelanggan asli sebelum Anda commit). Hanya pustaka standar. Python 3.10+.
 
 ```bash
 # 1. Kelompokkan prospek Anda. CSV masuk, T0-T3 keluar, setiap tingkat dengan langkah berikutnya.
@@ -124,7 +124,7 @@ company,country,product,source,email,phone,years,contact,note
 
 Hanya `company` yang wajib. Sisanya boleh kosong, dan kolom kosong mendapat skor terendah. `source` paling berpengaruh: `referral` / `trade_show` / `customs` / `linkedin` / `search`.
 
-Keempat belas skrip menerima `--help`. `lead_score.py` juga punya `--format json` serta filter `--country` / `--product`, jika Anda ingin mengalirkannya ke spreadsheet.
+Kelima belas skrip menerima `--help`. `lead_score.py` juga punya `--format json` serta filter `--country` / `--product`, jika Anda ingin mengalirkannya ke spreadsheet.
 
 Skrip hanya memutuskan apa yang bisa diputuskan mesin: ada email atau tidak, ada situs web atau tidak, apakah lolos batas T0. Apakah sebuah prospek layak menyita sore Anda, itu ada di dokumentasi, dan di kepala Anda.
 
@@ -171,12 +171,13 @@ zero-to-trade/
 │   ├── fast_path.py     # V19 jalur cepat 7 hari interaktif: --day N menampilkan tugas, --done N mencentang, --progress menghitung total (selaras dengan docs/fast-path.md)
 │   ├── market_rules.py    # Aturan pasar: pasar sasaran, hambatan Turki/Brasil, pengecualian Meksiko/AS/UE
 │   ├── daily_video_list.py  # Daftar harian 5 video (3 pagi, 2 sore) dengan cek ukuran, pasar, keunggulan, dan pengambilan gambar
+│   ├── fulfillment_checklist.py  # Daftar periksa pemenuhan pesanan: PI → uang muka → produksi → inspeksi → pelunasan → booking → bea cukai → B/L → dokumen → purnajual, pengaman uang ketat pada uang muka/pelepasan/pengiriman
 │   └── check_private_data.py  # Penjaga privasi: memindai data pelanggan asli sebelum commit
 ├── examples/
 │   ├── leads_example.csv  # Data contoh, bisa langsung dijalankan
 │   ├── leads_example_lighting.csv  # Contoh non-ban: 8 prospek lampu LED
 │   └── trade_show_example.csv  # Contoh peserta pameran, satu per tingkat minat
-├── tests/                 # 452 tes pustaka standar
+├── tests/                 # 586 tes pustaka standar
 ├── prompts/
 │   └── AI_PROMPTS.md      # 40 prompt siap salin (28 inti + 12 lanjutan), dikelompokkan per tahap
 └── assets/                # Tangkapan layar, diagram
@@ -208,7 +209,7 @@ Tanpa pandas, tanpa OpenAI SDK, dan itu disengaja. Penyiapan lingkungan adalah t
 |---|---|---|
 | **V13** | ✅ Rampung (2026-11-07) | Penjangkauan multibahasa (`scripts/outreach_gen.py --lang es/pt/ar`: teks Spanyol/Portugis/Arab + teks asli bahasa Inggris setelah setiap draf; templat mencerminkan T0/T1/T2 bahasa Inggris satu per satu, satu dict inline di dalam skrip) + bagian baru di `docs/04-outreach.md` (cara pakai + 3 keluaran nyata ditempel apa adanya) + `tests/` 80 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 7 file skrip |
 | **V18** | ✅ Rampung (2026-11-07) | Harga patokan pesaing (`scripts/anchor_price.py`: kisaran harga pesaing dari data bea cukai + biaya Anda → tingkat CIF agresif/tengah/konservatif, masing-masing dengan ruang laba, margin, padanan FOB, markup tersirat, dan kapan dipakai; daftar periksa 5 butir — biaya, ongkos kirim, kurs, syarat pembayaran, masa berlaku — sebelum memberi penawaran, butir yang belum dicek ditandai; peringatan di bawah biaya “di bawah biaya, jangan ambil pesanan, negosiasikan volume untuk harga dulu”; nilai tengah yang hilang diperkirakan sebagai (rendah + tinggi) / 2 dan ditandai sebagai perkiraan; `--format json` / `--audience client`) + `docs/anchor-price.md` (cara pakai + panduan patokan + 2 keluaran nyata ditempel apa adanya) + satu baris di `docs/06-quote.md` (tetapkan patokan sebelum memberi penawaran) + `tests/` 187 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 11 file skrip |
-| **V20** | ✅ Saat ini (2026-11-14) | Penggabungan inkremen lokal + 10 putaran penguatan: titik masuk CLI terpadu (pesan galat dalam bahasa sederhana, kode keluar diseragamkan) + tes lebih kuat (mode satu pesan, alias `--start-date`, log eksekusi) + angka dokumentasi diselaraskan + contoh non-ban (8 prospek lampu LED) + halaman demo disinkronkan dengan V19 + pesan galat ramah untuk CSV bermasalah (kolom hilang / file kosong / tanda kutip tak tertutup tidak lagi menampilkan traceback) + penyelarasan prompt (perintah tindak lanjut P04-4 mendapat `--avoid-weekend`, jendela P10-2 diseragamkan menjadi 48 jam) + pelacakan eksekusi diterapkan (`logs/trace-YYYY-MM-DD.jsonl`, satu baris per eksekusi tiga skrip inti) + perapian kode (helper bersama disimpan di satu tempat, bersih −151 baris; dua helper mati dihapus) + `tests/` 452 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 14 file skrip |
+| **V20** | ✅ Saat ini (2026-11-14) | Penggabungan inkremen lokal + 10 putaran penguatan: titik masuk CLI terpadu (pesan galat dalam bahasa sederhana, kode keluar diseragamkan) + tes lebih kuat (mode satu pesan, alias `--start-date`, log eksekusi) + angka dokumentasi diselaraskan + contoh non-ban (8 prospek lampu LED) + halaman demo disinkronkan dengan V19 + pesan galat ramah untuk CSV bermasalah (kolom hilang / file kosong / tanda kutip tak tertutup tidak lagi menampilkan traceback) + penyelarasan prompt (perintah tindak lanjut P04-4 mendapat `--avoid-weekend`, jendela P10-2 diseragamkan menjadi 48 jam) + pelacakan eksekusi diterapkan (`logs/trace-YYYY-MM-DD.jsonl`, satu baris per eksekusi tiga skrip inti) + perapian kode (helper bersama disimpan di satu tempat, bersih −151 baris; dua helper mati dihapus) + `tests/` 586 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 15 file skrip |
 | **V19** | ✅ Rampung (2026-11-07) | Jalur cepat 7 hari interaktif (`scripts/fast_path.py`: `--day N` menampilkan tugas hari itu — nama tugas + apa yang dihasilkan + skrip/dokumen yang dipakai; `--done N` mencentang satu hari dengan stempel waktu, ditulis ke file JSON `--state`, centang ulang akan memberi tahu sudah dicentang dan tidak dicatat dua kali; `--progress` menghitung total selesai / tersisa / terlambat (terlambat = tanggal rencana lebih awal dari hari ini dan belum dicentang, tanggal rencana = hari ke-1 `--start` + (N-1) hari; tanpa `--start` tidak ada hitungan terlambat, dan itu dinyatakan dengan jelas); `--list` menampilkan ketujuh hari; tugas diselaraskan baris demi baris dengan `docs/fast-path.md`, tanpa daftar kedua yang dikarang; `--help` memuat contoh nyata, hari atau tanggal yang salah mendapat pesan galat dalam bahasa sederhana) + `docs/fast-path-interactive.md` (cara pakai + format file state + aturan terlambat + ikhtisar 7 hari + 2 keluaran nyata ditempel apa adanya) + satu baris di bagian atas `docs/fast-path.md` (pintu masuk interaktif) + satu baris di langkah B5 `docs/00-getting-started.md` (8 skrip tersisa → 9) + `tests/` 226 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 12 file skrip |
 | **V17** | ✅ Rampung (2026-11-07) | README lengkap bahasa Portugis dan Arab (`README_PT.md` baru dalam bahasa Portugis Brasil dan `README_AR.md` dalam bahasa Arab dengan tata letak RTL, keduanya diterjemahkan penuh dan selaras dengan README_EN.md: bagian, tabel, perintah, nama skrip, nama file, versi, dan angka yang sama; semua perusahaan/harga/kontak contoh fiktif, ditandai 【示例】 dengan domain cadangan sample.example) + `tests/` 167 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 10 file skrip |
 | **V16** | ✅ Rampung (2026-11-07) | Pustaka pengingat (`scripts/nudge.py`: D3/D7/D14/D30 × sudah ditawar/sudah kirim sampel/sedang negosiasi, total 12 draf, versi WhatsApp singkat + versi email lebih panjang, bahasa Inggris dulu dengan terjemahan Mandarin setelah setiap draf; tangga nada — D3 pengingat ringan, D7 tanyakan perkembangan, D14 tiga pilihan untuk menjaga muka (harga lebih rendah / spesifikasi lain / syarat pembayaran lebih panjang), D30 catatan terakhir yang tetap membuka pintu; Hari 0 adalah hari penawaran/sampel/pembahasan harga dikirim, patokan yang berbeda dari ritme sentuhan pertama followup_plan, satu utas hanya mengikuti satu jalur; `--channel whatsapp/email/both` / `--format json` / `--out`) + `docs/nudge.md` (cara pakai + keselarasannya dengan followup_plan + 2 keluaran nyata ditempel apa adanya) + satu baris di `docs/00-getting-started.md` (daftar skrip 6 → 7) + `tests/` 152 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 10 file skrip |
@@ -223,7 +224,7 @@ Tanpa pandas, tanpa OpenAI SDK, dan itu disengaja. Penyiapan lingkungan adalah t
 | **Versi berikutnya** | Belum diputuskan | Arah berikutnya belum diputuskan (jalur cepat 7 hari interaktif rampung di V19) |
 | **Jangka panjang** | — | Paket industri (ban, bahan bangunan, mesin, perkakas); teks penjangkauan dalam bahasa Prancis/Rusia (Spanyol, Portugis, dan Arab rampung di V13); dataset prospek publik yang dianonimkan; menghubungkan mesin penawaran ke data bea cukai untuk harga patokan pesaing otomatis |
 
-V20 tidak menunggu versi berikutnya: 10 putaran penguatan sudah bisa dipakai sekarang (CSV bermasalah mendapat pesan galat dalam bahasa sederhana alih-alih traceback, setiap eksekusi menulis satu baris jejak, helper bersama ada di satu tempat). Tidak perlu menunggu versi berikutnya — skripnya sudah ada di repo, dengan 452 tes yang semuanya hijau.
+V20 tidak menunggu versi berikutnya: 10 putaran penguatan sudah bisa dipakai sekarang (CSV bermasalah mendapat pesan galat dalam bahasa sederhana alih-alih traceback, setiap eksekusi menulis satu baris jejak, helper bersama ada di satu tempat). Tidak perlu menunggu versi berikutnya — skripnya sudah ada di repo, dengan 586 tes yang semuanya hijau.
 
 ---
 
@@ -243,7 +244,7 @@ Kode juga diterima, dengan satu aturan tegas: **Python 3.10+, hanya pustaka stan
 
 ## Untuk pengembang: mudah dioprek, dan tanpa dependensi
 
-Ketiga belas skrip bisnis (`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine` / `due_diligence` / `tire_pack` / `landed_cost` / `trade_show` / `nudge` / `anchor_price` / `fast_path` / `market_rules` / `daily_video_list`, ditambah penjaga privasi `check_private_data.py`) hanya memakai pustaka standar. Tidak ada `pip install`. Fork, ubah, masukkan ke proyek Anda sendiri:
+Keempat belas skrip bisnis (`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine` / `due_diligence` / `tire_pack` / `landed_cost` / `trade_show` / `nudge` / `anchor_price` / `fast_path` / `market_rules` / `daily_video_list` / `fulfillment_checklist`, ditambah penjaga privasi `check_private_data.py`) hanya memakai pustaka standar. Tidak ada `pip install`. Fork, ubah, masukkan ke proyek Anda sendiri:
 
 - Bobotnya terasa kurang pas? Ada empat konstanta di bagian atas `lead_score.py` (`CONTACT_W / SOURCE_W / SIGNAL_W / MATURITY_W`). Batasnya tetap 100.
 - Punya data bea cukai sendiri? Samakan header-nya (`company,country,product,source,email,phone,years,contact,note`) lalu masukkan.

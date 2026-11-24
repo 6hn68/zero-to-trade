@@ -610,5 +610,255 @@ class TestBackcheckCli(unittest.TestCase):
         self.assertIn("--backcheck", out)
 
 
+class TestRealFormatDirectory(unittest.TestCase):
+    """Real-format readiness: the official Dubai list is a web search page
+    (no official downloadable CSV — real file format not verified), and
+    the 2016 official PDF lists Exhibitor Name / Country / Product
+    Section / Stand Number. The reader must accept that shape instead
+    of failing on the header, and carry booth / product section /
+    website over instead of dropping them."""
+
+    def _write(self, rows, header, delimiter=","):
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False,
+                                          encoding="utf-8", newline="")
+        writer = csv.writer(tmp, delimiter=delimiter)
+        writer.writerow(header)
+        writer.writerows(rows)
+        tmp.close()
+        return tmp.name
+
+    def test_real_format_header_aliases(self):
+        path = self._write([
+            ["【示例】展商甲", "United Arab Emirates", "Tyres & Batteries",
+             "S-0001", "ex0001@sample.example",
+             "https://www.sample.example/ex0001"],
+            ["【示例】展商乙", "China", "Parts & Components",
+             "S-0002", "", ""],
+        ], header=("Exhibitor Name", "Country", "Product Section",
+                   "Stand Number", "E-mail", "Website"))
+        directory = ts.read_directory(path)
+        summary = ts.summarize_directory(directory)
+        self.assertEqual(summary["total"], 2)
+        self.assertEqual(summary["ready"], 1)
+        self.assertEqual(summary["pending"], 1)
+        self.assertEqual(summary["missing_booth"], 0)
+        rows = ts.build_backcheck_rows(directory)
+        self.assertEqual(rows[0]["booth"], "S-0001")
+        self.assertEqual(rows[0]["product"], "Tyres & Batteries")
+        # A website on file is used as-is, not re-marked not verified.
+        self.assertEqual(rows[0]["website"],
+                         "https://www.sample.example/ex0001")
+        self.assertEqual(rows[1]["booth"], "S-0002")
+        self.assertEqual(rows[1]["website"], "没核实")
+        self.assertEqual(rows[1]["status"], "待核实")
+        self.assertEqual(rows[1]["decision_maker"], "没核实")
+        self.assertEqual(rows[1]["import_record"], "没核实")
+
+    def test_company_name_alias_for_followup_reader(self):
+        path = self._write([
+            ["【示例】甲公司", "Saudi Arabia", "TBR 12.00R20",
+             "a@sample.example", "高"],
+        ], header=("Company Name", "Country", "Product", "Contact",
+                   "Interest"))
+        rows = ts.read_exhibitors(path)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["company"], "【示例】甲公司")
+
+    def test_semicolon_delimited_export(self):
+        path = self._write([
+            ["【示例】展商甲", "UAE", "Tyres & Batteries", "S-0001",
+             "ex0001@sample.example"],
+            ["【示例】展商乙", "China", "Parts & Components", "S-0002", ""],
+        ], header=("Exhibitor Name", "Country", "Product Section",
+                   "Stand Number", "Email"), delimiter=";")
+        directory = ts.read_directory(path)
+        summary = ts.summarize_directory(directory)
+        self.assertEqual(summary["total"], 2)
+        self.assertEqual(summary["ready"], 1)
+        self.assertEqual(summary["pending"], 1)
+        self.assertEqual(directory[0]["booth"], "S-0001")
+
+    def test_same_company_different_booth_kept(self):
+        # One company, two stands / two brands: both rows are kept, the
+        # second is noted. Same company, same booth: still a duplicate.
+        path = self._write([
+            ["【示例】展商甲", "UAE", "Tyres & Batteries", "S-0001",
+             "ex0001@sample.example"],
+            ["【示例】展商甲", "UAE", "Oils & Lubricants", "S-0002",
+             "ex0001@sample.example"],
+            ["【示例】展商甲", "UAE", "Tyres & Batteries", "S-0001",
+             "ex0001@sample.example"],
+        ], header=("Exhibitor Name", "Country", "Product Section",
+                   "Stand Number", "Email"))
+        directory = ts.read_directory(path)
+        summary = ts.summarize_directory(directory)
+        self.assertEqual(summary["total"], 3)
+        self.assertEqual(summary["ready"], 2)
+        self.assertEqual(summary["skipped"], 1)
+        kept = [d for d in directory if d["status"] != "跳过"]
+        self.assertEqual([d["booth"] for d in kept], ["S-0001", "S-0002"])
+        self.assertIn("不同展位", kept[1]["note"])
+
+    def test_location_column_parses_country(self):
+        path = self._write([
+            ["【示例】展商甲", "Sharjah, United Arab Emirates",
+             "Tyres & Batteries", "S-0001", "ex0001@sample.example"],
+            ["【示例】展商乙", "Dubai", "Parts & Components", "S-0002", ""],
+        ], header=("Exhibitor Name", "Location", "Product Section",
+                   "Stand Number", "Email"))
+        # Second row has only a city: country stays not verified, city noted.
+        path2 = self._write([
+            ["【示例】展商乙", "Dubai", "Parts & Components", "S-0002", ""],
+        ], header=("Exhibitor Name", "City", "Product Section",
+                   "Stand Number", "Email"))
+        directory = ts.read_directory(path)
+        self.assertEqual(directory[0]["country"], "United Arab Emirates")
+        directory2 = ts.read_directory(path2)
+        self.assertEqual(directory2[0]["country"], "没核实")
+        self.assertIn("Dubai", directory2[0]["note"])
+
+
+class TestPendingOnly(unittest.TestCase):
+    """--pending-only: export only the 待核实 queue (rows with no usable
+    contact), without dropping them from the full worksheet. Seq numbers
+    stay the full-list numbers so the queue lines up with the full sheet."""
+
+    def _write_directory(self, rows):
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False,
+                                          encoding="utf-8", newline="")
+        writer = csv.writer(tmp)
+        writer.writerow(("company", "country", "product", "contact"))
+        writer.writerows(rows)
+        tmp.close()
+        return tmp.name
+
+    def _three_rows(self):
+        return self._write_directory([
+            ["【示例】甲公司", "Saudi Arabia", "TBR", "a@sample.example"],
+            ["【示例】乙公司", "UAE", "PCR", ""],
+            ["【示例】丙公司", "Egypt", "PCR tubes", ""],
+        ])
+
+    def test_pending_only_rows_keep_full_seq(self):
+        directory = ts.read_directory(self._three_rows())
+        rows = ts.build_backcheck_rows(directory, pending_only=True)
+        self.assertEqual(len(rows), 2)
+        self.assertTrue(all(r["status"] == "待核实" for r in rows))
+        self.assertEqual([r["seq"] for r in rows], [2, 3])
+        self.assertEqual([r["company"] for r in rows],
+                         ["【示例】乙公司", "【示例】丙公司"])
+
+    def test_cli_pending_only_csv(self):
+        rc, out = run_cli("--backcheck", self._three_rows(),
+                          "--format", "csv", "--pending-only")
+        self.assertEqual(rc, 0)
+        parsed = list(csv.DictReader(io.StringIO(out)))
+        self.assertEqual(len(parsed), 2)
+        self.assertEqual([r["seq"] for r in parsed], ["2", "3"])
+        self.assertNotIn("【示例】甲公司", out)
+
+    def test_cli_pending_only_json_keeps_full_summary(self):
+        rc, out = run_cli("--backcheck", self._three_rows(),
+                          "--format", "json", "--pending-only")
+        self.assertEqual(rc, 0)
+        payload = json.loads(out)
+        self.assertTrue(payload["pending_only"])
+        self.assertEqual(payload["summary"]["total"], 3)
+        self.assertEqual(payload["summary"]["pending"], 2)
+        self.assertEqual(len(payload["rows"]), 2)
+
+    def test_cli_pending_only_without_backcheck_errors(self):
+        rc, out = run_cli("--csv", "examples/trade_show_example.csv",
+                          "--pending-only")
+        self.assertNotEqual(rc, 0)
+        self.assertIn("错误", out)
+        self.assertIn("--backcheck", out)
+        self.assertNotIn("Traceback", out)
+
+
+class TestRealFormatSimulation1021(unittest.TestCase):
+    """Simulation CSV in the real-format shape (SIMULATED format — the
+    real official file format is not verified): 1,021 rows, header
+    Exhibitor Name / Country / Product Section / Stand Number / Email /
+    Website, fictional companies only. Whole pipeline end to end, exact
+    counts, plus the pending-only queue export."""
+
+    SECTIONS = ["Tyres & Batteries", "Parts & Components",
+                "Oils & Lubricants", "Electronics & Systems"]
+    COUNTRIES = ["United Arab Emirates", "China", "India", "Turkey",
+                 "Germany"]
+
+    def _generate_1021(self):
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False,
+                                          encoding="utf-8", newline="")
+        writer = csv.writer(tmp)
+        writer.writerow(("Exhibitor Name", "Country", "Product Section",
+                         "Stand Number", "Email", "Website"))
+        for i in range(1021):
+            company = "【示例】展商 %04d" % (i + 1)
+            booth = "S-%04d" % (i + 1)
+            if i in (100, 500):
+                company = "【示例】展商 0001"  # same booth as row 1: duplicate
+                booth = "S-0001"
+            if i == 300:
+                company = "【示例】展商 0001"  # different booth: kept
+                booth = "S-0301"
+            if i == 900:
+                company = ""  # empty name: skipped
+            country = "" if i % 50 == 0 else self.COUNTRIES[i % 5]
+            email = "" if i % 7 == 0 else "ex%04d@sample.example" % (i + 1)
+            website = ("https://www.sample.example/ex%04d" % (i + 1)
+                       if i % 3 == 0 else "")
+            writer.writerow([company, country, self.SECTIONS[i % 4],
+                             booth, email, website])
+        tmp.close()
+        return tmp.name
+
+    def test_1021_simulation_exact_counts(self):
+        path = self._generate_1021()
+        start = time.monotonic()
+        directory = ts.read_directory(path)
+        summary = ts.summarize_directory(directory)
+        rows = ts.build_backcheck_rows(directory)
+        pending = ts.build_backcheck_rows(directory, pending_only=True)
+        text = ts.render_backcheck_csv(rows)
+        pending_text = ts.render_backcheck_csv(pending)
+        elapsed = time.monotonic() - start
+        # i%7==0 -> 146 pending (none of the 3 skipped rows is divisible
+        # by 7); i%50==0 -> 21 missing-country, minus the 3 skipped rows
+        # that are also multiples of 50 (i==100, 500, 900) -> 18.
+        self.assertEqual(summary["total"], 1021)
+        self.assertEqual(summary["ready"], 872)
+        self.assertEqual(summary["pending"], 146)
+        self.assertEqual(summary["skipped"], 3)
+        self.assertEqual(summary["missing_country"], 18)
+        self.assertEqual(summary["missing_booth"], 0)
+        self.assertEqual(len(rows), 1018)
+        self.assertEqual(rows[0]["seq"], 1)
+        self.assertEqual(rows[-1]["seq"], 1018)
+        self.assertEqual(rows[0]["company"], "【示例】展商 0001")
+        self.assertEqual(rows[-1]["company"], "【示例】展商 1021")
+        self.assertEqual(len(text.splitlines()), 1019)  # header + 1018 rows
+        # Same company at a different booth is kept, not dropped.
+        dupes = [r for r in rows if r["company"] == "【示例】展商 0001"]
+        self.assertEqual(len(dupes), 2)
+        self.assertEqual([r["booth"] for r in dupes], ["S-0001", "S-0301"])
+        self.assertIn("不同展位", dupes[1]["note"])
+        # Website carried over from the directory when present (i%3==0,
+        # minus the skipped i==900): 340 rows.
+        with_site = [r for r in rows if r["website"] != "没核实"]
+        self.assertEqual(len(with_site), 340)
+        self.assertEqual(rows[0]["website"],
+                         "https://www.sample.example/ex0001")
+        self.assertEqual(rows[1]["product"], "Parts & Components")
+        # Pending-only queue: 146 rows, full-list seq numbers, CSV lines.
+        self.assertEqual(len(pending), 146)
+        self.assertTrue(all(r["status"] == "待核实" for r in pending))
+        self.assertEqual(pending[0]["seq"], 1)
+        self.assertEqual(pending[-1]["seq"], 1013)
+        self.assertEqual(len(pending_text.splitlines()), 147)
+        self.assertLess(elapsed, 5.0, "1021-row pipeline took %.2fs" % elapsed)
+
+
 if __name__ == "__main__":
     unittest.main()

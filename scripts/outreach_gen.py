@@ -27,6 +27,9 @@ outreach_gen.py — 按线索分级生成中英对照建联消息
     · LinkedIn 连接附注 ≤200 字符（平台硬上限，超了发送按钮直接禁用）：
       超了脚本直接报错、不擅自截断——截断会把 CTA 或唯一的那条 why them
       齐腰砍掉，等于白发
+    · --review 时每封附复核块：主题行全部备选 + 正文句数（T0/T1 应 5–8 句、
+      T2 刻意最轻、应 2–4 句）/ 问句数（只能一个 CTA）/ 预览 / 价格 /
+      占位符 / spam 自检；只报问题、不改文案
 """
 
 import argparse
@@ -491,8 +494,12 @@ def spam_scan(text):
     for w in SPAM_WORDS:
         if w in low:
             hits.append("spam 触发词 '%s'" % w)
+    # A caps token needs at least TWO letters to count as shouting: a tyre
+    # size like 12.00R20 splits into "00R20" (one letter) and must not cry
+    # wolf on every draft that mentions a size. Real shouts (FREE, URGENT)
+    # are all letters and still get caught.
     caps = sorted({w for w in re.findall(r"\b[A-Z0-9]{4,}\b", text)
-                   if any(c.isalpha() for c in w) and w not in ALLCAPS_ALLOW})
+                   if sum(c.isalpha() for c in w) >= 2 and w not in ALLCAPS_ALLOW})
     if caps:
         hits.append("疑似吼叫大写: %s" % "/".join(caps[:3]))
     if text.count("!") > 1:
@@ -632,6 +639,159 @@ def preview_line(body_text):
     return ""
 
 
+# ---------------------------------------------------------------- 复核 (review)
+# checklist() 是每封末尾的人工自查清单；下面这套是同一条规则的机器复核，
+# 只在 --review 时跑：返回旗标列表，不改文案。两套实现互相盯着同一条规则，
+# 一处漂移另一处会先响 —— 重叠是故意的。
+# checklist() above is the human pre-send list at the end of every draft;
+# the review below is the machine re-check of the same rules, run only
+# with --review: it returns flags, never rewrites the copy. The overlap
+# is deliberate — two implementations watching the same rules.
+
+_SENT_END_RE = re.compile(r"[.!?。！？]+")
+_GREETING_PREFIXES = ("Hi ", "Hello", "您好", "Hola", "Olá", "مرحباً")
+_SIGNOFF_PREFIXES = ("Best regards,", "顺祝商祺", "Saludos cordiales,",
+                     "Atenciosamente,", "مع أطيب التحيات")
+
+
+def count_body_sentences(body_text):
+    """数正文有几句：只数正文，不管主题行、招呼和落款。
+
+    Count sentences in the body only: skip the Subject line, the
+    greeting and the sign-off block. A bullet counts as one sentence
+    (it is one content point); a line with no terminator (e.g. the
+    "here are two things:" lead-in) counts as one.
+    """
+    lines = body_text.split("\n")
+    start = 0
+    for i, ln in enumerate(lines):
+        if ln.strip().startswith(("Subject:", "主题：")):
+            start = i + 1
+    end = len(lines)
+    for i in range(start, len(lines)):
+        if lines[i].strip().startswith(_SIGNOFF_PREFIXES):
+            end = i
+            break
+    n = 0
+    for ln in lines[start:end]:
+        s = ln.strip()
+        if not s:
+            continue
+        if s.startswith(_GREETING_PREFIXES) or s in ("Hi,", "Hi"):
+            continue
+        if s.startswith("- "):
+            n += 1
+            continue
+        # A decimal point in a tyre size (315/80R22.5, 12.00R20) is not
+        # a sentence end: hide decimals, then split on terminators and
+        # count the non-empty parts — so "We make ... basis. If you are
+        # sourcing ... now:" counts as two sentences, not one.
+        # (Known limit: an abbreviation like "Mr." splits an extra part;
+        # no template in this repo uses one.)
+        s = re.sub(r"\d+\.\d+", "N", s)
+        parts = [p for p in _SENT_END_RE.split(s) if p.strip()]
+        n += max(1, len(parts))
+    return n
+
+
+def count_body_questions(body_text):
+    """数正文有几个问句（一封信只能有一个 CTA）。
+
+    Count question marks in the body: one letter, one CTA. A why-them
+    sentence that itself ends with "?" counts too — it would make the
+    letter ask twice, which is exactly what this flag is for.
+    """
+    return body_text.count("?") + body_text.count("？")
+
+
+# 正文句数期望：T0/T1 按设计原则 5–8 句；T2 是刻意最轻的一触（只求确认
+# 信息），模板本身只有 3 句，所以期望 2–4 句 —— 不是模板写崩了。
+# Expected body length: T0/T1 follow the 5–8 sentence rule; T2 is the
+# deliberately lightest touch (confirm facts only), its template is 3
+# sentences by design, so it expects 2–4.
+BODY_SENTENCES_EXPECTED = {"T0": (5, 8), "T1": (5, 8), "T2": (2, 4)}
+
+
+def review_email_draft(subject, body_text, why_generic, tier, why_texts=()):
+    """复核一封已生成的邮件草稿，返回问题旗标列表（空 = 通过）。
+
+    Review one generated email draft against the house rules in this
+    file's docstring; returns a list of flag strings (empty = clean).
+    Report only — it never rewrites the draft. Checks: subject length,
+    body sentence count (tier-aware), preview length, price leak,
+    leftover placeholders, spam triggers, question count (one CTA),
+    generic why-them. why_texts are quoted user words: a "{product}"
+    written in the note is a quotation, not a leftover placeholder.
+    """
+    flags = []
+    if len(subject) > SUBJECT_LIMIT:
+        flags.append("✗ FIX 主题行 %d 字符，超了 %d 上限 / Subject %d chars, over the %d limit"
+                     % (len(subject), SUBJECT_LIMIT, len(subject), SUBJECT_LIMIT))
+    n_sent = count_body_sentences(body_text)
+    lo, hi = BODY_SENTENCES_EXPECTED.get(tier, (5, 8))
+    if not (lo <= n_sent <= hi):
+        flags.append("✗ FIX 正文 %d 句，%s 应为 %d–%d 句 / Body is %d sentences, %s expects %d–%d"
+                     % (n_sent, tier, lo, hi, n_sent, tier, lo, hi))
+    preview = preview_line(body_text)
+    if len(preview) > PREVIEW_LIMIT:
+        flags.append("✗ FIX 预览首句 %d 字符，超了 %d 上限 / Preview line %d chars, over the %d limit"
+                     % (len(preview), PREVIEW_LIMIT, len(preview), PREVIEW_LIMIT))
+    if _PRICE_RE.search(subject + "\n" + body_text):
+        flags.append("✗ FIX 正文/主题里有具体价格数字或价单 / Price number or price list in the draft")
+    leftover = set(_LEFT_PH_RE.findall(subject + "\n" + body_text))
+    for wt in why_texts:
+        leftover -= set(_LEFT_PH_RE.findall(wt or ""))
+    leftover = sorted(leftover)
+    if leftover:
+        flags.append("✗ FIX 占位符残留 %s / Leftover placeholders %s"
+                     % (" ".join(leftover), " ".join(leftover)))
+    for hit in spam_scan(subject + "\n" + body_text):
+        flags.append("✗ FIX %s" % hit)
+    n_q = count_body_questions(body_text)
+    if n_q != 1:
+        flags.append("✗ FIX 正文有 %d 个问句，一封信只能有一个 CTA / Body asks %d questions, one letter gets one CTA"
+                     % (n_q, n_q))
+    if why_generic:
+        flags.append("✗ FIX why them 已退化成通用模板，先别发，回去补一条只对这家成立的事实 / why them is generic — do NOT send yet")
+    return flags
+
+
+def subject_alternatives(tier, prod_en, prod_zh, company, limit=SUBJECT_LIMIT):
+    """列出该分级全部主题行备选（不只被选中的那一条），各带超长与否。
+
+    List every subject-line candidate for the tier (not just the one
+    fit_subject() picked), each with its fits flag — so the writer can
+    pick a shorter fallback instead of silently getting the shortest.
+    """
+    cands = SUBJECT.get(tier) or [("{product}", "{product}")]
+    out = []
+    for en_t, zh_t in cands:
+        en = en_t.format(product=prod_en, company=company)
+        zh = zh_t.format(product=prod_zh, company=company)
+        out.append((en, zh, len(en) <= limit))
+    return out
+
+
+def review_block(subject, body_text, why_generic, tier,
+                 prod_en, prod_zh, company, why_texts=()):
+    """拼一封草稿的复核块（--review 时附在清单后）。
+
+    Build the review block for one draft (appended after the checklist
+    with --review): every subject alternative, then the review flags
+    (or a clean verdict). Never rewrites the draft.
+    """
+    lines = ["Review / 复核 (report-only, 只报问题不改文案):"]
+    for en, zh, fits in subject_alternatives(tier, prod_en, prod_zh, company):
+        lines.append("  %s 主题备选 %d 字符: %s"
+                     % ("✓" if fits else "✗ 超 40 字符", len(en), en))
+    flags = review_email_draft(subject, body_text, why_generic, tier, why_texts)
+    if not flags:
+        lines.append("  ✓ 复核通过：主题/句数/预览/价格/占位符/spam/问句均无问题")
+    else:
+        lines.extend("  %s" % f for f in flags)
+    return lines
+
+
 def checklist(lang, en_text, zh_text, subject, sub_fits, email, sender, why_generic,
               measured, why_texts=()):
     """发送前自查：收件人/附件/签名档 + 长度/spam/价格/占位符的机器自检。
@@ -719,7 +879,7 @@ def as_leads(result):
     return result
 
 
-def render(lead, sender, lang="both", channel="email"):
+def render(lead, sender, lang="both", channel="email", review=False):
     """按 lang 一次性拼好整块（both/en/zh），不再靠事后扫行切段。
 
     channel picks the envelope, not the pitch: "email" (default, the full
@@ -793,6 +953,10 @@ def render(lead, sender, lang="both", channel="email"):
                              email or "web form (no email needed)", sender,
                              why_generic, form_body,
                              why_texts=(why_en, why_zh)))
+        if review:
+            out.extend(review_block(sub_en, form_body, why_generic, tier,
+                                    prod_en, prod_zh, company,
+                                    why_texts=(why_en, why_zh)))
         out.append("")
         return "\n".join(out)
 
@@ -830,6 +994,10 @@ def render(lead, sender, lang="both", channel="email"):
         out.extend(checklist("en", loc_text, en_text, sub_loc, sub_loc_fits,
                              email, sender, why_generic, loc_text,
                              why_texts=(why_loc, why_en)))
+        if review:
+            out.extend(review_block(sub_loc, loc_text, why_generic, tier,
+                                    prod_en, prod_zh, company,
+                                    why_texts=(why_loc, why_en)))
     else:
         if lang in ("both", "en"):
             out.append("[EN — send this]")
@@ -845,6 +1013,11 @@ def render(lead, sender, lang="both", channel="email"):
         out.extend(checklist(lang, en_text, zh_text, sub_en, sub_fits,
                              email, sender, why_generic, measured,
                              why_texts=(why_en, why_zh)))
+        if review:
+            m_sub = sub_zh if lang == "zh" else sub_en
+            out.extend(review_block(m_sub, measured, why_generic, tier,
+                                    prod_en, prod_zh, company,
+                                    why_texts=(why_en, why_zh)))
     out.append("")
     return "\n".join(out)
 
@@ -932,7 +1105,9 @@ def main():
                "    (LinkedIn connection note only, <=200 chars; too long = skipped, not cut)\n"
                "  python scripts/outreach_gen.py examples/leads_example.csv --tier T1 "
                "--channel all\n"
-               "    (email + LinkedIn note + web form for the same leads, same pitch)")
+               "    (email + LinkedIn note + web form for the same leads, same pitch)\n"
+               "  python scripts/outreach_gen.py examples/leads_example.csv --tier T0 --review\n"
+               "    (same drafts plus a per-draft review block: subject alternatives + checks)")
     p.add_argument("csv_path", nargs="?", default=None,
                    help="线索 CSV 路径；不填时用 --company 单条生成")
     p.add_argument("--company", default="",
@@ -953,6 +1128,9 @@ def main():
                         "超了跳过不截断）/ webform（官网表单）/ all（三线同出，供核对口径）；"
                         "三线用同一条 why them、同一个 CTA、同样不报价，只换信封")
     p.add_argument("--out", help="输出到 .md 文件，不填则打印到屏幕")
+    p.add_argument("--review", action="store_true",
+                   help="每封后附复核块：主题行全部备选 + 正文句数/问句数/预览/价格/"
+                        "占位符/spam 自检，只报问题、不改文案")
     args = p.parse_args()
     log = setup_log("outreach_gen")
     started = time.monotonic()
@@ -1049,7 +1227,8 @@ def main():
                 else (args.channel,)
             for ch in channels:
                 try:
-                    text = render(lead, args.sender, args.lang, channel=ch)
+                    text = render(lead, args.sender, args.lang, channel=ch,
+                                review=args.review)
                 except LinkedInNoteTooLongError as e:
                     # One lead's note too long must not kill the whole batch:
                     # skip that channel for this lead, say why, keep going.

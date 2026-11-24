@@ -15,6 +15,7 @@
 - `anchor_price.py`：竞品锚价：海关数据竞品价区间 + 自家成本 → 三档 CIF 锚价。
 - `fast_path.py`：七天快路径互动版：每天 `--day N` 看任务，干完 `--done N` 打卡。
 - `daily_video_list.py`：每日 5 条视频清单：上午 3 条 + 下午 2 条，每条带规格、市场、一句话卖点和 3 项拍摄检查项。用法：`python3 scripts/daily_video_list.py`
+- `fulfillment_checklist.py`：订单交付核对清单：PI → 定金 → 生产 → 验货 → 尾款 → 订舱 → 报关 → 提单 → 清关单据 → 售后复购十步，定金/放单/出运三道钱的关口硬拦。用法：`python3 scripts/fulfillment_checklist.py --demo`
 - `check_private_data.py`：提交前自查：扫真实客户数据，抓到就挡住。
 
 日志：`lead_score.py` / `outreach_gen.py` / `followup_plan.py` 每次运行都会在项目根目录 `logs/` 下追加一条记录（`lead_score.log` / `outreach_gen.log` / `followup_plan.log`），含运行时间、参数和结果摘要，屏幕输出不变。`logs/` 已加入 `.gitignore`，不进版本库，里面可能含客户名，只留在本地。

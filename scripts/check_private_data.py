@@ -15,6 +15,10 @@
 有真数据就打印文件名和第几行，并退出码1（挡住提交）。
 干净就打印一行「没查到真实客户数据」，退出码 0。
 
+`.xlsx` 按 zip/XML 解析（共享字符串 + 工作表单元格），不是
+按文本读——表格里的邮箱/电话也能扫到。`.xls` 是旧二进制格式，
+标准库解析不了，仍按文本读，里面的内容要人工复核。
+
 零依赖，跟仓库里其他脚本一个规矩。
 """
 from __future__ import print_function
@@ -24,6 +28,8 @@ import os
 import re
 import string
 import sys
+import xml.etree.ElementTree as ET
+import zipfile
 
 # Allowed email domains: RFC 2606 reserved domains + the example domain
 # this project agreed on. Subdomains of these count as allowed too
@@ -201,8 +207,137 @@ def looks_like_real_phone(line):
     return False
 
 
+def _local(tag):
+    """Tag name without its XML namespace ({...}sheet -> sheet).
+    去掉 XML 标签的命名空间前缀。"""
+    return tag.rsplit("}", 1)[-1]
+
+
+def _xlsx_text_parts(path):
+    """Extract scannable text from an .xlsx file (stdlib zipfile + XML):
+    every worksheet cell (shared strings resolved, inline strings and
+    plain numbers kept as-is), plus any shared string no scanned cell
+    references, so a value hiding only in sharedStrings.xml cannot
+    slip through. Returns a list of (part, row, text); row is the
+    sheet row number, or the shared-string index for unreferenced
+    strings. Returns None if the file is not a readable zip at all
+    (corrupt or misnamed -- the caller falls back to a plain-text scan).
+    从 .xlsx 里抽出可扫描的文本（标准库 zipfile + XML）：每个工作表
+    单元格（共享字符串已还原、内联字符串和纯数字原样保留），外加
+    没被任何单元格引用的共享字符串——只藏在 sharedStrings.xml 里
+    的值也跑不掉。返回 [(部位, 行号, 文本)]；文件根本不是 zip
+    就返回 None（调用方回退到纯文本扫描）。"""
+    try:
+        zf = zipfile.ZipFile(path)
+    except (zipfile.BadZipFile, OSError, IOError):
+        return None
+    shared = []
+    parts = []
+    used = set()
+    try:
+        try:
+            root = ET.fromstring(zf.read("xl/sharedStrings.xml"))
+            for si in root:
+                shared.append("".join(
+                    t.text or "" for t in si.iter()
+                    if _local(t.tag) == "t"))
+        except (KeyError, ET.ParseError):
+            shared = []
+        for name in sorted(zf.namelist()):
+            if not (name.startswith("xl/worksheets/")
+                    and name.endswith(".xml")):
+                continue
+            try:
+                root = ET.fromstring(zf.read(name))
+            except (ET.ParseError, zipfile.BadZipFile, KeyError):
+                continue
+            seq = 0
+            for row in root.iter():
+                if _local(row.tag) != "row":
+                    continue
+                seq += 1
+                r = row.get("r") or ""
+                row_no = int(r) if r.isdigit() else seq
+                for cell in row:
+                    if _local(cell.tag) != "c":
+                        continue
+                    ctype = cell.get("t")
+                    value = None
+                    for child in cell:
+                        tag = _local(child.tag)
+                        if tag == "v":
+                            value = child.text or ""
+                        elif tag == "is":
+                            value = "".join(
+                                x.text or "" for x in child.iter()
+                                if _local(x.tag) == "t")
+                    if value is None:
+                        continue
+                    if ctype == "s":
+                        try:
+                            idx = int(value)
+                        except ValueError:
+                            continue
+                        used.add(idx)
+                        if 0 <= idx < len(shared):
+                            value = shared[idx]
+                        else:
+                            continue
+                    parts.append((name, row_no, value))
+        # Shared strings never referenced by a scanned cell are still
+        # scanned on their own; referenced ones are skipped here so
+        # the same value is not reported twice.
+        # 没被任何单元格引用的共享字符串单独再扫一遍；已被引用的
+        # 在上面扫过，这里跳过，免得同一个值报两次。
+        for i, text in enumerate(shared):
+            if i not in used:
+                parts.append(("xl/sharedStrings.xml", i + 1, text))
+    finally:
+        zf.close()
+    return parts
+
+
+def _scan_xlsx(path):
+    """Scan an .xlsx file cell by cell, with the same email/phone
+    checks as the text scan. Returns [(row number, why)] -- the row
+    number is the sheet row for cells, or the shared-string index
+    for unreferenced shared strings. Returns None if the file is
+    not a readable zip (the caller falls back to a text scan).
+    按单元格扫 .xlsx，邮箱/电话检查和文本扫描同一套；返回
+    [(行号, 原因)]。文件不是合法 zip 就返回 None（调用方回退）。"""
+    parts = _xlsx_text_parts(path)
+    if parts is None:
+        return None
+    hits = []
+    for part, no, text in parts:
+        low = text.lower()
+        if any(h in text for h in ("【示例】", "[示例]")) or \
+           any(h in low for h in ("占位", "placeholder")):
+            continue
+        norm = _normalize(text)
+
+        for domain in _find_email_domains(norm):
+            if not _is_ok_domain(domain):
+                hits.append((no, "邮箱域名 %s（不是保留域名，像是真人邮箱）[%s]"
+                             % (domain, part)))
+                break
+
+        if looks_like_real_phone(norm):
+            hits.append((no, "手机号/座机号（看着像真号码）[%s]" % part))
+    return hits
+
+
 def scan_file(path):
     """返回 [(行号, 为什么中招)]，干净就返回空列表。"""
+    if path.lower().endswith(".xlsx"):
+        hits = _scan_xlsx(path)
+        if hits is not None:
+            return hits
+        # Not a readable zip (corrupt or misnamed file): fall through
+        # to the plain-text scan below, so anything visible in the
+        # raw bytes is still caught instead of silently passed.
+        # 不是合法 zip（损坏或改名文件）：往下走纯文本扫描，
+        # 原始字节里看得见的东西照样能抓住，不静默放过。
     try:
         with open(path, encoding="utf-8", errors="ignore") as fh:
             lines = fh.readlines()

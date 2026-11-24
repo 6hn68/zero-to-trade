@@ -10,21 +10,55 @@ touch the scoring code in lead_score.py.
 本文件只有数据表加一个小查询函数：不读写文件、不联网、只用标准库。
 改市场规则只改下面这几张表，别动 lead_score.py 里的打分代码。
 
-Where the numbers come from / 数字从哪来：
-- Turkey 60% anti-dumping duty on Chinese TBR until 2029, and the
-  Mexico / USA / EU permanent exclusion, are house rules handed down
-  for this project (task baseline, given as-is). They were NOT re-checked
-  against official sources in this round: re-check before quoting them
-  to a buyer, and before shipping always confirm the current duty
-  with the official source.
-  土耳其对华 TBR 反倾销税 60% 至 2029、以及墨西哥 / 美国 / 欧盟永久排除，
-  是本项目既有的内部口径（任务基线直接给定）。本轮没有重新核对官方原文：
-  对外报价、发货前务必以官方最新要求复核。
-- Brazil anti-dumping on Chinese truck/bus tyres exists (see tire_pack.py),
-  but the rate was never written down anywhere in this repo, so it is
-  recorded here as "rate not verified / 税率没核实", not as a number.
-  巴西对华卡客车胎有反倾销税（见 tire_pack.py），但税率在本仓库任何地方
-  都没写过，所以这里只记“税率没核实”，不编一个数字。
+Where the numbers come from / 数字从哪来 (verified 2026-11-24, see ROUTE.md):
+- Turkey 60% anti-dumping duty on Chinese TBR until 2029-02-06: VERIFIED
+  against the official text — Resmî Gazete (Official Gazette of Türkiye),
+  Communiqué No. 2024/1, 06.02.2024, issue 32452, Art. 4 table (GTİP
+  4011.20.90, buses/lorries, load index > 121, China, 60% of CIF) and
+  Art. 5(4) (measure lapses 5 years after entry into force).
+  Source: https://www.resmigazete.gov.tr/eskiler/2024/02/20240206-3.htm
+  Caveat: if a sunset (expiry) review is opened before 2029-02-06, the
+  duty stays in force until the review ends — re-check before quoting
+  or shipping. The Mexico / USA / EU permanent exclusion is still a
+  house rule, not re-checked in this round.
+  土耳其对华 TBR 反倾销税 60% 至 2029-02-06：已按官方原文核实——土耳其
+  官方公报 Resmî Gazete 2024/1 号公告（2024-02-06，第 32452 期）第 4 条
+  表格（税号 4011.20.90，客车/卡车用、载荷指数 >121，中国原产，按 CIF
+  的 60%）和第 5 条第 4 款（生效后 5 年到期）。注意：到期前如果启动日落
+  复审，税会延续到复审结束，报价/发货前再复核。墨西哥/美国/欧盟永久排除
+  仍是内部口径，本轮没重核。
+- Brazil anti-dumping on Chinese truck/bus tyres: VERIFIED in form, NOT
+  in current status. The duty is a specific duty in US dollars per
+  kilogram, per producer — NOT a percentage — under Gecex Resolution
+  No. 198 of 3 May 2021 (published in the Diário Oficial da União,
+  4 May 2021), rates US$1.05–2.59/kg, NCM 4011.20.90, radial tyres,
+  rims 20"/22"/22.5", for buses/trucks, for up to 5 years; scope
+  extended by Gecex Resolution No. 583/2024 to wheel assemblies.
+  Sources: MDIC/Camex resolutions list
+  (https://www.gov.br/mdic/pt-br/assuntos/camex/resolucoes/gecex/resolucoes)
+  and the MOFCOM trade-remedy summary of the DOU text
+  (https://cacs.mofcom.gov.cn/cacscms/articleDetail/ckys?articleId=180426&id=53d8a9ed8e5ed02d018f5627444d177d).
+  That is why rate_pct stays None here: there is no % rate to write.
+  NOT verified: whether the measure is still in force today — the
+  5-year term ran to about May 2026, and the third sunset review's
+  initiation/outcome was not confirmed from official text, so the
+  label still says "没核实" for current status. Check the official
+  source before shipping.
+  巴西对华卡客车胎反倾销税：形式已核实、现行状态没核实。这税不是百分比，
+  是按生产商分档的从量税（美元/公斤）：Gecex 198/2021 号决议（2021-05-03，
+  刊于 2021-05-04 官方公报），US$1.05–2.59/kg，税号 NCM 4011.20.90，
+  子午胎、轮辋 20/22/22.5 英寸、客车/卡车用，五年期；2024 年 Gecex
+  583/2024 号决议把范围扩到轮胎组件。所以 rate_pct 仍是 None：本来就
+  没有百分比可写。没核实的是现在是否仍在执行——五年期到 2026 年 5 月
+  前后，第三次日落复审的启动/结果没从官方原文确认，标签里仍写“没核实”，
+  出货前查官方原文。
+- Verification flags: Turkey rate_verified was flipped to True at merge
+  time (2026-11-24) together with the test update — the 60% / 2029-02-06
+  facts above are verified against the official gazette. Brazil
+  rate_verified stays False: only the form of the duty is verified,
+  current status is not.
+  核实标记：土耳其的 rate_verified 已在合入时翻成 True（连测试一起改）；
+  巴西的还是 False——只有税的形式（从量税）核实了，现行状态没核实。
 - The 8 target markets match tire_pack.py MARKETS exactly; keep the two
   tables in sync when either changes.
   8 个目标市场与 tire_pack.py 的 MARKETS 完全一致；改一边时另一边同步改。
@@ -76,9 +110,11 @@ BARRIERS = {
         "kind": "anti-dumping",  # 反倾销税
         "product": "TBR",        # 只针对卡客车胎（TBR），不是所有轮胎
         "origin": "China",       # 只针对中国原产
-        "rate_pct": 60,          # 60%：内部口径（任务基线给定），本轮未重核官方原文
-        "until": "2029",         # 有效期至 2029：内部口径（任务基线给定），本轮未重核
-        "rate_verified": False,  # True only after someone re-checks the official text
+        "rate_pct": 60,          # 60% of CIF: verified 2026-11-24, Resmî Gazete 2024/1 Art. 4
+        "until": "2029-02-06",   # 5 years from 06.02.2024 (Art. 5(4)); sunset review could extend it
+        "rate_verified": True,  # verified 2026-11-24 vs Resmî Gazete 2024/1 (flipped at merge time with the test update)
+        "source": "Resmî Gazete, Tebliğ No: 2024/1, 06.02.2024, issue 32452 — https://www.resmigazete.gov.tr/eskiler/2024/02/20240206-3.htm",
+        "verified_on": "2026-11-24",  # 60% + 2029-02-06 checked against the Gazette text above
     },
     "brazil": {
         "name": "巴西",
@@ -86,9 +122,12 @@ BARRIERS = {
         "kind": "anti-dumping",  # 反倾销税
         "product": "TBR",        # 卡客车胎
         "origin": "China",
-        "rate_pct": None,        # 税率没核实：仓库里没写过，别编
-        "until": None,           # 有效期没核实
-        "rate_verified": False,
+        "rate_pct": None,        # No % rate exists: the duty is US$/kg per producer, so None is correct, not missing
+        "rate_specific_usd_per_kg": "1.05-2.59",  # 按生产商分档：Gecex 198/2021，2026-11-24 核实
+        "until": None,           # Current status not verified: 5-year term ran to ~May 2026; sunset-review outcome unconfirmed
+        "rate_verified": False,  # The per-kg range is verified (see source); False here still means "current in-force status not verified"
+        "source": "Gecex Resolution No. 198 of 3 May 2021 (DOU 4 May 2021); scope extended by Gecex 583/2024 — MDIC resolutions list + MOFCOM summary of DOU text (see module docstring)",
+        "verified_on": "2026-11-24",  # Rate form (US$/kg range) checked; in-force status NOT checked
     },
 }
 
@@ -212,6 +251,12 @@ def _barrier_label(code):
     """
     b = BARRIERS[code]
     if b["rate_pct"] is None:
+        if b.get("rate_specific_usd_per_kg"):
+            # Specific duty, not a %: keep "%" out of this label on purpose —
+            # test_lead_score_market.py asserts no "%" in the Brazil detail.
+            # 分档从量税不是百分比：标签里故意不写 %，测试钉死了巴西明细里不能有 %。
+            return "%s：对华%s反倾销税 US$%s/kg（按生产商分档，Gecex 198/2021 号决议）；五年期至 2026 年 5 月前后，日落复审状态没核实，出货前查官方原文" % (
+                b["name"], b["product"], b["rate_specific_usd_per_kg"])
         return "%s：对华%s有反倾销税，税率没核实，出货前查官方原文" % (
             b["name"], b["product"])
     return "%s：对华%s反倾销税 %d%% 至 %s" % (

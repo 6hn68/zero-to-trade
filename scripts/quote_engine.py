@@ -4,14 +4,14 @@
 算报价的。给你成本、运费、想要的加成，它吐出 FOB / CIF 报价和底价，
 外加一套三档让步阶梯——每降一档都得从客户那儿换回点东西，空手降的价等于白送。
 
-只用了标准库，Python 3.8 往上都能直接跑，不联网。
+只用了标准库，Python 3.10 往上都能直接跑，不联网。
 
 用法:
     python scripts/quote_engine.py --cost 28 --freight 6 --margin 15
     python scripts/quote_engine.py --cost 28 --freight 6 --margin 15 --anchor 42 --format json
     python scripts/quote_engine.py --cost 200 --currency CNY --fx 0.14 --freight 6
     python scripts/quote_engine.py --cost 200 --currency CNY --tax-inclusive --tax-rate 13 --freight 6 --incoterm "FOB Yantian" --spec "示例型号-A" --moq 300 --lead-time "25天" --payment "T/T 30% 定金 + 70% 见提单副本" --strict
-    （人民币含税价，【示例】价格虚构：FOB 含税 236.90 / 不含税 209.65，CIF 含税 243.30 / 不含税 215.31，8 要素齐了才退出 0）
+    （人民币含税价，【示例】价格与 13% 税率均虚构/未核实，适用税率以税务规定为准：FOB 含税 236.90 / 不含税 209.65，CIF 含税 243.30 / 不含税 215.31，8 要素齐了才退出 0）
     python scripts/quote_engine.py --cost 28 --freight 6 --audience client --out quote.txt
 
 参数:
@@ -25,14 +25,16 @@
     --anchor        竞品锚价（报价币种，可选），给了就多一句定位建议
     --fx            汇率：1 单位「成本币种」= fx 「报价币种」（成本 CNY、报价 USD 时填 0.14）。
                     换算只在最开头做一次，之后全程不再碰汇率，绝不重复乘 margin。
-    --currency      报价币种符号，默认 USD；报人民币含税价用 --currency CNY --tax-inclusive --tax-rate 13
+    --currency      报价币种符号，默认 USD；报人民币含税价用 --currency CNY --tax-inclusive --tax-rate 13（【示例】，未核实）
     --unit          计价单位，默认 件
     --moq           最小起订量（报价单 8 要素之一，可选）
     --lead-time     交货期（如 "25天"，8 要素之一，可选）
     --incoterm      贸易术语+港口，如 "FOB Yantian"（8 要素之一，可选）
     --spec          规格型号，如 "示例型号-A"（8 要素之一，可选，【示例】名称虚构）
     --payment       付款条件（8 要素之一，可选；不给就标缺项，不再默认填一句现成的）
-    --tax-rate      增值税率（%，默认 0 = 不算税；人民币含税价常用 13，税率本身没核实，以税务规定为准）
+    --tax-rate      增值税率（%，默认 0 = 不算税；示例 13（【示例】，未核实），不是默认税率；
+                    适用税率以税务规定为准；不给税率时含税/不含税拆分不算，表里和 JSON 里
+                    都会明说缺了增值税率）
     --tax-inclusive 报价是含税价（不加 = 不含税价）；给了 --tax-rate 才生效
     --strict        8 要素缺一项就报错退出（退出码 2），不加只在表里标出来
     --validity      报价有效期天数，默认 30
@@ -69,6 +71,9 @@ DEFAULT_PAYMENT_TERMS = "T/T 30% 定金 + 70% 见提单副本；或即期 L/C"
 DEFAULT_CURRENCY = "USD"         # 输出币种符号（所有金额都带，不让新人猜）
 DEFAULT_UNIT = "件"              # 计价单位
 MAX_TAX_RATE_PCT = 100.0         # 增值税率上限 100%（超过基本是单位错）
+EXAMPLE_TAX_RATE_PCT = 13.0      # 示例增值税率 (example VAT rate ONLY)：只出现在 --help/示例里，
+                                 # 从未核实、不是默认值（默认 0 = 不算税）。适用税率以税务规定为准；
+                                 # 拿它当真税率报含税价就是编数。
 
 # Quote-sheet 8 elements / 报价单 8 要素：a quote is only sendable when all 8
 # are present. Price, currency and validity always have a value (computed or
@@ -152,7 +157,7 @@ def build_quote(cost, freight, margin, insurance_rate, local=0.0,
     if tax_rate_pct < 0:
         raise ValueError("增值税率不能为负")
     if tax_rate_pct > MAX_TAX_RATE_PCT:
-        raise ValueError("增值税率 %.1f%% 大得离谱（上限 %.0f%%）：这里填百分比，13 表示 13%%，"
+        raise ValueError("增值税率 %.1f%% 大得离谱（上限 %.0f%%）：这里填百分比，例如 13 表示 13%%，"
                          "不是 1300。" % (tax_rate_pct, MAX_TAX_RATE_PCT))
 
     # ---- 成本基数：不可预见费 + 本地费先叠进成本（海运费不进 FOB）
@@ -237,7 +242,12 @@ def build_quote(cost, freight, margin, insurance_rate, local=0.0,
         "ladder": ladder,
         "positioning": positioning,
         "warnings": warnings,
+        # Tax-rate provenance / 税率口径：税率是调用方显式输入的数，脚本没有核实过；
+        # 没给税率时只报不含税口径，必须明说缺哪项，不能悄悄当成含税价发出去。
+        "tax_status": "provided" if tax_rate_pct > 0 else "not_provided",
     }
+    if tax_rate_pct <= 0:
+        result["tax_missing"] = ["增值税率 (VAT rate)"]
 
     # ---- VAT split / 增值税拆分：只拆报价，不动链路（税率 0 就不加字段，老输出原样）
     if tax_rate_pct > 0:
@@ -258,6 +268,15 @@ def build_quote(cost, freight, margin, insurance_rate, local=0.0,
             "vat_on_fob_unit": money(fob_incl - fob_excl),
             "vat_on_cif_unit": money(cif_incl - cif_excl),
         })
+    elif tax_inclusive:
+        # --tax-inclusive without --tax-rate is a contradiction: the split was
+        # asked for but no rate was given, so say so instead of silently
+        # reporting the exclusive price as if it were inclusive.
+        # 给了 --tax-inclusive 却没给 --tax-rate 是自相矛盾：拆分没算出来，
+        # 必须明说，不能悄悄把不含税价当含税价报出去。
+        warnings.append("给了 --tax-inclusive 但没给 --tax-rate：含税/不含税拆分没算，"
+                        "本表只报不含税口径；要含税价先用 --tax-rate <税率> 补上，"
+                        "适用税率以税务规定为准。")
 
     return result
 
@@ -342,6 +361,9 @@ def render_table(q, currency=DEFAULT_CURRENCY, unit=DEFAULT_UNIT,
     label_w = max(_width(l) for l, _ in rows)
     for label, val in rows:
         s.append("  %s │ %10s %s" % (_pad(label, label_w), val, per))
+    if "tax_rate_pct" not in q:
+        s.append("  增值税率：未填 —— 含税价/不含税价未拆分；补上用 --tax-rate <税率>"
+                 "（示例 13，【示例】，未核实），适用税率以税务规定为准。")
     if "tax_rate_pct" in q and currency == "CNY" and q["tax_mode"] == "inclusive":
         s.append("  口径: 人民币含税价 (CNY tax-inclusive, VAT %.2f%%) —— 报给国内客户就按含税价走"
                  % q["tax_rate_pct"])
@@ -394,6 +416,9 @@ def render_table(q, currency=DEFAULT_CURRENCY, unit=DEFAULT_UNIT,
     s.append("   · 让步阶梯：降一档价必换回一样东西（量/账期/排他/长约），不换条件的让步=送钱。")
     s.append("   · 计价口径：报价 = 成本基数 *(1+加成%)，这是成本加成(markup)；"
              "若按毛利率倒推，报价 = 成本 /(1-毛利率)，15% 毛利率约等于 17.6% 加成。")
+    if "tax_rate_pct" in q:
+        s.append("   · 增值税：税率 %.2f%% 由调用方输入，脚本没有核实过；"
+                 "适用税率以税务规定为准。" % q["tax_rate_pct"])
 
     if not is_client and q.get("positioning"):
         s.append("-" * W)
@@ -421,8 +446,8 @@ def main():
                "    → 同样两个报价，成本/底价/锚价定位全砍掉，这版才能发客户\n"
                "  python scripts/quote_engine.py --cost 28 --freight 6 --margin 15 --moq 300 --lead-time \"25天\" --format json\n"
                "    → JSON 版，报价单必带字段（最小起订量/交货期）一次补齐\n"
-               "  python scripts/quote_engine.py --cost 200 --currency CNY --tax-inclusive --tax-rate 13 --freight 6 --incoterm \"FOB Yantian\" --spec \"示例型号-A\" --moq 300 --lead-time \"25天\" --payment \"T/T 30% 定金 + 70% 见提单副本\" --strict\n"
-               "    → 人民币含税价（【示例】价格虚构）：FOB 含税 236.90，不含税 209.65；CIF 含税 243.30，不含税 215.31；8 要素齐了才退出 0\n"
+               f"  python scripts/quote_engine.py --cost 200 --currency CNY --tax-inclusive --tax-rate {EXAMPLE_TAX_RATE_PCT:g} --freight 6 --incoterm \"FOB Yantian\" --spec \"示例型号-A\" --moq 300 --lead-time \"25天\" --payment \"T/T 30% 定金 + 70% 见提单副本\" --strict\n"
+               "    → 人民币含税价（【示例】价格与 13% 税率均虚构/未核实，适用税率以税务规定为准）：FOB 含税 236.90，不含税 209.65；CIF 含税 243.30，不含税 215.31；8 要素齐了才退出 0\n"
                "  python scripts/quote_engine.py --cost 28 --freight 6 --margin 15 --strict\n"
                "    → 8 要素缺 5 项（贸易术语/规格/起订量/交货期/付款条件），退出码 2，缺哪项明说\n"
                "  发客户永远加 --audience client：内部视图的底价数字一旦寄出去就收不回来。")
@@ -451,7 +476,7 @@ def main():
     p.add_argument("--payment", default=None,
                    help="付款条件(8 要素之一)；不给就标缺项，不再默认填一句现成的")
     p.add_argument("--tax-rate", type=float, default=0.0,
-                   help="增值税率(%%)，默认 0=不算税；人民币含税价常用 13")
+                   help="增值税率(%%)，默认 0=不算税；示例 13（【示例】，未核实）")
     p.add_argument("--tax-inclusive", action="store_true",
                    help="报价是含税价（不加=不含税价）；给了 --tax-rate 才生效")
     p.add_argument("--strict", action="store_true",

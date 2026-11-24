@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/6hn68/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.10%2B-306998)
 
-**Sept étapes, de « mais quel pays je choisis ? » à « l'argent est arrivé ». Plus quatorze scripts Python qui s'occupent des parties ennuyeuses, et un site web avec quatre outils qui tournent directement dans votre navigateur. Aucune expérience requise. C'est tout l'intérêt.**
+**Sept étapes, de « mais quel pays je choisis ? » à « l'argent est arrivé ». Plus quinze scripts Python qui s'occupent des parties ennuyeuses, et un site web avec quatre outils qui tournent directement dans votre navigateur. Aucune expérience requise. C'est tout l'intérêt.**
 
 > Vous avez envoyé 200 e-mails à froid et reçu zéro réponse. Ce n'est pas votre anglais. C'est l'ordre dans lequel vous faites les choses.
 >
@@ -51,11 +51,11 @@ Ce dépôt fait l'inverse : **prendre une tâche et la découper jusqu'à ce qu'
 | « Renseignez-vous sur vos clients » | Filtre L1, trois contrôles : le site existe-t-il, depuis quand l'entreprise est-elle immatriculée, les comptes sociaux sont-ils actifs. Un seul échec, et le prospect est mort. |
 | « La qualité compte plus que la quantité » | 10 prospects répartis en T0/T1/T2/T3, chaque niveau avec son action suivante et son propre budget temps. |
 | « Relancez-les » | Jours 1, 3, 5, 7. Un angle différent à chaque fois, et le jour 7 se termine par une décision : insister ou abandonner. |
-| « L'IA transforme le commerce » | Quatorze scripts Python en bibliothèque standard pure (treize scripts métier, dont un moteur de devis, plus un garde-fou de confidentialité). `python scripts/lead_score.py examples/leads_example.csv` et vous avez le classement complet en une trentaine de secondes. |
+| « L'IA transforme le commerce » | Quinze scripts Python en bibliothèque standard pure (quatorze scripts métier, dont un moteur de devis, plus un garde-fou de confidentialité). `python scripts/lead_score.py examples/leads_example.csv` et vous avez le classement complet en une trentaine de secondes. |
 
 Même information. **Granularité** différente. Toute la différence est là. Chaque affirmation ici doit survivre à une seule question : qu'est-ce que j'ouvre cet après-midi, et qu'est-ce que je tape ?
 
-Donc non, ce n'est pas de la motivation. C'est une checklist et quatorze fichiers de scripts (treize scripts métier + un garde-fou de confidentialité).
+Donc non, ce n'est pas de la motivation. C'est une checklist et quinze fichiers de scripts (quatorze scripts métier + un garde-fou de confidentialité).
 
 ---
 
@@ -83,7 +83,7 @@ Les documents d'étape se trouvent dans `docs/`, un fichier par étape, tous con
 
 **Vous ne voulez pas installer Python ?** Ouvrez le site : [6hn68.github.io/zero-to-trade](https://6hn68.github.io/zero-to-trade/). Quatre outils dans le navigateur — scoring des prospects, prospection, plan de relance et devis — avec une interface en 12 langues. Collez un CSV, obtenez le classement T0-T3, puis le premier contact, les dates de relance et le devis. Rien à installer, et rien ne quitte votre navigateur.
 
-Quatorze fichiers de scripts : treize scripts métier, dont le moteur de devis, plus un script garde-fou de confidentialité (`check_private_data.py`, qui recherche de vraies données clients avant chaque commit). Bibliothèque standard uniquement. Python 3.10+.
+Quinze fichiers de scripts : quatorze scripts métier, dont le moteur de devis, plus un script garde-fou de confidentialité (`check_private_data.py`, qui recherche de vraies données clients avant chaque commit). Bibliothèque standard uniquement. Python 3.10+.
 
 ```bash
 # 1. Classez vos prospects. Un CSV en entrée, T0-T3 en sortie, chaque niveau avec son action suivante.
@@ -124,7 +124,7 @@ company,country,product,source,email,phone,years,contact,note
 
 Seule la colonne `company` est obligatoire. Tout le reste peut rester vide, et un champ vide reçoit le score plancher. C'est `source` qui pèse le plus : `referral` / `trade_show` / `customs` / `linkedin` / `search`.
 
-Les quatorze scripts acceptent `--help`. `lead_score.py` propose aussi `--format json` et les filtres `--country` / `--product`, si vous voulez envoyer le résultat dans un tableur.
+Les quinze scripts acceptent `--help`. `lead_score.py` propose aussi `--format json` et les filtres `--country` / `--product`, si vous voulez envoyer le résultat dans un tableur.
 
 Les scripts ne tranchent que ce qu'une machine peut trancher : y a-t-il un e-mail, y a-t-il un site, le prospect passe-t-il la barre du T0. Savoir si un prospect mérite votre après-midi, c'est dans la documentation que ça se joue — et dans votre tête.
 
@@ -171,12 +171,13 @@ zero-to-trade/
 │   ├── fast_path.py     # V19, parcours express interactif de 7 jours : --day N affiche les tâches, --done N les coche, --progress fait le bilan (aligné sur docs/fast-path.md)
 │   ├── market_rules.py    # Règles marché : marchés cibles, barrières Turquie/Brésil, exclusions Mexique/États-Unis/UE
 │   ├── daily_video_list.py  # Liste quotidienne de 5 vidéos (3 le matin, 2 l'après-midi) avec dimension, marché, argument de vente et contrôle des plans
+│   ├── fulfillment_checklist.py  # Checklist d'exécution de commande : PI → acompte → production → inspection → solde → réservation → douane → B/L → documents → après-vente, contrôles d'argent stricts sur acompte/libération/expédition
 │   └── check_private_data.py  # Garde-fou de confidentialité : recherche de vraies données clients avant commit
 ├── examples/
 │   ├── leads_example.csv  # Données d'exemple, exécutables telles quelles
 │   ├── leads_example_lighting.csv  # Exemple hors pneus : 8 prospects en éclairage LED
 │   └── trade_show_example.csv  # Exposants d'exemple, un par niveau d'intérêt
-├── tests/                 # 452 tests en bibliothèque standard
+├── tests/                 # 586 tests en bibliothèque standard
 ├── prompts/
 │   └── AI_PROMPTS.md      # 40 prompts à copier-coller (28 essentiels + 12 avancés), regroupés par étape
 └── assets/                # Captures d'écran, schémas
@@ -208,7 +209,7 @@ Pas de pandas, pas de SDK OpenAI, et c'est voulu. La configuration de l'environn
 |---|---|---|
 | **V13** | ✅ Livrée (2026-11-07) | Prospection multilingue (`scripts/outreach_gen.py --lang es/pt/ar` : texte en espagnol/portugais/arabe + original anglais après chaque brouillon ; modèles calqués un pour un sur les T0/T1/T2 anglais, un seul dictionnaire intégré au script) + nouvelle section dans `docs/04-outreach.md` (utilisation + 3 sorties réelles collées telles quelles) + `tests/` 80 tests en bibliothèque standard + 40 prompts inchangés (28 essentiels + 12 avancés) + 7 fichiers de scripts |
 | **V18** | ✅ Livrée (2026-11-07) | Prix de référence concurrent (`scripts/anchor_price.py` : fourchette de prix concurrents issue des données douanières + votre coût → paliers CIF agressif/médian/prudent, chacun avec marge disponible, taux de marge, équivalent FOB, majoration implicite et cas d'usage ; une checklist en 5 points — coût, fret, change, conditions de paiement, validité — avant de chiffrer, tout point non coché étant signalé ; alerte sous le coût « sous le coût, ne prenez pas la commande, négociez d'abord le volume contre le prix » ; médiane manquante estimée à (bas + haut) / 2 et marquée comme estimation ; `--format json` / `--audience client`) + `docs/anchor-price.md` (utilisation + guide du prix de référence + 2 sorties réelles collées telles quelles) + une ligne dans `docs/06-quote.md` (prix de référence avant de chiffrer) + `tests/` 187 tests en bibliothèque standard + 40 prompts inchangés (28 essentiels + 12 avancés) + 11 fichiers de scripts |
-| **V20** | ✅ Actuelle (2026-11-14) | Fusion des incréments locaux + 10 tours de durcissement : points d'entrée CLI unifiés (erreurs en langage clair, codes de sortie harmonisés) + tests renforcés (mode message unique, alias `--start-date`, journaux d'exécution) + chiffres de la documentation alignés + exemple hors pneus (8 prospects en éclairage LED) + page de démo synchronisée avec la V19 + erreurs claires pour les CSV défectueux (colonne manquante / fichier vide / guillemet non fermé ne provoquent plus de traceback) + alignement des prompts (la commande de relance P04-4 gagne `--avoid-weekend`, la fenêtre de P10-2 unifiée à 48 heures) + traçage des exécutions en place (`logs/trace-YYYY-MM-DD.jsonl`, une ligne par exécution des trois scripts principaux) + nettoyage du code (fonctions utilitaires partagées regroupées en un seul endroit, −151 lignes nettes ; deux fonctions mortes supprimées) + `tests/` 452 tests en bibliothèque standard + 40 prompts inchangés (28 essentiels + 12 avancés) + 14 fichiers de scripts |
+| **V20** | ✅ Actuelle (2026-11-14) | Fusion des incréments locaux + 10 tours de durcissement : points d'entrée CLI unifiés (erreurs en langage clair, codes de sortie harmonisés) + tests renforcés (mode message unique, alias `--start-date`, journaux d'exécution) + chiffres de la documentation alignés + exemple hors pneus (8 prospects en éclairage LED) + page de démo synchronisée avec la V19 + erreurs claires pour les CSV défectueux (colonne manquante / fichier vide / guillemet non fermé ne provoquent plus de traceback) + alignement des prompts (la commande de relance P04-4 gagne `--avoid-weekend`, la fenêtre de P10-2 unifiée à 48 heures) + traçage des exécutions en place (`logs/trace-YYYY-MM-DD.jsonl`, une ligne par exécution des trois scripts principaux) + nettoyage du code (fonctions utilitaires partagées regroupées en un seul endroit, −151 lignes nettes ; deux fonctions mortes supprimées) + `tests/` 586 tests en bibliothèque standard + 40 prompts inchangés (28 essentiels + 12 avancés) + 15 fichiers de scripts |
 | **V19** | ✅ Livrée (2026-11-07) | Parcours express interactif de 7 jours (`scripts/fast_path.py` : `--day N` affiche les tâches du jour — nom de la tâche + livrable + script/document à utiliser ; `--done N` coche une journée avec horodatage, écrit dans le fichier JSON `--state`, un second pointage indique que c'est déjà fait et n'est pas enregistré deux fois ; `--progress` fait le total fait / restant / en retard (en retard = date prévue antérieure à aujourd'hui et non cochée, date prévue = jour 1 de `--start` + (N-1) jours ; sans `--start`, pas de décompte des retards, et c'est dit clairement) ; `--list` affiche les 7 jours ; tâches alignées ligne par ligne sur `docs/fast-path.md`, aucune seconde liste inventée ; `--help` contient de vrais exemples, un jour ou une date invalide donne une erreur en langage clair) + `docs/fast-path-interactive.md` (utilisation + format du fichier d'état + règle de retard + vue d'ensemble des 7 jours + 2 sorties réelles collées telles quelles) + une ligne en tête de `docs/fast-path.md` (point d'entrée interactif) + une ligne dans `docs/00-getting-started.md` étape B5 (8 scripts restants → 9) + `tests/` 226 tests en bibliothèque standard + 40 prompts inchangés (28 essentiels + 12 avancés) + 12 fichiers de scripts |
 | **V17** | ✅ Livrée (2026-11-07) | README complets en portugais et en arabe (nouveaux `README_PT.md` en portugais du Brésil et `README_AR.md` en arabe avec mise en page RTL, tous deux traduits intégralement et alignés sur README_EN.md : mêmes sections, tableaux, commandes, noms de scripts, noms de fichiers, version et chiffres ; toutes les entreprises/prix/contacts d'exemple sont fictifs, marqués 【示例】 avec le domaine réservé sample.example) + `tests/` 167 tests en bibliothèque standard + 40 prompts inchangés (28 essentiels + 12 avancés) + 10 fichiers de scripts |
 | **V16** | ✅ Livrée (2026-11-07) | Bibliothèque de relances (`scripts/nudge.py` : D3/D7/D14/D30 × devis envoyé/échantillon envoyé/en négociation, 12 brouillons au total, version WhatsApp courte + version e-mail plus longue, l'anglais d'abord avec la traduction chinoise après chaque brouillon ; gradation du ton — D3 rappel léger, D7 demande d'avancement, D14 trois options pour sauver la face (prix plus bas / autre spécification / délai de paiement plus long), D30 dernier message qui laisse la porte ouverte ; le jour 0 est le jour d'envoi du devis/de l'échantillon/de la discussion de prix, un repère différent du rythme de premier contact de followup_plan, un fil ne suit qu'une seule piste ; `--channel whatsapp/email/both` / `--format json` / `--out`) + `docs/nudge.md` (utilisation + articulation avec followup_plan + 2 sorties réelles collées telles quelles) + une ligne dans `docs/00-getting-started.md` (liste des scripts 6 → 7) + `tests/` 152 tests en bibliothèque standard + 40 prompts inchangés (28 essentiels + 12 avancés) + 10 fichiers de scripts |
@@ -223,7 +224,7 @@ Pas de pandas, pas de SDK OpenAI, et c'est voulu. La configuration de l'environn
 | **Prochaine version** | À décider | Prochaine orientation à décider (le parcours express interactif de 7 jours est arrivé avec la V19) |
 | **Long terme** | — | Packs sectoriels (pneus, matériaux de construction, machines, quincaillerie) ; textes de prospection en français/russe (espagnol, portugais et arabe arrivés avec la V13) ; jeux de données publics de prospects anonymisés ; connexion du moteur de devis aux données douanières pour un prix de référence concurrent automatique |
 
-La V20 n'attend pas la prochaine version : les 10 tours de durcissement sont utilisables dès maintenant (les CSV défectueux donnent des erreurs en langage clair au lieu de tracebacks, chaque exécution écrit une ligne de trace, les fonctions utilitaires partagées sont regroupées en un seul endroit). Inutile d'attendre la prochaine version — les scripts sont déjà dans le dépôt, avec 452 tests tous au vert.
+La V20 n'attend pas la prochaine version : les 10 tours de durcissement sont utilisables dès maintenant (les CSV défectueux donnent des erreurs en langage clair au lieu de tracebacks, chaque exécution écrit une ligne de trace, les fonctions utilitaires partagées sont regroupées en un seul endroit). Inutile d'attendre la prochaine version — les scripts sont déjà dans le dépôt, avec 586 tests tous au vert.
 
 ---
 
@@ -243,7 +244,7 @@ Le code aussi, avec une règle stricte : **Python 3.10+, bibliothèque standard 
 
 ## Pour les développeurs : modifiable à souhait, et sans aucune dépendance
 
-Les treize scripts métier (`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine` / `due_diligence` / `tire_pack` / `landed_cost` / `trade_show` / `nudge` / `anchor_price` / `fast_path` / `market_rules` / `daily_video_list`, plus le garde-fou de confidentialité `check_private_data.py`) n'utilisent que la bibliothèque standard. Il n'y a aucun `pip install`. Forkez, modifiez, intégrez-les à vos propres outils :
+Les quatorze scripts métier (`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine` / `due_diligence` / `tire_pack` / `landed_cost` / `trade_show` / `nudge` / `anchor_price` / `fast_path` / `market_rules` / `daily_video_list` / `fulfillment_checklist`, plus le garde-fou de confidentialité `check_private_data.py`) n'utilisent que la bibliothèque standard. Il n'y a aucun `pip install`. Forkez, modifiez, intégrez-les à vos propres outils :
 
 - Les pondérations vous semblent fausses ? Quatre constantes en tête de `lead_score.py` (`CONTACT_W / SOURCE_W / SIGNAL_W / MATURITY_W`). Le plafond reste à 100.
 - Vous avez vos propres données douanières ? Respectez l'en-tête (`company,country,product,source,email,phone,years,contact,note`) et injectez-les.

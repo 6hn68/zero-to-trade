@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/6hn68/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.10%2B-306998)
 
-**Sieben Etappen, von „Welches Land nehme ich überhaupt?“ bis „Das Geld ist da.“ Dazu vierzehn Python-Skripte, die die lästigen Teile erledigen, und eine Website mit vier Tools, die direkt in Ihrem Browser laufen. Erfahrung wird nicht vorausgesetzt. Genau darum geht es.**
+**Sieben Etappen, von „Welches Land nehme ich überhaupt?“ bis „Das Geld ist da.“ Dazu fünfzehn Python-Skripte, die die lästigen Teile erledigen, und eine Website mit vier Tools, die direkt in Ihrem Browser laufen. Erfahrung wird nicht vorausgesetzt. Genau darum geht es.**
 
 > Sie haben 200 Kaltakquise-E-Mails verschickt und null Antworten bekommen. Das liegt nicht an Ihrem Englisch. Das liegt an der Reihenfolge.
 >
@@ -51,11 +51,11 @@ Dieses Repo macht das Gegenteil: **eine Aufgabe nehmen und so lange zerlegen, bi
 | „Recherchieren Sie den Kunden“ | L1-Screening, drei Checks: Gibt es die Website, wie lange ist die Firma eingetragen, sind die Social-Media-Konten aktiv. Fällt einer durch, ist der Lead tot. |
 | „Qualität ist wichtiger als Quantität“ | 10 Leads werden in T0/T1/T2/T3 sortiert, jede Stufe mit eigenem nächsten Schritt und eigenem Zeitbudget. |
 | „Fassen Sie nach“ | Tag 1, 3, 5, 7. Jedes Mal ein anderer Ansatz, und Tag 7 endet mit einer Entscheidung: dranbleiben oder fallen lassen. |
-| „KI verändert den Handel“ | Vierzehn Python-Skripte, nur Standardbibliothek (dreizehn Business-Skripte, eines davon eine Angebots-Engine, plus ein Datenschutz-Wächter). `python scripts/lead_score.py examples/leads_example.csv`, und Sie haben die vollständige Einstufung in etwa dreißig Sekunden. |
+| „KI verändert den Handel“ | Fünfzehn Python-Skripte, nur Standardbibliothek (vierzehn Business-Skripte, eines davon eine Angebots-Engine, plus ein Datenschutz-Wächter). `python scripts/lead_score.py examples/leads_example.csv`, und Sie haben die vollständige Einstufung in etwa dreißig Sekunden. |
 
 Dieselbe Information. Eine andere **Körnung**. Das ist der ganze Unterschied. Jede Aussage hier muss eine Frage überstehen: Was öffne ich heute Nachmittag, und was tippe ich ein?
 
-Also nein, das hier ist keine Motivation. Es ist eine Checkliste und vierzehn Skriptdateien (dreizehn Business-Skripte + ein Datenschutz-Wächter).
+Also nein, das hier ist keine Motivation. Es ist eine Checkliste und fünfzehn Skriptdateien (vierzehn Business-Skripte + ein Datenschutz-Wächter).
 
 ---
 
@@ -83,7 +83,7 @@ Die Etappen-Dokumente liegen in `docs/`, eine Datei pro Etappe, alle nach dersel
 
 **Sie wollen Python nicht installieren?** Öffnen Sie die Website: [6hn68.github.io/zero-to-trade](https://6hn68.github.io/zero-to-trade/). Vier Browser-Tools – Lead-Bewertung, Erstansprache, Nachfassplan und Angebot – in 12 Oberflächensprachen. CSV einfügen, die T0-T3-Einstufung erhalten, dann den Erstkontakt, die Nachfasstermine und das Angebot. Nichts zu installieren, und nichts verlässt Ihren Browser.
 
-Vierzehn Skriptdateien: dreizehn Business-Skripte, eines davon die Angebots-Engine, plus ein Datenschutz-Skript (`check_private_data.py`, sucht vor dem Commit nach echten Kundendaten). Nur Standardbibliothek. Python 3.10+.
+Fünfzehn Skriptdateien: vierzehn Business-Skripte, eines davon die Angebots-Engine, plus ein Datenschutz-Skript (`check_private_data.py`, sucht vor dem Commit nach echten Kundendaten). Nur Standardbibliothek. Python 3.10+.
 
 ```bash
 # 1. Leads einstufen. CSV rein, T0-T3 raus, jede Stufe mit ihrem nächsten Schritt.
@@ -124,7 +124,7 @@ company,country,product,source,email,phone,years,contact,note
 
 Nur `company` ist Pflicht. Alles andere darf leer bleiben, und leere Felder bekommen die Mindestpunktzahl. Am stärksten wirkt `source`: `referral` / `trade_show` / `customs` / `linkedin` / `search`.
 
-Alle vierzehn Skripte verstehen `--help`. `lead_score.py` hat außerdem `--format json` sowie die Filter `--country` / `--product`, falls Sie die Ausgabe in eine Tabelle leiten möchten.
+Alle fünfzehn Skripte verstehen `--help`. `lead_score.py` hat außerdem `--format json` sowie die Filter `--country` / `--product`, falls Sie die Ausgabe in eine Tabelle leiten möchten.
 
 Die Skripte entscheiden nur, was eine Maschine entscheiden kann: Gibt es eine E-Mail-Adresse, gibt es eine Website, reicht es für die T0-Latte. Ob ein Lead Ihren Nachmittag verdient, steht in der Doku – und in Ihrem Kopf.
 
@@ -171,12 +171,13 @@ zero-to-trade/
 │   ├── fast_path.py     # V19 interaktiver 7-Tage-Schnellstart: --day N zeigt Aufgaben, --done N hakt ab, --progress zählt zusammen (abgestimmt mit docs/fast-path.md)
 │   ├── market_rules.py    # Marktregeln: Zielmärkte, Hürden für Türkei/Brasilien, Ausschluss von Mexiko/USA/EU
 │   ├── daily_video_list.py  # Tägliche Liste mit 5 Videos (3 am Vormittag, 2 am Nachmittag) mit Checks zu Größe, Markt, Verkaufsargument und Einstellungen
+│   ├── fulfillment_checklist.py  # Auftragsabwicklung: PI → Anzahlung → Produktion → Prüfung → Restzahlung → Buchung → Zoll → B/L → Dokumente → Nachverkauf, harte Geld-Gates bei Anzahlung/Freigabe/Versand
 │   └── check_private_data.py  # Datenschutz-Wächter: sucht vor dem Commit nach echten Kundendaten
 ├── examples/
 │   ├── leads_example.csv  # Beispieldaten, sofort lauffähig
 │   ├── leads_example_lighting.csv  # Beispiel ohne Reifen: 8 Leads für LED-Beleuchtung
 │   └── trade_show_example.csv  # Beispiel-Aussteller, einer pro Interessensstufe
-├── tests/                 # 452 Tests mit der Standardbibliothek
+├── tests/                 # 586 Tests mit der Standardbibliothek
 ├── prompts/
 │   └── AI_PROMPTS.md      # 40 Prompts zum Kopieren (28 Kern + 12 fortgeschritten), nach Etappe gruppiert
 └── assets/                # Screenshots, Diagramme
@@ -208,7 +209,7 @@ Kein pandas, kein OpenAI SDK, mit Absicht. Bei der Einrichtung der Umgebung gebe
 |---|---|---|
 | **V13** | ✅ Ausgeliefert (2026-11-07) | Mehrsprachige Ansprache (`scripts/outreach_gen.py --lang es/pt/ar`: Texte auf Spanisch/Portugiesisch/Arabisch + englisches Original nach jedem Entwurf; die Vorlagen spiegeln die englischen T0/T1/T2 eins zu eins, ein einziges Inline-Dict im Skript) + neuer Abschnitt in `docs/04-outreach.md` (Nutzung + 3 echte Ausgaben wörtlich eingefügt) + `tests/` 80 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 7 Skriptdateien |
 | **V18** | ✅ Ausgeliefert (2026-11-07) | Preisanker am Wettbewerb (`scripts/anchor_price.py`: Konkurrenzpreisspanne aus Zolldaten + eigene Kosten → aggressive/mittlere/konservative CIF-Stufe, jeweils mit Gewinnspielraum, Marge, FOB-Äquivalent, implizitem Aufschlag und wann man sie nutzt; eine 5-Punkte-Checkliste – Kosten, Fracht, Wechselkurs, Zahlungsbedingungen, Gültigkeit – vor dem Angebot, jeder offene Punkt wird markiert; Warnung unter Kosten „unter Kosten, Auftrag nicht annehmen, erst Menge gegen Preis verhandeln“; fehlender Median wird als (niedrig + hoch) / 2 geschätzt und als Schätzung markiert; `--format json` / `--audience client`) + `docs/anchor-price.md` (Nutzung + Anker-Leitfaden + 2 echte Ausgaben wörtlich eingefügt) + eine Zeile in `docs/06-quote.md` (vor dem Angebot ankern) + `tests/` 187 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 11 Skriptdateien |
-| **V20** | ✅ Aktuell (2026-11-14) | Zusammenführung lokaler Änderungen + 10 Härtungsrunden: einheitliche CLI-Einstiege (Fehler in Klartext, abgestimmte Exit-Codes) + stärkere Tests (Einzelnachricht-Modus, Alias `--start-date`, Laufprotokolle) + Zahlen in der Doku abgeglichen + Beispiel ohne Reifen (8 Leads für LED-Beleuchtung) + Demoseite mit V19 synchronisiert + freundliche Fehler bei fehlerhaften CSVs (fehlende Spalte / leere Datei / nicht geschlossenes Anführungszeichen ergeben keinen Traceback mehr) + Prompts abgeglichen (der Nachfassbefehl in P04-4 bekommt `--avoid-weekend`, das Fenster in P10-2 einheitlich 48 Stunden) + Lauf-Tracing eingeführt (`logs/trace-YYYY-MM-DD.jsonl`, eine Zeile pro Lauf der drei Kernskripte) + Code aufgeräumt (gemeinsame Hilfsfunktionen an einer Stelle, netto −151 Zeilen; zwei tote Hilfsfunktionen entfernt) + `tests/` 452 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 14 Skriptdateien |
+| **V20** | ✅ Aktuell (2026-11-14) | Zusammenführung lokaler Änderungen + 10 Härtungsrunden: einheitliche CLI-Einstiege (Fehler in Klartext, abgestimmte Exit-Codes) + stärkere Tests (Einzelnachricht-Modus, Alias `--start-date`, Laufprotokolle) + Zahlen in der Doku abgeglichen + Beispiel ohne Reifen (8 Leads für LED-Beleuchtung) + Demoseite mit V19 synchronisiert + freundliche Fehler bei fehlerhaften CSVs (fehlende Spalte / leere Datei / nicht geschlossenes Anführungszeichen ergeben keinen Traceback mehr) + Prompts abgeglichen (der Nachfassbefehl in P04-4 bekommt `--avoid-weekend`, das Fenster in P10-2 einheitlich 48 Stunden) + Lauf-Tracing eingeführt (`logs/trace-YYYY-MM-DD.jsonl`, eine Zeile pro Lauf der drei Kernskripte) + Code aufgeräumt (gemeinsame Hilfsfunktionen an einer Stelle, netto −151 Zeilen; zwei tote Hilfsfunktionen entfernt) + `tests/` 586 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 15 Skriptdateien |
 | **V19** | ✅ Ausgeliefert (2026-11-07) | Interaktiver 7-Tage-Schnellstart (`scripts/fast_path.py`: `--day N` zeigt die Aufgaben des Tages – Aufgabenname + was entstehen soll + welches Skript/Dokument; `--done N` hakt einen Tag mit Zeitstempel ab und schreibt in die `--state`-JSON-Datei, ein erneutes Abhaken meldet „bereits abgehakt“ und wird nicht doppelt erfasst; `--progress` zählt erledigt / offen / überfällig (überfällig = geplantes Datum vor heute und nicht abgehakt, geplantes Datum = `--start` Tag 1 + (N-1) Tage; ohne `--start` keine Überfällig-Zählung, das wird klar gesagt); `--list` zeigt alle 7 Tage; Aufgaben Zeile für Zeile mit `docs/fast-path.md` abgestimmt, keine zweite Liste erfunden; `--help` enthält echte Beispiele, ein ungültiger Tag oder ein ungültiges Datum ergibt einen Fehler in Klartext) + `docs/fast-path-interactive.md` (Nutzung + Format der Statusdatei + Überfällig-Regel + 7-Tage-Überblick + 2 echte Ausgaben wörtlich eingefügt) + eine Zeile oben in `docs/fast-path.md` (interaktiver Einstieg) + eine Zeile in `docs/00-getting-started.md` Schritt B5 (8 verbleibende Skripte → 9) + `tests/` 226 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 12 Skriptdateien |
 | **V17** | ✅ Ausgeliefert (2026-11-07) | Vollständige READMEs auf Portugiesisch und Arabisch (neu `README_PT.md` in brasilianischem Portugiesisch und `README_AR.md` auf Arabisch mit RTL-Layout, beide vollständig übersetzt und mit README_EN.md abgeglichen: gleiche Abschnitte, Tabellen, Befehle, Skriptnamen, Dateinamen, Version und Zahlen; alle Beispielfirmen/-preise/-kontakte sind fiktiv, mit 【示例】 und der reservierten Domain sample.example markiert) + `tests/` 167 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 10 Skriptdateien |
 | **V16** | ✅ Ausgeliefert (2026-11-07) | Nachhak-Bibliothek (`scripts/nudge.py`: D3/D7/D14/D30 × quoted/sampled/negotiating, insgesamt 12 Entwürfe, kurze WhatsApp-Version + längere E-Mail-Version, zuerst Englisch, nach jedem Entwurf die chinesische Übersetzung; Tonleiter – D3 sanfte Erinnerung, D7 nach dem Stand fragen, D14 drei gesichtswahrende Optionen (niedrigerer Preis / andere Spezifikation / längeres Zahlungsziel), D30 letzte Nachricht, die die Tür offen lässt; Tag 0 ist der Tag, an dem Angebot/Muster/Preisgespräch rausging – ein anderer Anker als der Erstkontakt-Rhythmus von followup_plan, ein Thread folgt nur einer Linie; `--channel whatsapp/email/both` / `--format json` / `--out`) + `docs/nudge.md` (Nutzung + Zusammenspiel mit followup_plan + 2 echte Ausgaben wörtlich eingefügt) + eine Zeile in `docs/00-getting-started.md` (Skriptliste 6 → 7) + `tests/` 152 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 10 Skriptdateien |
@@ -223,7 +224,7 @@ Kein pandas, kein OpenAI SDK, mit Absicht. Bei der Einrichtung der Umgebung gebe
 | **Nächste Version** | Noch offen | Nächste Richtung noch offen (interaktiver 7-Tage-Schnellstart in V19 ausgeliefert) |
 | **Langfristig** | — | Branchenpakete (Reifen, Baustoffe, Maschinen, Eisenwaren); Ansprache-Texte auf Französisch/Russisch (Spanisch, Portugiesisch und Arabisch in V13 ausgeliefert); öffentliche anonymisierte Lead-Datensätze; Anbindung der Angebots-Engine an Zolldaten für automatische Wettbewerbs-Ankerpreise |
 
-V20 wartet nicht auf die nächste Version: Die 10 Härtungsrunden sind jetzt schon nutzbar (fehlerhafte CSVs ergeben Fehler in Klartext statt Tracebacks, jeder Lauf schreibt eine Trace-Zeile, gemeinsame Hilfsfunktionen liegen an einer Stelle). Sie müssen nicht auf die nächste Version warten – die Skripte sind bereits im Repo, und alle 452 Tests sind grün.
+V20 wartet nicht auf die nächste Version: Die 10 Härtungsrunden sind jetzt schon nutzbar (fehlerhafte CSVs ergeben Fehler in Klartext statt Tracebacks, jeder Lauf schreibt eine Trace-Zeile, gemeinsame Hilfsfunktionen liegen an einer Stelle). Sie müssen nicht auf die nächste Version warten – die Skripte sind bereits im Repo, und alle 586 Tests sind grün.
 
 ---
 
@@ -243,7 +244,7 @@ Code ebenfalls, mit einer harten Regel: **Python 3.10+, nur Standardbibliothek.*
 
 ## Für Entwickler: anpassbar und ohne Abhängigkeiten
 
-Alle dreizehn Business-Skripte (`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine` / `due_diligence` / `tire_pack` / `landed_cost` / `trade_show` / `nudge` / `anchor_price` / `fast_path` / `market_rules` / `daily_video_list`, plus der Datenschutz-Wächter `check_private_data.py`) nutzen nur die Standardbibliothek. Es gibt kein `pip install`. Forken, ändern, in Ihre eigenen Projekte einbauen:
+Alle vierzehn Business-Skripte (`lead_score` / `outreach_gen` / `followup_plan` / `quote_engine` / `due_diligence` / `tire_pack` / `landed_cost` / `trade_show` / `nudge` / `anchor_price` / `fast_path` / `market_rules` / `daily_video_list` / `fulfillment_checklist`, plus der Datenschutz-Wächter `check_private_data.py`) nutzen nur die Standardbibliothek. Es gibt kein `pip install`. Forken, ändern, in Ihre eigenen Projekte einbauen:
 
 - Die Gewichtung passt Ihnen nicht? Vier Konstanten oben in `lead_score.py` (`CONTACT_W / SOURCE_W / SIGNAL_W / MATURITY_W`). Das Maximum bleibt 100.
 - Sie haben eigene Zolldaten? Passen Sie die Kopfzeile an (`company,country,product,source,email,phone,years,contact,note`) und speisen Sie sie ein.

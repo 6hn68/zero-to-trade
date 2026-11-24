@@ -142,10 +142,11 @@ class TestMarketRulesTable(unittest.TestCase):
         # Brazil's rate is None on purpose: the repo never recorded one.
         self.assertIsNone(mr.BARRIERS["brazil"]["rate_pct"])
         self.assertFalse(mr.BARRIERS["brazil"]["rate_verified"])
-        # Turkey's 60% comes from the house rule (task baseline), flagged
-        # as not re-verified against official text in this round.
+        # Turkey's 60% verified 2026-11-24 against the official gazette
+        # (Resmî Gazete 2024/1, Art. 4 table, 60% of CIF; Art. 5(4):
+        # lapses 2029-02-06) — flag flipped at merge time with this test.
         self.assertEqual(mr.BARRIERS["turkey"]["rate_pct"], 60)
-        self.assertFalse(mr.BARRIERS["turkey"]["rate_verified"])
+        self.assertTrue(mr.BARRIERS["turkey"]["rate_verified"])
 
     def test_eu_has_27_members(self):
         self.assertEqual(len(mr.EU_MEMBERS), 27)

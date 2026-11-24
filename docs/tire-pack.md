@@ -18,9 +18,55 @@ python scripts/tire_pack.py --size 315/80R22.5 --market uae --li 156/150 --speed
 
 # 存成文件
 python scripts/tire_pack.py --size 12.00R20 --market brazil --out pack.txt
+
+# 只核对、不出包：先看缺什么（Check first: what is missing）
+python scripts/tire_pack.py --check --size 11.00R20 --market nigeria
+# 只缺常见值兜底也能出包，但值没核实；缺必填项时不出包，退出码 2
+# (Only common-value fallbacks missing: the pack still builds, but the values are unverified; a required input missing: no pack, exit code 2)
 ```
 
 市场名中文、英文、代码都能认：`尼日利亚 / nigeria / ng`、`沙特 / saudi / ksa`、`阿联酋 / uae` 都行。`--help` 里有 3 个亲手跑过的真实例子。
+
+## 先核对再出包：`--check` / Check first, pack second
+
+**Check first, then quote. / 先核对，再报价。**
+
+`--li` / `--speed` 不填时，脚本会用该规格的常见值顶上去——`--check` 就是把这层"顶上去"挑明：它只核对、不出包，告诉你这份包里缺什么、哪些值是兜底、哪些值是你填了但还没核实的。报价前先跑一遍，缺项补齐厂家数据表数值后再报价，别拿常见值当报价依据。
+
+**What `--check` tells you / `--check` 告诉你四件事：**
+
+| 类别 / Category | 意思 / Meaning | 堵不堵出包 / Blocks the pack? |
+|---|---|---|
+| `missing` / 缺项 | 必填没给：规格 / 市场 | 堵：退出码 2，不出包 |
+| `assumed` / 用了常见值 | 没填，用了该规格的常见值（未按厂家数据表核实） | 不堵：退出码 0，但值没核实 |
+| `unverified` / 你填的（未核实） | 你自己填了，但仍未按厂家数据表核实 | 不堵：退出码 0，但值没核实 |
+| `errors` / 报错 | 格式 / 范围错（规格不在 4 个里、市场不在 8 个里、`--li` 格式不对……） | 堵：先改，退出码 2 |
+
+**Rule of thumb / 记住一条就行：** `ready` 只有在必填齐了、又没报错时才是真——`assumed` / `unverified` 不影响 `ready`，但影响你能不能直接拿去报价。常见值永远只是参考，报价前按厂家数据表把缺项补上。
+
+**The exit code is the answer. / 退出码就是答案：** `0` = 必填齐了，可以出包（先把下面列的缺项核实了再报）；`2` = 缺必填项或有报错，先补上再跑。`--format json` 能把四类缺项以 JSON 打出来，接进你自己的表格；`--out` 能存成文件。
+
+**Real output / 真实输出**——命令 / Command：`python scripts/tire_pack.py --check --size 11.00R20 --market nigeria`
+
+```text
+==================================================================
+  Spec check / 规格核对：OK — nothing required is missing
+  （必填项都齐了；下面列的是还没核实的值，报价前按厂家数据表复核）
+==================================================================
+  Assumed common values (not verified) / 用了常见值（未核实）（2 项）:
+   1. load index: not given, using common value 150/147 for 11.00R20 (not verified against the manufacturer datasheet) / 载重指数：没填，用了 11.00R20 的常见值 150/147（未按厂家数据表核实）
+   2. speed rating: not given, using common value K for 11.00R20 (not verified against the manufacturer datasheet) / 速度级别：没填，用了 11.00R20 的常见值 K（未按厂家数据表核实）
+==================================================================
+```
+
+读法 / How to read it：标题写着 OK、退出码是 0——包能出；但下面 2 项明说载重指数、速度级别都用了常见值，没按厂家数据表核实。报价前先把这两个数跟厂家数据表对上。
+
+另外两种情况 / Two more cases（都亲手跑过，退出码已核实）：
+
+- 缺必填项：`python scripts/tire_pack.py --check --market nigeria`——标题变成 `NOT READY`，`Missing` 里写着规格没给，退出码 2。规格没给时，连常见值是多少都不知道，`assumed` 里会写 `common value unknown until the tire size is fixed / 规格定下来之前不知道常见值是多少`。
+- 全给了也照样标出来：`python scripts/tire_pack.py --check --size 11.00R20 --market nigeria --li 150/147 --speed K`——退出码 0，但 `unverified` 里 2 项照列：值是你填的，仍未按厂家数据表核实。填了 ≠ 核实了。
+
+**The pack itself says what is missing, too. / 包本身也写着缺什么：** 不用 `--check`、直接出包也行——每份包（表格版和 JSON 版）现在都自带缺项栏，表格版是 `To verify before you quote / 报价前先核实` 一节，JSON 版是 `gaps` 字段（见下面两个样例）。也就是说，缺项不会只藏在 `--check` 里，包本身就写清了哪些值是兜底、哪些没核实。
 
 ## 支持的规格与市场
 
@@ -58,6 +104,10 @@ python scripts/tire_pack.py --size 12.00R20 --market brazil --out pack.txt
   常见用途：重载卡车、自卸车：驱动轮与转向轮都常见
   （载重指数/速度级别是常见值，最终以厂家数据表为准）
 ------------------------------------------------------------------
+  To verify before you quote / 报价前先核实（2 项）
+   1. load index: not given, using common value 150/147 for 11.00R20 (not verified against the manufacturer datasheet) / 载重指数：没填，用了 11.00R20 的常见值 150/147（未按厂家数据表核实）
+   2. speed rating: not given, using common value K for 11.00R20 (not verified against the manufacturer datasheet) / 速度级别：没填，用了 11.00R20 的常见值 K（未按厂家数据表核实）
+------------------------------------------------------------------
   GCC 认证要点（不适用）
    1. 本市场不在海湾合作委员会（GCC）成员国之列，GCC 认证不适用；走当地符合性评定程序（见下方市场注意事项）。
 ------------------------------------------------------------------
@@ -77,7 +127,7 @@ python scripts/tire_pack.py --size 12.00R20 --market brazil --out pack.txt
 ==================================================================
 ```
 
-读法：尼日利亚不在 GCC 成员国之列，所以 GCC 那节只有一句话「不适用」；重点在 SONCAP——PC 产品证书先行，每批货再凭 PC 申请 SC 装运证书，没 SC 到港清不了关。单证 5 项里第 5 项就是 SONCAP 符合性证书。
+读法：尼日利亚不在 GCC 成员国之列，所以 GCC 那节只有一句话「不适用」；重点在 SONCAP——PC 产品证书先行，每批货再凭 PC 申请 SC 装运证书，没 SC 到港清不了关。单证 5 项里第 5 项就是 SONCAP 符合性证书。表格里现在还多了一节「To verify before you quote / 报价前先核实」——这份包的 2 项缺项（载重指数、速度级别都用了常见值）直接写在包里，报价前先按厂家数据表核实。
 
 ## 真实输出样例 2：295/80R22.5 → 沙特（JSON 版）
 
@@ -115,12 +165,16 @@ python scripts/tire_pack.py --size 12.00R20 --market brazil --out pack.txt
       "SABER 平台上产品分类、规格填错会导致证书无效，填之前跟买家逐项对一遍。",
       "沙特对轮胎标签、胎侧标识有专门要求，标签内容出货前按当时法规核对。"
     ],
+    "gaps": [
+      "load index: not given, using common value 152/148 for 295/80R22.5 (not verified against the manufacturer datasheet) / 载重指数：没填，用了 295/80R22.5 的常见值 152/148（未按厂家数据表核实）",
+      "speed rating: not given, using common value M for 295/80R22.5 (not verified against the manufacturer datasheet) / 速度级别：没填，用了 295/80R22.5 的常见值 M（未按厂家数据表核实）"
+    ],
     "disclaimer": "须以官方最新要求为准、发货前复核。"
   }
 }
 ```
 
-读法：沙特是 GCC 成员国，GCC 那节是 3 条实的——GSO 标志、检测报告、GCC 符合性证书；同时还要走 SASO 的 SABER 平台登记。JSON 版跟表格版是同一份数据，字段名见上，方便接进表格或别的脚本。
+读法：沙特是 GCC 成员国，GCC 那节是 3 条实的——GSO 标志、检测报告、GCC 符合性证书；同时还要走 SASO 的 SABER 平台登记。JSON 版跟表格版是同一份数据，字段名见上，方便接进表格或别的脚本。`gaps` 字段就是这份包的缺项栏：这次 2 项都是常见值兜底（载重指数 152/148、速度级别 M 都没填），自己填了 `--li` / `--speed` 的话，这里列的就是你填的值、仍未核实。
 
 ## 常见报错
 
@@ -130,10 +184,13 @@ python scripts/tire_pack.py --size 12.00R20 --market brazil --out pack.txt
 | `✗ 市场 mexico 不在支持范围` | 只支持 8 个市场 | 换表里的市场；墨西哥在永久排除名单里（反倾销税至 2029），本来也不做 |
 | `✗ 载重指数 abc 格式不对` | `--li` 只认 `150` 或 `150/147` 这种 | 去掉字母，按格式重填 |
 | `✗ 速度级别 KK 格式不对` | `--speed` 只认一个字母 | 写一个字母，如 K、L、M |
-| `tire_pack.py: error: the following arguments are required: --market` | 少了必填参数 | `--size` 和 `--market` 两个都得给 |
+| `✗ 没给规格：--size 后面要跟一个规格……` | 少了 `--size`（退出码 1） | 补上规格；不知道怎么填就跑 `--help` |
+| `✗ 没给市场：--market 后面要跟一个市场……` | 少了 `--market`（退出码 1） | 补上市场；`--size` / `--market` 不再是 argparse 层面的必填项，缺了给人话报错 |
+| `Spec check / 规格核对：NOT READY`（退出码 2） | `--check` 时缺必填项或有报错 | 按下面列的缺项 / 报错补上；只有 `assumed` / `unverified` 时退出码是 0，包能出但值没核实 |
 
 ## 跟其他脚本怎么配合
 
 - 先跑 `lead_score.py` 分级，再对 T0/T1 的客户跑 `tire_pack.py`：知道对方市场要什么证，开发信里才能写对一句——比如尼日利亚的客户，第一句就该问 SONCAP 的 PC 办了没有，而不是先报价格。
 - 报价前跑一遍：巴西的 INMETRO 认证周期长、反倾销税要算进到岸成本，`quote_engine.py` 的 `--freight` / `--margin` 填之前，先看这份输出里的注意事项，别按裸价报。
 - 背调时对照着看：`due_diligence.py` 的 L2「合规」那维，拿这份输出里的当地程序去核——客户说「证都齐了」，齐的是哪几项，对着清单一项项问。
+- 每天跟进时顺带核对：`nudge.py --list` 的清单里，每家填了规格 + 市场，就会贴上这份包的一句话摘要 + 缺什么没核实——见 `docs/nudge.md` 的「每天一张清单」一节，两个工具一次跑通。

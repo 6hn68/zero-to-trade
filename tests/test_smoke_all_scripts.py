@@ -1,5 +1,5 @@
 """Smoke test: every script must run its smallest example and exit 0.
-冒烟测试：十四个脚本，每个至少能跑一次最小示例并成功退出。
+冒烟测试：十五个脚本，每个至少能跑一次最小示例并成功退出。
 
 Why this file exists / 为什么要有这个文件：
   Dedicated tests cover the tricky logic, but nothing used to check the
@@ -28,6 +28,7 @@ Rules for the examples below / 下面例子的规矩：
     不联网、不引第三方包：只用 subprocess + 标准库 unittest。
 """
 
+import json
 import subprocess
 import sys
 import tempfile
@@ -46,6 +47,7 @@ EXAMPLES = {
     "due_diligence": ["--company", "【示例】海湾轮胎贸易"],
     "fast_path": ["--day", "1"],  # --state is added per-run, see below
     "followup_plan": ["--tier", "T0", "--start", "2026-10-08"],
+    "fulfillment_checklist": ["--demo"],  # --state is added per-run, see below
     "landed_cost": ["--fob", "28"],
     "lead_score": ["examples/leads_example.csv"],
     "market_rules": ["--country", "Turkey"],
@@ -119,6 +121,19 @@ class TestSmokeAllScripts(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
             self.assertTrue(proc.stdout.strip())
 
+    def test_fulfillment_checklist_minimal_example(self):
+        # fulfillment_checklist writes its done-stages state next to
+        # --state; keep it in a temp dir so the repo stays clean.
+        # fulfillment_checklist 的打卡状态写在 --state 指定的文件里，
+        # 放临时目录，别脏了仓库。
+        with tempfile.TemporaryDirectory() as tmp:
+            state = str(Path(tmp) / "fulfillment_state.json")
+            proc = _run("fulfillment_checklist",
+                        EXAMPLES["fulfillment_checklist"] + ["--state", state])
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            self.assertTrue(proc.stdout.strip())
+            self.assertIn("4032.00", proc.stdout)
+
     def test_followup_plan_minimal_example(self):
         proc = _run("followup_plan", EXAMPLES["followup_plan"])
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
@@ -168,6 +183,74 @@ class TestSmokeAllScripts(unittest.TestCase):
         proc = _run("trade_show", EXAMPLES["trade_show"])
         self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
         self.assertTrue(proc.stdout.strip())
+
+
+
+class TestSmokeDailyVideoListExamples(unittest.TestCase):
+    """daily_video_list beyond the no-arg run: its --help lists five
+    usage lines, and the unit tests cover the pure functions, but only
+    the smoke layer proves the documented CLI combinations actually
+    run end to end. Four checks, no overlap with
+    tests/test_daily_video_list.py (which tests the functions and
+    single flags, not these CLI-level combinations).
+
+    daily_video_list 光跑无参还不够：--help 里写了 5 行用法，单测管
+    的是纯函数，这里只证明文档里写的 CLI 组合端到端真能跑。4 项，
+    与 tests/test_daily_video_list.py 不重叠（那边测函数和单个
+    flag，不测这些 CLI 组合）。
+    """
+
+    def test_daily_video_list_same_date_same_output(self):
+        # Same date -> same list, twice in a row, byte for byte.
+        # The docstring promises this; the unit test only checks the
+        # pure function, this checks the real CLI output.
+        # 同一天跑两次，输出要逐字节一样。文档里承诺了这点；单测只
+        # 验了纯函数，这里验的是真实 CLI 输出。
+        first = _run("daily_video_list", ["--date", "2026-11-22"])
+        second = _run("daily_video_list", ["--date", "2026-11-22"])
+        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+        self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
+        self.assertEqual(first.stdout, second.stdout)
+
+    def test_daily_video_list_date_plus_market_from_help(self):
+        # The --help line: --date 2026-11-22 --market nigeria.
+        # All five videos must land in the pinned market.
+        # --help 里那行：--date 2026-11-22 --market nigeria。
+        # 5 条视频必须全钉在这个市场。
+        proc = _run("daily_video_list",
+                    ["--date", "2026-11-22", "--market", "nigeria",
+                     "--format", "json"])
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        data = json.loads(proc.stdout)
+        self.assertEqual(len(data["videos"]), 5)
+        self.assertTrue(all(v["market_en"] == "Nigeria"
+                            for v in data["videos"]),
+                        proc.stdout)
+
+    def test_daily_video_list_bad_date_says_it_in_plain_words(self):
+        # Bad date must exit non-zero AND speak plainly: no traceback.
+        # Same bar the CI bad-CSV step holds the other scripts to.
+        # 坏日期必须非零退出，而且说人话：不许甩 traceback。
+        # 跟 CI 里烂 CSV 那步对别的脚本的要求是同一条线。
+        proc = _run("daily_video_list", ["--date", "2026-13-40"])
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("Bad date", proc.stderr)
+        self.assertNotIn("Traceback", proc.stderr)
+
+    def test_daily_video_list_out_file_matches_screen(self):
+        # --out writes the same text the screen shows, into a temp
+        # dir so the repo stays clean (the unit test writes into
+        # tests/ and deletes it afterwards; this one never touches
+        # the repo).
+        # --out 落盘的内容要跟屏幕上的一样，写进临时目录，别脏仓库
+        # （单测是写进 tests/ 再删，这里全程不碰仓库）。
+        with tempfile.TemporaryDirectory() as tmp:
+            out_file = str(Path(tmp) / "today.txt")
+            proc = _run("daily_video_list",
+                        ["--date", "2026-11-22", "--out", out_file])
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+            written = Path(out_file).read_text(encoding="utf-8")
+            self.assertEqual(written, proc.stdout)
 
 
 if __name__ == "__main__":

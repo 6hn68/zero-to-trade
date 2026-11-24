@@ -9,7 +9,7 @@ trade_show.py — 展会实战：名片收进来，会后 24 小时跟进计划�
 线索 + 24 小时电话追一次），并按 outreach_gen 的首触模板把第一封消息的
 草稿写出来。
 
-只用标准库，Python 3.8+ 可直接跑，不联网。
+只用标准库，Python 3.10+ 可直接跑，不联网。
 
 两种录入方式（可以混着用：先读 CSV，再用 --add 补一家）：
     命令行逐条加：--add 公司 --country 国家 --product 产品 --interest 高
@@ -100,6 +100,31 @@ PLACEHOLDERS = {"", "-", "--", "---", "/", "n/a", "na", "n.a.", "none", "null",
                 "未知", "无", "不知道", "未填写"}
 FALLBACK_ENCODINGS = ("utf-8-sig", "gb18030", "utf-8", "big5", "latin-1")
 
+# Real-directory column aliases (真实名录列名别名).
+# Real exhibitor directories rarely use our tidy headers: the official
+# Automechanika Dubai list is a web search page (no official downloadable
+# CSV — real file format not verified, 真实文件格式没核实), and the 2016
+# official PDF lists "Exhibitor Name / Country / Product Section / Stand
+# Number". Third-party exports add Email / Website / Booth. So the
+# directory reader accepts these aliases instead of failing on the
+# header — a real export must run, not error out on "Exhibitor Name".
+# 真实名录的表头很少是我们这套干净列名：迪拜展官方名录是网页检索页（没有
+# 官方可下载 CSV，真实文件格式没核实），2016 年官方 PDF 用的是 Exhibitor
+# Name / Country / Product Section / Stand Number；第三方导出还带 Email /
+# Website / Booth。所以名录读取认下面这些别名，表头写 "Exhibitor Name"
+# 也能跑，不会在第一行就报错。
+COMPANY_ALIASES = ("company", "company name", "exhibitor",
+                   "exhibitor name", "exhibitor company")
+PRODUCT_ALIASES = ("product", "product section", "product category",
+                   "product group", "category", "section")
+BOOTH_ALIASES = ("booth", "booth number", "booth no", "booth no.",
+                 "stand", "stand number", "stand no", "stand no.")
+WEBSITE_ALIASES = ("website", "web site", "url", "homepage", "web")
+EMAIL_ALIASES = ("email", "e-mail", "email address", "contact email")
+PHONE_ALIASES = ("phone", "telephone", "tel", "phone number", "mobile")
+WHATSAPP_ALIASES = ("whatsapp", "whats app", "wa")
+LOCATION_ALIASES = ("location", "city, country", "city and country")
+
 
 class TradeShowError(Exception):
     """名单读不出来、缺列、没数据、参数填错。main 会把它翻成人话再退出。"""
@@ -113,6 +138,45 @@ def _get(row: Dict[str, Any], key: str, default: str = "") -> str:
         if col is not None and str(col).strip().lower() == target:
             return _clean(value)
     return default
+
+
+def _get_first(row: Dict[str, Any], keys: Tuple[str, ...],
+               default: str = "") -> str:
+    """First filled value across alias keys (first alias wins).
+    按别名顺序取第一个填了的值（排前面的别名优先）。"""
+    for key in keys:
+        value = _get(row, key)
+        if _is_filled(value):
+            return value
+    return default
+
+
+def _get_company(row: Dict[str, Any]) -> str:
+    """Company name from any accepted alias (company / Company Name /
+    Exhibitor Name / ...). Real exports rarely say plain "company".
+    公司名：认 company / Company Name / Exhibitor Name 等别名，真实导出
+    很少只写 company 一个词。"""
+    return _get_first(row, COMPANY_ALIASES)
+
+
+def _get_country(row: Dict[str, Any]) -> Tuple[str, str]:
+    """Country -> (country, note). A "Location" column like
+    "Sharjah, United Arab Emirates" yields the part after the last comma;
+    a lone "City" column leaves country as 没核实 and notes the city.
+    国家 -> (国家, 备注)：Location 列如 "Sharjah, United Arab Emirates"
+    取最后一个逗号后面那段；只有 City 列时国家标「没核实」，城市写进备注。"""
+    country = _get(row, "country")
+    if _is_filled(country):
+        return country, ""
+    location = _get_first(row, LOCATION_ALIASES)
+    if _is_filled(location) and "," in location:
+        return location.rsplit(",", 1)[-1].strip(), ""
+    city = _get(row, "city")
+    if _is_filled(city):
+        return NOT_VERIFIED, "城市：%s（国家没核实）" % city
+    if _is_filled(location):
+        return NOT_VERIFIED, "地点：%s（国家没核实）" % location
+    return NOT_VERIFIED, ""
 
 
 
@@ -248,7 +312,21 @@ def _read_csv_records(path: str) -> Tuple[List[str], List[Tuple[int, Dict[str, A
     except (OverflowError, ValueError):
         pass
 
-    reader = csv.reader(io.StringIO(text, newline=""))
+    # Delimiter sniffing (分隔符嗅探): real exports are not always comma —
+    # European Excel writes ";" and some exports use tabs. Sniff the first
+    # chunk; if sniffing fails or guesses something odd, fall back to ",".
+    # 真实导出不一定是逗号分隔——欧洲版 Excel 写 ";"，有的导出用制表符。
+    # 先嗅探一小段，嗅不出来或嗅出怪东西就回退到逗号。
+    delimiter = ","
+    try:
+        sample = text[:2048]
+        sniffed = csv.Sniffer().sniff(sample, delimiters=",;\t")
+        if sniffed.delimiter in (",", ";", "\t"):
+            delimiter = sniffed.delimiter
+    except csv.Error:
+        pass
+
+    reader = csv.reader(io.StringIO(text, newline=""), delimiter=delimiter)
     header: Optional[List[str]] = None
     records: List[Tuple[int, Dict[str, Any]]] = []
     for row_values in reader:
@@ -268,9 +346,11 @@ def _read_csv_records(path: str) -> Tuple[List[str], List[Tuple[int, Dict[str, A
 
     if header is None:
         raise TradeShowError("这个 CSV 没有表头行（第一行得是列名，比如 company,country）。")
-    if "company" not in [h.lower() for h in header]:
-        raise TradeShowError("CSV 缺少 company 列（写 Company / COMPANY / ' company ' 都行，"
-                             "照 examples/leads_example.csv 抄表头最省事）。")
+    header_keys = [h.lower() for h in header]
+    if not any(alias in header_keys for alias in COMPANY_ALIASES):
+        raise TradeShowError("CSV 缺少公司名列（写 company / Company Name / "
+                             "Exhibitor Name 都行，照 examples/leads_example.csv "
+                             "抄表头最省事）。")
 
     rows = [(n, r) for n, r in records if any(_clean(v) for v in r.values())]
     if not rows:
@@ -296,7 +376,7 @@ def read_exhibitors(path: str) -> List[Dict[str, Any]]:
             no_interest += 1
         try:
             exhibitors.append(make_exhibitor(
-                _get(row, "company"), _get(row, "country"), _get(row, "product"),
+                _get_company(row), _get(row, "country"), _get(row, "product"),
                 _get(row, "interest"), _get(row, "email"), _get(row, "phone"),
                 _get(row, "whatsapp"), _get(row, "contact")))
         except TradeShowError as e:
@@ -321,7 +401,12 @@ def read_exhibitors(path: str) -> List[Dict[str, Any]]:
 
 # Backcheck worksheet columns (also the --format csv header, in this order).
 # 背调工作表的列（也是 --format csv 的表头，按这个顺序）。
-BACKCHECK_COLUMNS = ["seq", "company", "country", "product", "status",
+# booth (展位号) is carried over from the directory when present: on the
+# show floor the stand number is how you find a company, and the official
+# list's core fields are name / country / product section / stand number.
+# 展位号从名录里原样带过来：展馆里找公司靠的就是展位号，官方名录的核心
+# 字段本来就是公司名 / 国家 / 产品分区 / 展位号。
+BACKCHECK_COLUMNS = ["seq", "company", "country", "product", "booth", "status",
                      "contact", "interest", "website", "decision_maker",
                      "import_record", "note"]
 
@@ -378,18 +463,33 @@ def read_directory(path: str) -> List[Dict[str, Any]]:
     """Read an official exhibitor directory CSV and account for every row.
     读一份官方展商名录 CSV，每行都有交代。
 
-    Columns: company is required; country / product / contact / interest /
-    email / phone / whatsapp are optional and read when present.
-    列：company 必填；country / product / contact / interest / email /
-    phone / whatsapp 有就认，没有也能跑。
+    Columns: company is required (aliases: Company Name / Exhibitor
+    Name / Exhibitor); country / product / contact / interest / email /
+    phone / whatsapp are optional and read when present. Real-format
+    extras are carried over when present: booth / stand number, product
+    section / category, website, and a combined Location ("City,
+    Country") column. A website on file is used as-is instead of being
+    marked 没核实 — the directory already gave it to us.
+    列：company 必填（别名 Company Name / Exhibitor Name / Exhibitor）；
+    country / product / contact / interest / email / phone / whatsapp
+    有就认，没有也能跑。真实格式里常见的多余列有就带过来：展位号
+    （booth / stand number）、产品分区（product section / category）、
+    官网（website）、合并的地点列（Location 如 "City, Country"）。
+    名录里给了官网就直接用，不标「没核实」——名录已经给了，没必要重标。
 
     Dirty data is handled out in the open, never silently:
     脏数据都摆在明面上处理，不静默丢行：
       - empty company name -> status 跳过 (skipped), reason recorded;
         公司名为空 -> 跳过，原因记下来；
-      - duplicate company name (same name after trimming + casefolding) ->
-        status 跳过 (skipped), reason names the earlier line;
-        重名（去空白、拉丁字母小写后相同）-> 跳过，原因写明与第几行重名；
+      - duplicate company name (same name after trimming + casefolding,
+        same booth) -> status 跳过 (skipped), reason names the earlier
+        line. Same company at a DIFFERENT booth is kept (one company can
+        hold two stands / two brands) and noted — a real directory lists
+        stands, not just companies;
+        重名（去空白、拉丁字母小写后相同，且展位号也相同）-> 跳过，原因
+        写明与第几行重名；同一家公司、不同展位 -> 留着（一家公司可能
+        占两个展位 / 挂两个品牌），备注写明——真实名录列的是展位，不
+        只是公司；
       - missing country -> kept, country = 没核实 (not verified);
         国家没填 -> 留着，国家标「没核实」；
       - no usable contact -> kept as 待核实 (pending), a backcheck
@@ -405,28 +505,34 @@ def read_directory(path: str) -> List[Dict[str, Any]]:
     """
     _header, rows = _read_csv_records(path)
 
-    seen: Dict[str, int] = {}
+    seen: Dict[Tuple[str, str], int] = {}
+    company_booths: Dict[str, set] = {}
     directory: List[Dict[str, Any]] = []
     for line_no, row in rows:
-        company = _clean(_get(row, "company"))
+        company = _clean(_get_company(row))
+        booth = _clean(_get_first(row, BOOTH_ALIASES))
+        website = _clean(_get_first(row, WEBSITE_ALIASES))
         notes: List[str] = []
         if not _is_filled(company):
             directory.append({
                 "seq": None, "line": line_no, "company": company,
-                "country": _clean(_get(row, "country")) or NOT_VERIFIED,
-                "product": _clean(_get(row, "product")),
+                "country": _get_country(row)[0],
+                "product": _clean(_get_first(row, PRODUCT_ALIASES)),
+                "booth": booth, "website": website,
                 "interest": "", "contact": "", "channel": "",
                 "status": DIR_STATUS_SKIPPED,
                 "reason": "公司名为空 (empty company name)",
                 "note": "",
             })
             continue
-        key = _normalize_company_key(company)
+        key = (_normalize_company_key(company),
+               " ".join(booth.split()).casefold())
         if key in seen:
             directory.append({
                 "seq": None, "line": line_no, "company": company,
-                "country": _clean(_get(row, "country")) or NOT_VERIFIED,
-                "product": _clean(_get(row, "product")),
+                "country": _get_country(row)[0],
+                "product": _clean(_get_first(row, PRODUCT_ALIASES)),
+                "booth": booth, "website": website,
                 "interest": "", "contact": "", "channel": "",
                 "status": DIR_STATUS_SKIPPED,
                 "reason": "与第 %d 行重名 (duplicate of line %d)"
@@ -436,10 +542,11 @@ def read_directory(path: str) -> List[Dict[str, Any]]:
             continue
         seen[key] = line_no
 
-        country = _clean(_get(row, "country"))
-        if not _is_filled(country):
-            country = NOT_VERIFIED
+        country, country_note = _get_country(row)
+        if country == NOT_VERIFIED:
             notes.append("国家没核实 (country not verified)")
+            if country_note:
+                notes.append(country_note)
         interest_raw = _get(row, "interest")
         try:
             interest = normalize_interest(interest_raw) if _is_filled(interest_raw) else ""
@@ -449,18 +556,25 @@ def read_directory(path: str) -> List[Dict[str, Any]]:
                          "(unrecognized interest, treated as blank)"
                          % _clean(interest_raw))
         channel, shown = _lenient_contact(
-            _get(row, "email"), _get(row, "phone"), _get(row, "whatsapp"),
-            _get(row, "contact"))
+            _get_first(row, EMAIL_ALIASES), _get_first(row, PHONE_ALIASES),
+            _get_first(row, WHATSAPP_ALIASES), _get(row, "contact"))
         if channel:
             status = DIR_STATUS_READY
         else:
             status = DIR_STATUS_PENDING
             notes.append("联系方式待核：名录里没留可用的邮箱/电话，背调时先补联系方式 "
                          "(no usable contact on file — find one during backcheck)")
+        booths = company_booths.setdefault(
+            _normalize_company_key(company), set())
+        booth_key = " ".join(booth.split()).casefold()
+        if booths and booth_key not in booths:
+            notes.append("同一家公司、不同展位 (same company, different booth)")
+        booths.add(booth_key)
         directory.append({
             "seq": None, "line": line_no, "company": company,
             "country": country,
-            "product": _clean(_get(row, "product")),
+            "product": _clean(_get_first(row, PRODUCT_ALIASES)),
+            "booth": booth, "website": website,
             "interest": interest, "contact": shown, "channel": channel,
             "status": status, "reason": "", "note": "；".join(notes),
         })
@@ -469,9 +583,11 @@ def read_directory(path: str) -> List[Dict[str, Any]]:
 
 def summarize_directory(directory: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Progress summary for a directory read: total / ready / pending /
-    skipped / missing-country, plus the skipped rows with line + reason.
-    名录进度汇总：总数 / 已处理 / 待核实 / 跳过 / 缺国家的行数，外加被跳过
-    的行（带原文件行号和原因）。ready + pending + skipped == total.
+    skipped / missing-country / missing-booth, plus the skipped rows with
+    line + reason.
+    名录进度汇总：总数 / 已处理 / 待核实 / 跳过 / 缺国家的行数 / 缺展位号
+    的行数，外加被跳过的行（带原文件行号和原因）。ready + pending +
+    skipped == total.
     """
     skipped_rows = [{"line": d["line"], "company": d["company"],
                      "reason": d["reason"]}
@@ -484,21 +600,35 @@ def summarize_directory(directory: List[Dict[str, Any]]) -> Dict[str, Any]:
         "missing_country": sum(1 for d in directory
                                if d["status"] != DIR_STATUS_SKIPPED
                                and d["country"] == NOT_VERIFIED),
+        "missing_booth": sum(1 for d in directory
+                             if d["status"] != DIR_STATUS_SKIPPED
+                             and not _is_filled(d.get("booth", ""))),
         "skipped_rows": skipped_rows,
     }
 
 
-def build_backcheck_rows(directory: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def build_backcheck_rows(directory: List[Dict[str, Any]],
+                         pending_only: bool = False) -> List[Dict[str, Any]]:
     """One backcheck placeholder row per kept exhibitor (ready + pending),
     in source order, numbered from 1. Skipped rows get no row — they are
     already listed in the summary with their reason.
     每家留下的展商（已处理 + 待核实）产出一行背调占位行，按原文件顺序从 1
     编号。被跳过的行不出占位行——它们已经在汇总里带着原因列出来了。
 
-    Backcheck fields nobody has verified yet (website / decision maker /
-    import record) are marked 没核实 (not verified), never invented.
-    还没人核实过的背调字段（官网 / 决策人 / 进口记录）一律标「没核实」，
-    不编数、不编案例。
+    pending_only=True keeps only the 待核实 rows: that is the queue to
+    work — the rows with no contact on file. The seq numbers stay the
+    full-list numbers, so a pending-only export still lines up with the
+    full worksheet row by row.
+    pending_only=True 只留「待核实」的行：那就是要干的活——名录里没留
+    联系方式的行。序号仍用全表的序号，待核实清单能跟全表逐行对上。
+
+    Backcheck fields nobody has verified yet (decision maker / import
+    record) are marked 没核实 (not verified), never invented. Booth and
+    website are carried over from the directory when the directory gave
+    them — a website on file is used as-is, not re-marked 没核实.
+    还没人核实过的背调字段（决策人 / 进口记录）一律标「没核实」，不编数、
+    不编案例。展位号和官网从名录里原样带过来——名录给了官网就直接用，
+    不重标「没核实」。
     """
     rows: List[Dict[str, Any]] = []
     for d in directory:
@@ -509,37 +639,46 @@ def build_backcheck_rows(directory: List[Dict[str, Any]]) -> List[Dict[str, Any]
             "company": d["company"],
             "country": d["country"],
             "product": d["product"],
+            "booth": d.get("booth", ""),
             "status": d["status"],
             "contact": d["contact"] or NOT_VERIFIED,
             "interest": d["interest"],
-            "website": NOT_VERIFIED,
+            "website": d.get("website") or NOT_VERIFIED,
             "decision_maker": NOT_VERIFIED,
             "import_record": NOT_VERIFIED,
             "note": d["note"],
         })
+    if pending_only:
+        rows = [r for r in rows if r["status"] == DIR_STATUS_PENDING]
     return rows
 
 
 def render_backcheck_table(rows: List[Dict[str, Any]], summary: Dict[str, Any],
-                           source: str) -> str:
+                           source: str, pending_only: bool = False) -> str:
     """Plain-text progress report: summary first, one compact line per
     exhibitor, then every skipped row with its reason.
-    纯文本进度报告：先是汇总，每家一行，再是所有被跳过的行（带原因）。"""
+    纯文本进度报告：先是汇总，每家一行，再是所有被跳过的行（带原因）。
+    pending_only=True 只列待核实的行，汇总仍是全表的数（对得上总数）。"""
     lines = ["=" * 76,
              "  展商名录背调进度   来源：%s" % source,
              "  共 %d 家 · 已处理 %d 家（留了联系方式，能直接排跟进表）· "
              "待核实 %d 家（背调占位行，等补联系方式）· 跳过 %d 家"
              % (summary["total"], summary["ready"], summary["pending"],
                 summary["skipped"]),
-             "  缺国家的行：%d 家（国家标「没核实」，背调时补）"
-             % summary["missing_country"],
+             "  缺国家的行：%d 家（国家标「没核实」，背调时补）· 缺展位号的行：%d 家"
+             % (summary["missing_country"], summary["missing_booth"]),
              "=" * 76, ""]
+    if pending_only:
+        lines.append("  只列待核实 %d 家（--pending-only：没留联系方式的队列）。"
+                     % len(rows))
+        lines.append("")
     for r in rows:
         contact = r["contact"] if r["contact"] != NOT_VERIFIED else "联系方式没核实"
         interest = " · 兴趣度 %s" % r["interest"] if r["interest"] else ""
-        lines.append("[%d] %s（%s）· %s · %s%s"
+        booth = " · 展位 %s" % r["booth"] if r.get("booth") else ""
+        lines.append("[%d] %s（%s）· %s · %s%s%s"
                      % (r["seq"], r["company"], r["country"], r["status"],
-                        contact, interest))
+                        contact, booth, interest))
         if r["note"]:
             lines.append("    备注：%s" % r["note"])
     if summary["skipped_rows"]:
@@ -559,14 +698,16 @@ def render_backcheck_table(rows: List[Dict[str, Any]], summary: Dict[str, Any],
 
 
 def render_backcheck_json(rows: List[Dict[str, Any]], summary: Dict[str, Any],
-                          source: str) -> str:
+                          source: str, pending_only: bool = False) -> str:
     """JSON payload: summary + skipped rows + one placeholder row per exhibitor.
-    JSON 版：汇总 + 被跳过的行 + 每家一行占位行。"""
+    JSON 版：汇总 + 被跳过的行 + 每家一行占位行。pending_only 只列待核实行，
+    汇总仍是全表的数。"""
     payload = {
         # 带时区，不然跨时区的同事对不上是哪一版
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "source": source,
         "mode": "backcheck",
+        "pending_only": pending_only,
         "summary": summary,
         "rows": rows,
     }
@@ -764,8 +905,16 @@ high/medium/low），不填按「低」处理。联系方式邮箱/电话/WhatsA
 官方名录批量背调（整份名录几百上千家都这么跑）：
   python scripts/trade_show.py --backcheck my_directory.csv --format csv --out backcheck_worksheet.csv
   python scripts/trade_show.py --backcheck my_directory.csv --format json
+  python scripts/trade_show.py --backcheck my_directory.csv --format csv --pending-only --out pending_queue.csv
 名录里没留联系方式的留成「待核实」占位行，不扔；只跳过公司名为空或重名
-的行，每行都写清原因。背调字段（官网/决策人/进口记录）没核实就标「没核实」。""")
+的行，每行都写清原因。背调字段（决策人/进口记录）没核实就标「没核实」；
+名录里给了官网就直接用。--pending-only 只导出「待核实」队列（没留联系
+方式、等背调补的行），序号仍用全表序号，能跟全表逐行对上。
+表头认这些别名：公司名 company / Company Name / Exhibitor Name；产品
+product / Product Section / Category；展位 booth / Stand Number；官网
+website；地点 Location（"City, Country" 取逗号后一段当国家）。分隔符
+逗号 / 分号 / 制表符都认。真实文件格式没核实：迪拜展官方名录是网页检
+索页，没有官方可下载的 CSV，先用 --backcheck 跑一遍看汇总再说。""")
     p.add_argument("--add", help="逐条加一家展商：--add 公司名（一次命令加一家）")
     p.add_argument("--country", help="国家（如 Saudi Arabia）")
     p.add_argument("--product", help="意向产品（如 TBR 12.00R20）")
@@ -782,6 +931,12 @@ high/medium/low），不填按「低」处理。联系方式邮箱/电话/WhatsA
                    "Official exhibitor directory: batch-read the whole list, emit one"
                    " backcheck placeholder row per exhibitor plus a progress summary"
                    " (ready / pending / skipped).")
+    p.add_argument("--pending-only", action="store_true",
+                   help="只导出「待核实」队列（only the pending-verification rows: "
+                   "no usable contact on file). Only with --backcheck; "
+                   "seq numbers stay the full-list numbers so the queue "
+                   "lines up with the full worksheet. 只在 --backcheck 下用；"
+                   "序号仍用全表序号，能跟全表逐行对上。")
     p.add_argument("--format", choices=["table", "json", "csv"], default="table",
                    help="输出格式：table=跟进表/进度报告(默认) / json=给别的脚本用 / "
                    "csv=背调工作表（只在 --backcheck 下用）")
@@ -791,6 +946,11 @@ high/medium/low），不填按「低」处理。联系方式邮箱/电话/WhatsA
 
 def main() -> None:
     args = build_parser().parse_args()
+    if args.pending_only and not args.backcheck:
+        raise SystemExit("错误：--pending-only 只在 --backcheck 下用（待核实队列）。\n"
+                         "  用法：python scripts/trade_show.py --backcheck "
+                         "my_directory.csv --format csv --pending-only "
+                         "--out pending_queue.csv")
     if args.backcheck:
         # Directory batch mode: --csv / --add do not mix with --backcheck —
         # the directory is a raw official list, the follow-up plan is built
@@ -808,13 +968,15 @@ def main() -> None:
         except TradeShowError as e:
             raise SystemExit("错误：%s" % e)
         summary = summarize_directory(directory)
-        rows = build_backcheck_rows(directory)
+        rows = build_backcheck_rows(directory, pending_only=args.pending_only)
         if args.format == "json":
-            text = render_backcheck_json(rows, summary, args.backcheck)
+            text = render_backcheck_json(rows, summary, args.backcheck,
+                                         pending_only=args.pending_only)
         elif args.format == "csv":
             text = render_backcheck_csv(rows)
         else:
-            text = render_backcheck_table(rows, summary, args.backcheck)
+            text = render_backcheck_table(rows, summary, args.backcheck,
+                                          pending_only=args.pending_only)
         if not text.endswith("\n"):
             text += "\n"
         sys.stdout.write(text)

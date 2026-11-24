@@ -21,7 +21,7 @@
 ## Day 0 · 准备（30–40 分钟）
 
 - **今天做什么**：
-  1. 装个 Python 3.8 以上（不会装去看 [`00-getting-started.md`](00-getting-started.md)）。嫌麻烦？直接双击 [`index.html`](../index.html)，分级 Demo 零安装就能玩。
+  1. 装个 Python 3.10 以上（不会装去看 [`00-getting-started.md`](00-getting-started.md)）。嫌麻烦？直接双击 [`index.html`](../index.html)，分级 Demo 零安装就能玩。
   2. 把 [`README.md`](../README.md) 里那张「7 环节总览」扫一遍，混个眼熟就行——知道有哪 7 步，不用背。
   3. 注册个 LinkedIn，再准备一个能正常收发消息的 WhatsApp（建议用 Business 版，工作和生活好隔开）。
 - **怎么算过关（二选一，做到一条就成）**：

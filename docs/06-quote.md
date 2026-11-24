@@ -66,7 +66,7 @@ duties and inland delivery are for Buyer's account.
 
 ### 用脚本跑一遍（命令可直接复制）
 
-在项目根目录执行。脚本只用 Python 标准库，装了 Python 3.8+ 就能跑，无任何第三方依赖：
+在项目根目录执行。脚本只用 Python 标准库，装了 Python 3.10+ 就能跑，无任何第三方依赖：
 
 ```bash
 python scripts/quote_engine.py --cost 28 --freight 6 --margin 15 --local 1.2 --moq 300 --lead-time "25天" --validity 15

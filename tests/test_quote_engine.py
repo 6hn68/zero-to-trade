@@ -226,5 +226,70 @@ class TestTaxInclusiveCNY(unittest.TestCase):
         self.assertIn("人民币含税价", out)
 
 
+class TestTaxRateIsExplicitInput(unittest.TestCase):
+    """Route-07: 13% is an example rate, never a default; a missing rate is
+    named out loud (tax_status / tax_missing / table line), never silent."""
+
+    def test_example_rate_is_named_not_default(self):
+        # The example rate lives in one named constant; the default stays 0.
+        self.assertEqual(qe.EXAMPLE_TAX_RATE_PCT, 13.0)
+        q = qe.build_quote(28, 6, 15, 0.0015)
+        self.assertEqual(q["tax_status"], "not_provided")
+        self.assertNotIn("tax_rate_pct", q)
+        self.assertEqual(q["fob_list"], 33.17)  # old number unchanged
+
+    def test_missing_tax_names_the_missing_item(self):
+        q = qe.build_quote(28, 6, 15, 0.0015)
+        self.assertEqual(q["tax_missing"], ["增值税率 (VAT rate)"])
+
+    def test_tax_provided_clears_missing(self):
+        q = qe.build_quote(200, 6, 15, 0.0015,
+                           tax_rate_pct=13.0, tax_inclusive=True)
+        self.assertEqual(q["tax_status"], "provided")
+        self.assertNotIn("tax_missing", q)
+        self.assertEqual(q["tax_rate_pct"], 13.0)
+
+    def test_tax_inclusive_without_rate_warns(self):
+        # --tax-inclusive with no rate is a contradiction: the split was
+        # asked for but cannot be computed, so it must warn, not stay silent.
+        q = qe.build_quote(28, 6, 15, 0.0015, tax_inclusive=True)
+        self.assertEqual(q["tax_status"], "not_provided")
+        self.assertTrue(any("--tax-rate" in w for w in q["warnings"]))
+        self.assertTrue(any("没给" in w for w in q["warnings"]))
+
+    def test_table_without_tax_names_missing_rate(self):
+        code, out = run_quote("--cost", "28", "--freight", "6", "--margin", "15")
+        self.assertEqual(code, 0)
+        self.assertIn("增值税率：未填", out)
+        self.assertIn("--tax-rate", out)
+        self.assertIn("未核实", out)
+
+    def test_table_with_tax_says_rate_is_unverified_input(self):
+        code, out = run_quote("--cost", "200", "--currency", "CNY",
+                              "--tax-inclusive", "--tax-rate", "13",
+                              "--freight", "6")
+        self.assertEqual(code, 0)
+        self.assertIn("没有核实过", out)
+        self.assertIn("236.90", out)
+
+    def test_json_client_keeps_tax_status_visible(self):
+        # Tax status is not a cost leak: the client must see that no tax
+        # split was computed when no rate was given.
+        code, out = run_quote("--cost", "28", "--freight", "6", "--margin", "15",
+                              "--audience", "client", "--format", "json")
+        self.assertEqual(code, 0)
+        quote = json.loads(out)["quote"]
+        self.assertEqual(quote["tax_status"], "not_provided")
+        self.assertEqual(quote["tax_missing"], ["增值税率 (VAT rate)"])
+        self.assertEqual(quote["fob_list"], 33.17)
+        self.assertNotIn("cost_base", quote)
+
+    def test_help_labels_13_as_example(self):
+        code, out = run_quote("--help")
+        self.assertEqual(code, 0)
+        self.assertIn("示例 13", out)
+        self.assertIn("未核实", out)
+
+
 if __name__ == "__main__":
     unittest.main()

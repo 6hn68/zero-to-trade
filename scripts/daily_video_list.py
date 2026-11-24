@@ -9,7 +9,7 @@ market, a one-line selling point, and a 3-item filming checklist. The first
 3 go out in the morning, the last 2 in the afternoon — the same 3 + 2 rhythm
 as the daily posting rule.
 
-Only the standard library, Python 3.8+, no network. The size and market
+Only the standard library, Python 3.10+, no network. The size and market
 tables are reused from tire_pack.py (imported, not copied), so a spec or a
 market is never defined twice in this repo.
 

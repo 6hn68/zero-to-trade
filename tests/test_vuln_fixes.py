@@ -19,6 +19,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -266,6 +267,191 @@ class TestCheckPrivateDataBoundaries(unittest.TestCase):
             with self.assertRaises(ls.LeadDataError) as ctx:
                 ls.read_leads(path)
             self.assertIn("缺少 company", str(ctx.exception))
+
+
+class TestXlsxPrivacyScan(unittest.TestCase):
+    """Route 04 (2026-11-24): .xlsx files are parsed as zip/XML now.
+    Route 07 left them as plain text, so an address inside a
+    spreadsheet was only caught if it happened to show up in the
+    raw bytes -- a real email in sharedStrings.xml scanned clean.
+    All fixtures are synthetic and fictional; phone digits are
+    sequential patterns, domains are .example.
+    .xlsx 按 zip/XML 解析的回归：上轮仍按文本读，表格里的地址
+    未必扫得到。全部数据虚构，电话用顺序号段。"""
+
+    def _scan_xlsx(self, shared_strings, rows):
+        with tempfile.TemporaryDirectory() as d:
+            path = str(Path(d) / "probe.xlsx")
+            _make_xlsx(path, shared_strings, rows)
+            return cpd.scan_file(path)
+
+    def test_shared_string_email_flagged(self):
+        """An email sitting in sharedStrings.xml must be caught.
+        共享字符串里的邮箱必须被抓住。"""
+        hits = self._scan_xlsx(
+            ["Contact", "buyer@customer-mail.example"],
+            [(1, [("A1", "s", 0), ("B1", "s", 1)])])
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
+
+    def test_shared_string_phone_flagged(self):
+        """A phone sitting in sharedStrings.xml must be caught.
+        共享字符串里的电话必须被抓住。"""
+        hits = self._scan_xlsx(
+            ["phone", "+86 139 1234 5678"],
+            [(1, [("A1", "s", 0), ("B1", "s", 1)])])
+        self.assertTrue(any("手机" in why for _, why in hits))
+
+    def test_inline_string_email_flagged(self):
+        """An inline-string cell (no sharedStrings entry) is still
+        an email. 内联字符串单元格里的邮箱也是泄漏。"""
+        hits = self._scan_xlsx(
+            [], [(2, [("A2", "inline", "buyer@customer-mail.example")])])
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
+
+    def test_numeric_phone_cell_flagged(self):
+        """A bare 11-digit number cell is a phone, not just a number.
+        纯数字单元格里的 11 位号也是电话。"""
+        hits = self._scan_xlsx(
+            [], [(2, [("B2", "n", "13912345678")])])
+        self.assertTrue(any("手机" in why for _, why in hits))
+
+    def test_clean_xlsx_passes(self):
+        """sample.example mail + placeholder phone stay clean.
+        示例域名 + 占位电话的表格干净。"""
+        hits = self._scan_xlsx(
+            ["demo01@sample.example", "+000 00 000 0000"],
+            [(1, [("A1", "s", 0), ("B1", "s", 1)])])
+        self.assertEqual(hits, [])
+
+    def test_example_marked_cell_exempt(self):
+        """A cell marked 【示例】 is still exempt.
+        标了【示例】的单元格仍豁免。"""
+        hits = self._scan_xlsx(
+            ["【示例】 buyer@customer-mail.example"],
+            [(1, [("A1", "s", 0)])])
+        self.assertEqual(hits, [])
+
+    def test_xlsx_without_shared_strings(self):
+        """A workbook with no sharedStrings.xml at all (inline
+        strings only) must still be scanned, not crash.
+        没有 sharedStrings.xml 的工作簿（只有内联字符串）也要
+        扫得到，不能报错。"""
+        hits = self._scan_xlsx(
+            None, [(1, [("A1", "inline", "buyer@customer-mail.example")])])
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
+
+    def test_unreferenced_shared_string_flagged(self):
+        """A shared string no cell references must still be scanned
+        -- a value hiding only in sharedStrings.xml cannot slip
+        through. 没被任何单元格引用的共享字符串也要扫。"""
+        hits = self._scan_xlsx(
+            ["note", "buyer@customer-mail.example"],
+            [(1, [("A1", "s", 0)])])
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
+
+    def test_no_double_report(self):
+        """A shared string referenced by one cell is reported once,
+        not once for the cell and once for sharedStrings.xml.
+        同一个值只报一次，不重复。"""
+        hits = self._scan_xlsx(
+            ["buyer@customer-mail.example"],
+            [(1, [("A1", "s", 0)])])
+        flagged = [h for h in hits if "customer-mail.example" in h[1]]
+        self.assertEqual(len(flagged), 1)
+
+    def test_subdomain_of_example_domain_clean(self):
+        """info@mail.example.com in a cell stays clean, like in text.
+        白名单子域名在单元格里也干净。"""
+        hits = self._scan_xlsx(
+            ["info@mail.example.com"],
+            [(1, [("A1", "s", 0)])])
+        self.assertEqual(hits, [])
+
+    def test_corrupt_xlsx_falls_back_to_text(self):
+        """A .xlsx that is not a zip at all falls back to the plain
+        text scan instead of crashing or silently passing.
+        根本不是 zip 的 .xlsx 回退到纯文本扫描，不报错、不放过。"""
+        with tempfile.TemporaryDirectory() as d:
+            path = str(Path(d) / "probe.xlsx")
+            Path(path).write_text(
+                "contact buyer@customer-mail.example\n", encoding="utf-8")
+            hits = cpd.scan_file(path)
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
+
+
+def _make_xlsx(path, shared_strings, rows):
+    """Build a minimal .xlsx with the stdlib only (zipfile).
+    shared_strings is a list of strings (None omits
+    xl/sharedStrings.xml); rows is a list of (row_no,
+    [(ref, kind, value)]) with kind 's' (shared-string index),
+    'inline' (inline string) or 'n' (plain number).
+    只用标准库造一个最小 .xlsx；shared_strings 是字符串列表
+    （None 表示不写 sharedStrings.xml），rows 是
+    (行号, [(格子, 类型, 值)])，类型 s=共享字符串序号、
+    inline=内联字符串、n=纯数字。"""
+    def esc(s):
+        return (s.replace("&", "&amp;").replace("<", "&lt;")
+                 .replace(">", "&gt;"))
+
+    parts = {
+        "[Content_Types].xml": (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+            '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+            '<Default Extension="xml" ContentType="application/xml"/>'
+            '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+            '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+            '<Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>'
+            '</Types>'),
+        "_rels/.rels": (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+            '</Relationships>'),
+        "xl/workbook.xml": (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+            '<sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets></workbook>'),
+        "xl/_rels/workbook.xml.rels": (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+            '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>'
+            '</Relationships>'),
+    }
+    if shared_strings is not None:
+        items = "".join("<si><t>%s</t></si>" % esc(s)
+                        for s in shared_strings)
+        parts["xl/sharedStrings.xml"] = (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+            'count="%d" uniqueCount="%d">%s</sst>'
+            % (len(shared_strings), len(shared_strings), items))
+    sheet_rows = []
+    for row_no, cells in rows:
+        rendered = []
+        for ref, kind, value in cells:
+            if kind == "s":
+                rendered.append('<c r="%s" t="s"><v>%s</v></c>'
+                                % (ref, value))
+            elif kind == "inline":
+                rendered.append('<c r="%s" t="inlineStr"><is><t>%s</t></is></c>'
+                                % (ref, esc(value)))
+            else:  # 'n'
+                rendered.append('<c r="%s"><v>%s</v></c>' % (ref, value))
+        sheet_rows.append('<row r="%d">%s</row>' % (row_no, "".join(rendered)))
+    parts["xl/worksheets/sheet1.xml"] = (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        '<sheetData>%s</sheetData></worksheet>' % "".join(sheet_rows))
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for name, data in parts.items():
+            zf.writestr(name, data)
 
 
 class TestTableRender(unittest.TestCase):

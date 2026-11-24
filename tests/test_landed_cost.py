@@ -255,5 +255,67 @@ class TestImportVat(unittest.TestCase):
         self.assertNotIn("fob_unit", r)
 
 
+class TestVatRateIsExplicitInput(unittest.TestCase):
+    """Route-07: 13% is an example rate, never a default; a missing rate is
+    named out loud (vat_status / vat_missing / table note), never silent."""
+
+    def test_example_rate_is_named_not_default(self):
+        # The example rate lives in one named constant; the default stays 0.
+        self.assertEqual(lc.EXAMPLE_VAT_RATE_PCT, 13.0)
+        r = lc.build_landed_cost(30, 5, 0.0015, 10, port_charges=2)
+        self.assertEqual(r["vat_status"], "not_provided")
+        self.assertNotIn("vat_rate_pct", r)
+        self.assertEqual(r["ddp_unit"], 40.56)  # old number unchanged
+
+    def test_missing_vat_names_the_missing_item(self):
+        r = lc.build_landed_cost(30, 5, 0.0015, 10, port_charges=2)
+        self.assertEqual(r["vat_missing"], ["进口增值税率 (import VAT rate)"])
+        self.assertTrue(any("未给进口增值税率" in w for w in r["warnings"]))
+        self.assertTrue(any("未税价" in w for w in r["warnings"]))
+
+    def test_vat_provided_clears_missing(self):
+        r = lc.build_landed_cost(30, 5, 0.0015, 10, port_charges=2,
+                                 vat_rate_pct=13.0)
+        self.assertEqual(r["vat_status"], "provided")
+        self.assertNotIn("vat_missing", r)
+        self.assertEqual(r["vat_rate_pct"], 13.0)
+
+    def test_table_without_vat_says_ddp_excludes_vat(self):
+        code, out = run_landed("--fob", "30", "--freight", "5", "--duty", "10",
+                               "--port-charges", "2")
+        self.assertEqual(code, 0)
+        self.assertIn("未含进口增值税", out)
+        self.assertIn("缺：进口增值税率", out)
+        self.assertIn("--vat-rate", out)
+        self.assertIn("40.56", out)
+
+    def test_table_with_vat_says_rate_is_unverified_input(self):
+        code, out = run_landed("--fob", "30", "--freight", "5", "--duty", "10",
+                               "--port-charges", "2", "--vat-rate", "13")
+        self.assertEqual(code, 0)
+        self.assertIn("没有核实过", out)
+        self.assertIn("45.58", out)
+
+    def test_json_client_keeps_vat_status_visible(self):
+        # Tax status is not a cost leak: the client must see that DDP is
+        # tax-exclusive when no rate was given.
+        code, out = run_landed("--fob", "30", "--freight", "5", "--duty", "10",
+                               "--port-charges", "2",
+                               "--audience", "client", "--format", "json")
+        self.assertEqual(code, 0)
+        r = json.loads(out)["landed_cost"]
+        self.assertEqual(r["vat_status"], "not_provided")
+        self.assertEqual(r["vat_missing"], ["进口增值税率 (import VAT rate)"])
+        self.assertNotIn("fob_unit", r)
+
+    def test_help_labels_13_as_example(self):
+        code, out = run_landed("--help")
+        self.assertEqual(code, 0)
+        # argparse wraps "示例 13" across lines, so check the wrapped pieces.
+        self.assertIn("13（【示例】，未核实）", out)
+        self.assertIn("13% 只是算例", out)
+        self.assertIn("不是目的港进口增值税", out)
+
+
 if __name__ == "__main__":
     unittest.main()

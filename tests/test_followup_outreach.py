@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -181,6 +182,130 @@ class TestFollowupRhythmAndRefusal(unittest.TestCase):
                                "--start", "2026-10-08", "--reply", "refused",
                                "--reply-date", "10/10/2026")
         self.assertNotEqual(code, 0)
+        self.assertNotIn("Traceback", out)
+
+
+class TestTodayList(unittest.TestCase):
+    """--today morning list: overdue first, then due today, then next.
+
+    T1 plan is D0 2026-10-08 / D3 2026-10-11 / D6 2026-10-14.
+    """
+
+    def _t1(self):
+        return fp.build_plan("T1", "2026-10-08")
+
+    def test_parse_today_explicit_and_default(self):
+        self.assertEqual(fp.parse_today("2026-10-11"), date(2026, 10, 11))
+        self.assertEqual(fp.parse_today(None), date.today())
+        self.assertEqual(fp.parse_today(fp.TODAY_SENTINEL), date.today())
+        with self.assertRaises(ValueError):
+            fp.parse_today("2026/10/11")
+
+    def test_parse_sent(self):
+        self.assertEqual(fp.parse_sent("D0,D2"), ("D0", "D2"))
+        self.assertEqual(fp.parse_sent(""), ())
+        self.assertEqual(fp.parse_sent(None), ())
+        self.assertEqual(fp.parse_sent("d3"), ("D3",))
+        with self.assertRaises(ValueError):
+            fp.parse_sent("tomorrow")
+
+    def test_due_today_and_upcoming(self):
+        result = fp.todays_followups(self._t1(), "2026-10-08")
+        self.assertEqual([r["offset"] for r in result["due"]], ["D0"])
+        self.assertEqual(result["overdue"], [])
+        self.assertEqual(result["upcoming"]["offset"], "D3")
+        self.assertEqual(result["upcoming_in_days"], 3)
+        self.assertFalse(result["all_done"])
+        self.assertEqual(result["today"], "2026-10-08")
+
+    def test_overdue_most_overdue_first(self):
+        result = fp.todays_followups(self._t1(), "2026-10-12")
+        self.assertEqual([r["offset"] for r in result["overdue"]], ["D0", "D3"])
+        self.assertEqual(result["due"], [])
+        self.assertEqual(result["upcoming"]["offset"], "D6")
+        self.assertEqual(result["upcoming_in_days"], 2)
+
+    def test_sent_marks_hide_touches(self):
+        result = fp.todays_followups(self._t1(), "2026-10-12", sent=("D0",))
+        self.assertEqual([r["offset"] for r in result["overdue"]], ["D3"])
+        result = fp.todays_followups(self._t1(), "2026-10-20",
+                                     sent=("D0", "D3", "D6"))
+        self.assertTrue(result["all_done"])
+        self.assertIsNone(result["upcoming"])
+        self.assertIsNone(result["upcoming_in_days"])
+
+    def test_unknown_sent_label_raises(self):
+        with self.assertRaises(ValueError):
+            fp.todays_followups(self._t1(), "2026-10-12", sent=("D9",))
+
+    def test_today_before_start_all_upcoming(self):
+        result = fp.todays_followups(self._t1(), "2026-10-05")
+        self.assertEqual(result["overdue"], [])
+        self.assertEqual(result["due"], [])
+        self.assertEqual(result["upcoming"]["offset"], "D0")
+        self.assertEqual(result["upcoming_in_days"], 3)
+
+    def test_cli_today_shows_due_not_full_plan(self):
+        code, out = run_script("followup_plan.py", "--tier", "T1",
+                               "--start", "2026-10-08",
+                               "--csv", "examples/leads_example.csv",
+                               "--today", "2026-10-11", "--sent", "D0")
+        self.assertEqual(code, 0)
+        self.assertIn("今日跟进", out)
+        self.assertIn("DUE TODAY", out)
+        self.assertIn("2026-10-11", out)
+        self.assertIn("OVERDUE 0", out)
+        self.assertNotIn("跟进计划（", out)
+        self.assertNotIn("Traceback", out)
+
+    def test_cli_today_overdue_pinned_first(self):
+        code, out = run_script("followup_plan.py", "--tier", "T1",
+                               "--start", "2026-10-08",
+                               "--today", "2026-10-12")
+        self.assertEqual(code, 0)
+        self.assertIn("OVERDUE", out)
+        self.assertIn("2026-10-08", out)  # the overdue D0 touch
+        self.assertIn("2026-10-14", out)  # the upcoming D6 touch
+        self.assertLess(out.index("OVERDUE"), out.index("NOT YET"))
+        self.assertNotIn("Traceback", out)
+
+    def test_cli_today_bare_flag_means_today(self):
+        code, out = run_script("followup_plan.py", "--tier", "T1",
+                               "--start", "2026-10-08", "--today")
+        self.assertEqual(code, 0)
+        self.assertIn("今日跟进", out)
+        self.assertIn(date.today().isoformat(), out)
+        self.assertNotIn("Traceback", out)
+
+    def test_cli_today_bad_date_and_bad_sent_are_words_not_traceback(self):
+        code, out = run_script("followup_plan.py", "--tier", "T1",
+                               "--start", "2026-10-08",
+                               "--today", "2026/10/12")
+        self.assertNotEqual(code, 0)
+        self.assertNotIn("Traceback", out)
+        code, out = run_script("followup_plan.py", "--tier", "T1",
+                               "--start", "2026-10-08",
+                               "--today", "2026-10-12", "--sent", "D9")
+        self.assertNotEqual(code, 0)
+        self.assertNotIn("Traceback", out)
+        self.assertIn("D9", out)
+
+    def test_cli_today_with_reply_refused_still_stops(self):
+        code, out = run_script("followup_plan.py", "--tier", "T1",
+                               "--start", "2026-10-08",
+                               "--today", "2026-10-12",
+                               "--reply", "refused",
+                               "--reply-date", "2026-10-10")
+        self.assertEqual(code, 0)
+        self.assertIn("2026-11-09", out)
+        self.assertNotIn("DUE TODAY", out)
+        self.assertNotIn("Traceback", out)
+
+    def test_cli_today_t3_has_nothing_to_send(self):
+        code, out = run_script("followup_plan.py", "--tier", "T3",
+                               "--start", "2026-10-08",
+                               "--today", "2026-10-12")
+        self.assertEqual(code, 0)
         self.assertNotIn("Traceback", out)
 
 

@@ -4,7 +4,7 @@
 算到岸成本的。给你 FOB 价、海运费、保险费率、目的港杂费、关税税率，
 它吐出 CIF / DDP 分项 breakdown + 单条成本 +（给了售价）每条利润空间。
 
-只用了标准库，Python 3.8 往上都能直接跑，不联网。
+只用了标准库，Python 3.10 往上都能直接跑，不联网。
 
 CIF 口径与 scripts/quote_engine.py 完全一致，不许两套算法打架：
     CIF = (FOB + 海运费) ÷ (1 − 投保加成 × 保险费率)，投保加成 110%
@@ -27,7 +27,11 @@ CIF 口径与 scripts/quote_engine.py 完全一致，不许两套算法打架：
     --port-charges  目的港杂费（每条：THC/卸货/清关代理等），默认 0
     --duty          关税税率（%），默认 0
     --vat-rate      进口增值税率（%，默认 0 = 不算；给了就按 (CIF+关税)×税率 计入 DDP，
-                    DDP 就是含税价。税率本身没核实，报 DDP 前跟清关代理核对）
+                    DDP 就是含税价。13 只是示例（【示例】，未核实），不是默认税率；
+                    它等于中国增值税标准税率（PwC，中国一般纳税人销售/进口大多数货物
+                    自 2019-04-01 起 13%，2026-11-24 核实），不是任何目的港的进口增值税；
+                    适用税率以税务规定/清关代理核实为准，报 DDP 前跟清关代理核对。
+                    不给税率时 DDP 是未税价，表里和 JSON 里都会明说缺了进口增值税率）
     --qty           条数，默认 1
     --sell-price    拟售价（每条，可选），给了才算每条利润空间
     --currency      币种符号，默认 USD
@@ -59,6 +63,9 @@ INSURANCE_COVER_FACTOR = 1.10    # 投保加成：按 CIF 货值 110% 投保（�
 MAX_INSURANCE_RATE = 0.05        # 费率 >5% 判定为「单位输错」，直接报错
 MAX_DUTY_PCT = 1000.0            # 关税税率上限 1000%（反倾销税可能很高，但 1000% 以上基本是单位错）
 MAX_VAT_RATE_PCT = 100.0         # 进口增值税率上限 100%（超过基本是单位错）
+EXAMPLE_VAT_RATE_PCT = 13.0      # 示例增值税率 (example VAT rate ONLY)：只出现在 --help/示例里，
+                                 # 从未核实、不是默认值（默认 0 = 不算税）。适用税率以税务规定/
+                                 # 清关代理核实为准；拿它当真税率报 DDP 就是编数。
 DEFAULT_CURRENCY = "USD"         # 输出币种符号（所有金额都带，不让新人猜）
 DEFAULT_UNIT = "条"              # 计价单位（轮胎按条计）
 
@@ -120,7 +127,7 @@ def build_landed_cost(fob, freight, insurance_rate, duty_pct,
     if vat_rate_pct < 0:
         raise ValueError("进口增值税率不能为负")
     if vat_rate_pct > MAX_VAT_RATE_PCT:
-        raise ValueError("进口增值税率 %.1f%% 大得离谱（上限 %.0f%%）：这里填百分比，13 表示 13%%，"
+        raise ValueError("进口增值税率 %.1f%% 大得离谱（上限 %.0f%%）：这里填百分比，例如 13 表示 13%%，"
                          "不是 1300。" % (vat_rate_pct, MAX_VAT_RATE_PCT))
 
     # ---- CIF：保险按 CIF 货值的 110% 投保 → CIF = (FOB+运费) / (1 - 投保加成×费率)
@@ -156,7 +163,15 @@ def build_landed_cost(fob, freight, insurance_rate, duty_pct,
         "port_charges_total": money(port_charges * qty),
         "ddp_total": money(ddp_unit * qty),
         "warnings": [],
+        # Tax-rate provenance / 税率口径：税率是调用方显式输入的数，脚本没有核实过；
+        # 没给税率时 DDP 是未税价，必须明说缺哪项，不能悄悄当成含税价发出去。
+        "vat_status": "provided" if vat_rate_pct > 0 else "not_provided",
     }
+    if vat_rate_pct <= 0:
+        result["vat_missing"] = ["进口增值税率 (import VAT rate)"]
+        result["warnings"].append(
+            "未给进口增值税率：DDP 是未税价（不含进口增值税），不是含税价；"
+            "报含税 DDP 先用 --vat-rate <税率> 补上，税率以税务规定/清关代理核实为准。")
     if vat_rate_pct > 0:
         result.update({
             "vat_rate_pct": money(vat_rate_pct),
@@ -222,7 +237,7 @@ def render_table(r, currency=DEFAULT_CURRENCY, unit=DEFAULT_UNIT,
     if "vat_unit" in r:
         rows.append(("进口增值税（单条，估算）: (CIF+关税) × %.2f%%" % r["vat_rate_pct"],
                      fmt(r["vat_unit"])))
-    rows.append(("DDP 单条: 完税后交货价%s" % ("（含进口增值税）" if "vat_unit" in r else ""),
+    rows.append(("DDP 单条: 完税后交货价%s" % ("（含进口增值税）" if "vat_unit" in r else "（未含进口增值税）"),
                  fmt(r["ddp_unit"])))
     label_w = max(_width(l) for l, _ in rows)
     for label, val in rows:
@@ -255,8 +270,13 @@ def render_table(r, currency=DEFAULT_CURRENCY, unit=DEFAULT_UNIT,
     s.append("   · DDP 完税后交货：CIF + 关税 + 目的港杂费，包到买方门口。")
     if "vat_unit" in r:
         s.append("   · 进口增值税（估算）：(CIF + 关税) × %.2f%%，已计入上面 DDP；"
-                 "给了税率 DDP 就是含税价，税率以清关代理核实的最新税率为准。"
+                 "给了税率 DDP 就是含税价；税率是调用方输入的数，脚本没有核实过，"
+                 "适用税率以税务规定/清关代理核实的最新税率为准。"
                  % r["vat_rate_pct"])
+    else:
+        s.append("   · 进口增值税：未给税率，未计入上面 DDP —— 缺：进口增值税率；"
+                 "补上用 --vat-rate <税率>（示例 13，【示例】，未核实），"
+                 "适用税率以税务规定/清关代理核实为准。")
     s.append("   · 投保加成 %.0f%%：保险按 CIF 货值的 %.0f%% 投保，所以 "
              "CIF = (FOB+运费) ÷ (1 − %.2f×费率)，与 quote_engine.py 同一条公式。"
              % (r["insurance_cover_factor"] * 100, r["insurance_cover_factor"] * 100,
@@ -285,8 +305,8 @@ def main():
                "    → CIF 单条 35.06，DDP 单条 40.56（USD/条，内部视图）\n"
                "  python scripts/landed_cost.py --fob 30 --freight 5 --duty 10 --port-charges 2 --qty 100 --sell-price 48\n"
                "    → DDP 总计 4056.36，每条利润 7.44，利润率 15.49%\n"
-               "  python scripts/landed_cost.py --fob 30 --freight 5 --duty 10 --port-charges 2 --qty 100 --sell-price 48 --vat-rate 13\n"
-               "    → 进口增值税每条 5.01，DDP 单条 45.58（含税价），每条利润 2.42，利润率 5.05%（【示例】税率虚构，以清关代理核实为准）\n"
+               f"  python scripts/landed_cost.py --fob 30 --freight 5 --duty 10 --port-charges 2 --qty 100 --sell-price 48 --vat-rate {EXAMPLE_VAT_RATE_PCT:g}\n"
+               "    → 进口增值税每条 5.01，DDP 单条 45.58（含税价），每条利润 2.42，利润率 5.05%（【示例】13% 只是算例：它等于中国增值税标准税率，不是目的港进口增值税；报 DDP 前按清关代理核实的税率算）\n"
                "  python scripts/landed_cost.py --fob 30 --freight 5 --duty 10 --port-charges 2 --audience client\n"
                "    → 同样两个总价，FOB/运费/保险费率/利润全砍掉，这版才能发客户\n"
                "  python scripts/landed_cost.py --fob 30 --freight 5 --duty 10 --port-charges 2 --format json\n"
@@ -302,7 +322,8 @@ def main():
                    help="目的港杂费（每条：THC/卸货/清关代理等）")
     p.add_argument("--duty", type=float, default=0.0, help="关税税率(%%)，默认 %(default)s")
     p.add_argument("--vat-rate", type=float, default=0.0,
-                   help="进口增值税率(%%)，默认 0=不算；给了就按 (CIF+关税)×税率 计入 DDP")
+                   help="进口增值税率(%%)，默认 0=不算；给了就按 (CIF+关税)×税率 计入 DDP；"
+                        "示例 13（【示例】，未核实）")
     p.add_argument("--qty", type=int, default=1, help="条数，默认 %(default)s")
     p.add_argument("--sell-price", type=float, default=None,
                    help="拟售价（每条，可选），给了才算每条利润空间")

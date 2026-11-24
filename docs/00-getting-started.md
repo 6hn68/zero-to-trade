@@ -75,7 +75,7 @@ cd zero-to-trade
 
 脚本是 Python 写的，电脑默认没有，要装一次。
 
-1. 打开 [python.org/downloads](https://www.python.org/downloads/)，下 **3.8 或更高版本** 的安装包（macOS 用户选 macOS 版 `.pkg`）。
+1. 打开 [python.org/downloads](https://www.python.org/downloads/)，下 **3.10 或更高版本** 的安装包（macOS 用户选 macOS 版 `.pkg`）。
 2. Windows 安装第一屏**务必勾上 `Add Python to PATH`**（漏了这步后面全报错，新手翻车第一原因）。macOS / Linux 不用管这步。
 3. 一路 Next 装完。
 
@@ -108,7 +108,7 @@ py --version
 三条全都不出版本号 = Python 没装上或没勾 PATH，重装一遍，记得勾 `Add Python to PATH`。
 
 > `py` 是 Windows 自带的 Python 启动器，macOS / Linux 上没有，试不出来是正常的。
-> macOS 预装的 Python 2 已淘汰，请务必自己装 3.8+；本文一律用 `python3` 指代 macOS / Linux 上的命令。
+> macOS 预装的 Python 2 已淘汰，请务必自己装 3.10+；本文一律用 `python3` 指代 macOS / Linux 上的命令。
 
 ---
 
