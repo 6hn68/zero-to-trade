@@ -40,7 +40,7 @@ jobs:
 
       - name: 3.8 语法门禁：只拦语法层（match 这类）；PEP 585/604 由 tests/test_py38_compat.py 拦
         run: |
-        python - <<'PY'
+          python - <<'PY'
           import ast, glob, sys
 
           bad = []
