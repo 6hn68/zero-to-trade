@@ -38,8 +38,7 @@ jobs:
       - name: 十五个脚本能不能编译（别让新人第一步就崩）
         run: python -m py_compile scripts/*.py
 
-      - name: 3.8 语法门禁：list[str]、dict | dict、match 这些不许偷渡进来
-        run: |
+      - name: 3.8 语法门禁：只拦语法层（match 这类）；PEP 585/604 由 tests/test_py38_compat.py 拦
           python - <<'PY'
           import ast, glob, sys
 
@@ -52,7 +51,8 @@ jobs:
                   bad.append('%s -> %s' % (f, e))
           if bad:
               sys.exit('✗ 有脚本用了 3.8 不认的语法。CI 实测版本是 3.10–3.13，'
-                       '写成 dict[str, int] 而不是 dict | dict：\n  '
+                       '3.8 的正确写法是 typing.Dict[str, int] / typing.Union / '
+                       'typing.Optional（dict[str, int] 和 X | Y 在 3.8 上跑起来一样会炸）：\n  '
                        + '\n  '.join(bad))
           print('  十五个脚本在 3.8 的语法下都能解析 ✓')
           PY
@@ -254,7 +254,7 @@ jobs:
           echo "=========================================================="
 
   tests:
-    name: 586 个测试 / Python ${{ matrix.python-version }}
+    name: 647 个测试 / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -270,7 +270,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: 全量测试（586 个，标准库 unittest）
+      - name: 全量测试（647 个，标准库 unittest）
         run: python -m unittest discover -s tests -v
 
   repo:
