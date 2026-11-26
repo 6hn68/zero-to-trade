@@ -14,7 +14,7 @@
 GitHub 用户名 = **`6hn68`**，仓库名 = **`zero-to-trade`**。代码里所有 issue 链接、Pages 链接、CI badge 已全部指向 `github.com/6hn68/zero-to-trade`，无需再替换。
 
 - 涉及文件：`README.md`、`README_EN.md`、`README_ES.md`、`CONTRIBUTING.md`、`docs/00-getting-started.md`，以及 `README.md` 顶部的 CI badge URL
-- 已修好的死链：`CONTRIBUTING.md` 与 `docs/00-getting-started.md` 里的 `TODO-your-username` 已全部换成 `6hn68`，无需再改。
+- 已修好的死链：`CONTRIBUTING.md` 与 `docs/00-getting-started.md` 里的占位符用户名已全部换成 `6hn68`，无需再改。
 
 > 仓库名保持 `zero-to-trade`，短、好搜、品类词直给。
 > CI badge 在第一次 push 后、workflow 跑过一次才会显示状态（之前是灰色 "no status"，属正常）。
