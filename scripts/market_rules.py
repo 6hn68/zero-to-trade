@@ -27,38 +27,61 @@ Where the numbers come from / 数字从哪来 (verified 2026-11-24, see ROUTE.md
   的 60%）和第 5 条第 4 款（生效后 5 年到期）。注意：到期前如果启动日落
   复审，税会延续到复审结束，报价/发货前再复核。墨西哥/美国/欧盟永久排除
   仍是内部口径，本轮没重核。
-- Brazil anti-dumping on Chinese truck/bus tyres: VERIFIED in form, NOT
-  in current status. The duty is a specific duty in US dollars per
-  kilogram, per producer — NOT a percentage — under Gecex Resolution
-  No. 198 of 3 May 2021 (published in the Diário Oficial da União,
-  4 May 2021), rates US$1.05–2.59/kg, NCM 4011.20.90, radial tyres,
-  rims 20"/22"/22.5", for buses/trucks, for up to 5 years; scope
-  extended by Gecex Resolution No. 583/2024 to wheel assemblies.
-  Sources: MDIC/Camex resolutions list
-  (https://www.gov.br/mdic/pt-br/assuntos/camex/resolucoes/gecex/resolucoes)
-  and the MOFCOM trade-remedy summary of the DOU text
+- Brazil anti-dumping on Chinese truck/bus tyres: VERIFIED, including
+  current status (checked 2026-11-26). The duty is a specific duty in US
+  dollars per kilogram, per producer — NOT a percentage — under Gecex
+  Resolution No. 198 of 3 May 2021 (published in the Diário Oficial da
+  União, 4 May 2021), rates US$1.05–2.59/kg (Linglong 1.05, Triangle
+  1.07, Zhongce/Double Coin 1.12, Giti group 1.31, Aeolus group 1.42,
+  Shandong Bayi 1.55, all others 2.59), NCM 4011.20.90, radial tyres,
+  rims 20"/22"/22.5", for buses/trucks; scope extended by Gecex
+  Resolution No. 583/2024 to wheel assemblies.
+  Sunset review: opened by SECEX Circular No. 20 of 19 March 2026
+  (DOU 20 March 2026, rectified 23 March 2026), covering the measures
+  of Gecex 176/2021 and 198/2021. Per Decree 8.058/2013 art. 112 §2 the
+  duties stay in force while the review runs (Circular 20, item 15) —
+  so the 198/2021 rates are the rates in force TODAY. The original
+  5-year term for the China measure would have ended 4 May 2026
+  (Circular SECEX No. 69/2025). SECEX Circular No. 94 of 9 October
+  2026 (DOU 13 October 2026) extended the review's conclusion deadline
+  to 12 months from initiation (about 20 March 2027); no concluding
+  Gecex resolution had been published as of 25 November 2026, so the
+  outcome is still open — re-check before shipping.
+  Sources: DOU texts of Circular SECEX 20/2026 (DOU 20 March 2026)
+  and Circular SECEX 94/2026 (MDIC 2026 circulars list
+  https://www.gov.br/mdic/pt-br/acesso-a-informacao/institucional/atos-normativos/secex/circulares-secex/2026),
+  plus the MDIC/Camex resolutions list and the MOFCOM trade-remedy
+  summary of the DOU text
   (https://cacs.mofcom.gov.cn/cacscms/articleDetail/ckys?articleId=180426&id=53d8a9ed8e5ed02d018f5627444d177d).
   That is why rate_pct stays None here: there is no % rate to write.
-  NOT verified: whether the measure is still in force today — the
-  5-year term ran to about May 2026, and the third sunset review's
-  initiation/outcome was not confirmed from official text, so the
-  label still says "没核实" for current status. Check the official
-  source before shipping.
-  巴西对华卡客车胎反倾销税：形式已核实、现行状态没核实。这税不是百分比，
-  是按生产商分档的从量税（美元/公斤）：Gecex 198/2021 号决议（2021-05-03，
-  刊于 2021-05-04 官方公报），US$1.05–2.59/kg，税号 NCM 4011.20.90，
-  子午胎、轮辋 20/22/22.5 英寸、客车/卡车用，五年期；2024 年 Gecex
-  583/2024 号决议把范围扩到轮胎组件。所以 rate_pct 仍是 None：本来就
-  没有百分比可写。没核实的是现在是否仍在执行——五年期到 2026 年 5 月
-  前后，第三次日落复审的启动/结果没从官方原文确认，标签里仍写“没核实”，
-  出货前查官方原文。
+  巴西对华卡客车胎反倾销税：已核实，包括现行状态（2026-11-26 查的）。
+  这税不是百分比，是按生产商分档的从量税（美元/公斤）：Gecex 198/2021
+  号决议（2021-05-03，刊于 2021-05-04 官方公报），US$1.05–2.59/kg
+  （玲珑 1.05、三角 1.07、中策/双钱 1.12、佳通系 1.31、风神系 1.42、
+  山东八一 1.55、其余 2.59），税号 NCM 4011.20.90，子午胎、轮辋
+  20/22/22.5 英寸、客车/卡车用，五年期；2024 年 Gecex 583/2024 号决议
+  把范围扩到轮胎组件。日落复审：SECEX 20/2026 号公告（2026-03-19，
+  刊于 2026-03-20 官方公报，03-23 更正）已启动，覆盖 Gecex 176/2021
+  和 198/2021 两项措施；按 8.058/2013 号法令第 112 条第 2 款，复审期间
+  税照收（20 号公告第 15 条）——所以 198/2021 的税率就是今天在收的税率。
+  中国这项措施的原五年期本来到 2026-05-04（SECEX 69/2025 号公告）；
+  SECEX 94/2026 号公告（2026-10-09，刊于 2026-10-13 官方公报）把复审
+  结论期限延到 12 个月（约 2027-03-20）；截至 2026-11-25 还没有结案的
+  Gecex 决议出来，结果未定，出货前再查官方原文。所以 rate_pct 仍是
+  None：本来就没有百分比可写。
 - Verification flags: Turkey rate_verified was flipped to True at merge
   time (2026-11-24) together with the test update — the 60% / 2029-02-06
   facts above are verified against the official gazette. Brazil
-  rate_verified stays False: only the form of the duty is verified,
-  current status is not.
+  rate_verified was flipped to True on 2026-11-26: the sunset review
+  was confirmed opened (SECEX Circular 20/2026, DOU 20/03/2026) and
+  still running with its deadline extended to 12 months (SECEX Circular
+  94/2026, DOU 13/10/2026), and the duties stay in force during the
+  review — so the 198/2021 per-kg rates are the rates in force today.
   核实标记：土耳其的 rate_verified 已在合入时翻成 True（连测试一起改）；
-  巴西的还是 False——只有税的形式（从量税）核实了，现行状态没核实。
+  巴西的 2026-11-26 翻成 True：日落复审已确认启动（SECEX 20/2026 号公告，
+  2026-03-20 官方公报），结论期限已延到 12 个月（SECEX 94/2026 号公告，
+  2026-10-13 官方公报），复审期间税照收——198/2021 的从量税率就是今天
+  在收的税率。
 - The 8 target markets match tire_pack.py MARKETS exactly; keep the two
   tables in sync when either changes.
   8 个目标市场与 tire_pack.py 的 MARKETS 完全一致；改一边时另一边同步改。
@@ -123,11 +146,11 @@ BARRIERS = {
         "product": "TBR",        # 卡客车胎
         "origin": "China",
         "rate_pct": None,        # No % rate exists: the duty is US$/kg per producer, so None is correct, not missing
-        "rate_specific_usd_per_kg": "1.05-2.59",  # 按生产商分档：Gecex 198/2021，2026-11-24 核实
-        "until": None,           # Current status not verified: 5-year term ran to ~May 2026; sunset-review outcome unconfirmed
-        "rate_verified": False,  # The per-kg range is verified (see source); False here still means "current in-force status not verified"
-        "source": "Gecex Resolution No. 198 of 3 May 2021 (DOU 4 May 2021); scope extended by Gecex 583/2024 — MDIC resolutions list + MOFCOM summary of DOU text (see module docstring)",
-        "verified_on": "2026-11-24",  # Rate form (US$/kg range) checked; in-force status NOT checked
+        "rate_specific_usd_per_kg": "1.05-2.59",  # 按生产商分档：Gecex 198/2021，2026-11-24 核实；复审期间税率不变，见 Circular SECEX 20/2026 附件重述的 198/2021 税率表
+        "until": None,           # No fixed expiry while the sunset review runs: duty stays in force until the review concludes (Decree 8.058/2013 art. 112 §2); review conclusion deadline extended to 12 months from 2026-03-20, i.e. about 2027-03-20 (Circular SECEX 94/2026) — do not write a date here until a concluding Gecex resolution sets one
+        "rate_verified": True,  # verified 2026-11-26: review opened (SECEX Circular 20/2026, DOU 20/03/2026) and still running, deadline extended to 12 months (SECEX Circular 94/2026, DOU 13/10/2026); duty in force during review, so the per-kg rates above are the rates in force today
+        "source": "Gecex Resolution No. 198 of 3 May 2021 (DOU 4 May 2021); scope extended by Gecex 583/2024; sunset review opened by SECEX Circular No. 20 of 19 March 2026 (DOU 20 March 2026, rates restated in its annex), duty in force during review (Decree 8.058/2013 art. 112 §2); review deadline extended to 12 months by SECEX Circular No. 94 of 9 October 2026 (DOU 13 October 2026) — see module docstring",
+        "verified_on": "2026-11-26",  # In-force status + review status checked against the DOU texts above; review outcome still open
     },
 }
 
@@ -255,7 +278,7 @@ def _barrier_label(code):
             # Specific duty, not a %: keep "%" out of this label on purpose —
             # test_lead_score_market.py asserts no "%" in the Brazil detail.
             # 分档从量税不是百分比：标签里故意不写 %，测试钉死了巴西明细里不能有 %。
-            return "%s：对华%s反倾销税 US$%s/kg（按生产商分档，Gecex 198/2021 号决议）；五年期至 2026 年 5 月前后，日落复审状态没核实，出货前查官方原文" % (
+            return "%s：对华%s反倾销税 US$%s/kg（按生产商分档，Gecex 198/2021 号决议）；日落复审已于 2026-03-20 启动（Circular SECEX 20/2026），复审期间税照收，结论期限延至 12 个月（约 2027-03-20），结果未定，出货前查官方原文" % (
                 b["name"], b["product"], b["rate_specific_usd_per_kg"])
         return "%s：对华%s有反倾销税，税率没核实，出货前查官方原文" % (
             b["name"], b["product"])

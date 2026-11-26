@@ -18,7 +18,7 @@ Satın alınacak kurs yok. Ücretli paket yok. E-posta duvarı yok. MIT lisansl�
 
 ## 7 adımlık demo: gerçek bir listeyi seviyelendirin ve ilk mesajınızı 2 dakikada yazın
 
-Önce dokümanları okumanıza gerek yok. Yedi adım; her biri tek satır, her biri kopyalayıp yapıştıracağınız tek komut — baştan sona yaklaşık 2 dakika. Aşağıdaki yedi komutun hepsi bu depoda gerçekten çalıştırıldı (2026-11-22, Python 3.x, yalnızca standart kütüphane). Örnek veriler kurgusaldır; şirket adları 【示例】 ("örnek") önekini taşır.
+Önce dokümanları okumanıza gerek yok. Yedi adım; her biri tek satır, her biri kopyalayıp yapıştıracağınız tek komut — baştan sona yaklaşık 2 dakika. Aşağıdaki yedi komutun hepsi bu depoda gerçekten çalıştırıldı (2026-11-24, Python 3.x, yalnızca standart kütüphane). Örnek veriler kurgusaldır; şirket adları 【示例】 ("örnek") önekini taşır.
 
 | Adım | Tek satırda | Komut (kopyala-yapıştır) |
 |---|---|---|
@@ -26,7 +26,7 @@ Satın alınacak kurs yok. Ücretli paket yok. E-posta duvarı yok. MIT lisansl�
 | 2 Seviyelendirin | 10 potansiyel müşteri T0–T3 arasında sıralanır; bugün 2'sini arayın | `python scripts/lead_score.py my_leads.csv` |
 | 3 T0'ları inceleyin | Yazmadan önce T0'ın paravan şirket olmadığını kontrol edin; sağlamadığınız her bilgi "doğrulanacak" olarak döner | `python scripts/due_diligence.py --company "【示例】海湾轮胎贸易"` |
 | 4 İlk mesajı yazın | T0 seviyesi için ilk temas taslağı; İngilizcesi gönderilir, Çincesi sizin kontrolünüz içindir | `python scripts/outreach_gen.py my_leads.csv --tier T0` |
-| 5 Takibi planlayın | D0/D2/D5 ritmi: 6 günde 3 temas, üçüncü sessizlikten sonra durun | `python scripts/followup_plan.py --tier T0 --start 2026-11-22 --csv my_leads.csv` |
+| 5 Takibi planlayın | D0/D2/D5 ritmi: 6 günde 3 temas, üçüncü sessizlikten sonra durun | `python scripts/followup_plan.py --tier T0 --start 2026-11-24 --csv my_leads.csv` |
 | 6 Yanıt gelince teklif verin | Maliyet + navlun + kâr marjı → FOB/CIF aralığı + üç basamaklı indirim merdiveni | `python scripts/quote_engine.py --cost 28 --freight 6 --margin 15` |
 | 7 Sessizleşince hatırlatın | Tekliften 7 gün sonra yanıt yoksa gelişmeyi sorun — kararlı olun, çaresiz değil | `python scripts/nudge.py --day D7 --scenario quoted` |
 
@@ -110,9 +110,9 @@ python scripts/quote_engine.py --cost 28 --freight 6 --margin 15
 | T1 | 【示例】尼罗河商贸 | Mısır | 67 | bu hafta; metni bugün hazırlayın |
 | T1 | 【示例】迪拜轮毂行 | BAE | 65 | bu hafta; metni bugün hazırlayın |
 | T1 | 【示例】利雅得汽配 | Suudi Arabistan | 60 | bu hafta; metni bugün hazırlayın |
-| T2 | 【示例】尼日利亚先锋 | Nijerya | 46 | soğuk havuz, günde bir kez gözden geçirin |
-| T3 | 【示例】黎凡特供配 | Lübnan | 20 | bilgi yetersiz, önce iletişim bilgisi + ihtiyaç bulun |
-| T3 | 【示例】利雅得零件店 | Suudi Arabistan | 10 | bilgi yetersiz, önce iletişim bilgisi + ihtiyaç bulun |
+| T2 | 【示例】尼日利亚先锋 | Nijerya | 50 | soğuk havuz, günde bir kez gözden geçirin |
+| T3 | 【示例】黎凡特供配 | Lübnan | 24 | bilgi yetersiz, önce iletişim bilgisi + ihtiyaç bulun |
+| T3 | 【示例】利雅得零件店 | Suudi Arabistan | 17 | bilgi yetersiz, önce iletişim bilgisi + ihtiyaç bulun |
 
 Özet: **T0:2 / T1:5 / T2:1 / T3:2**. Bugün iletişime geçin: 【示例】海湾轮胎贸易, 【示例】三角洲轮胎. Bu hafta: 【示例】阿曼蓝海, 【示例】半岛汽车, 【示例】尼罗河商贸, 【示例】迪拜轮毂行, 【示例】利雅得汽配. Şimdilik dokunmayın: 【示例】黎凡特供配, 【示例】利雅得零件店.
 
@@ -177,7 +177,7 @@ zero-to-trade/
 │   ├── leads_example.csv  # Örnek veri, olduğu gibi çalıştırılabilir
 │   ├── leads_example_lighting.csv  # Lastik dışı örnek: 8 LED aydınlatma potansiyel müşterisi
 │   └── trade_show_example.csv  # Örnek fuar katılımcıları, her ilgi düzeyinden bir tane
-├── tests/                 # Standart kütüphaneyle yazılmış 586 test
+├── tests/                 # Standart kütüphaneyle yazılmış 647 test
 ├── prompts/
 │   └── AI_PROMPTS.md      # Aşamalara göre gruplanmış 40 kopyala-yapıştır komut (28 temel + 12 ileri düzey)
 └── assets/                # Ekran görüntüleri, diyagramlar
@@ -209,7 +209,7 @@ Pandas yok, OpenAI SDK yok; bilerek. Ortam kurulumu, yeni başlayanların bırak
 |---|---|---|
 | **V13** | ✅ Yayında (2026-11-07) | Çok dilli ilk temas (`scripts/outreach_gen.py --lang es/pt/ar`: İspanyolca/Portekizce/Arapça metin + her taslağın ardından İngilizce orijinal; şablonlar İngilizce T0/T1/T2'yi bire bir yansıtır, scriptte tek bir satır içi sözlük) + `docs/04-outreach.md` yeni bölüm (kullanım + birebir yapıştırılmış 3 gerçek çıktı) + `tests/` 80 standart kütüphane testi + 40 komut değişmedi (28 temel + 12 ileri düzey) + 7 script dosyası |
 | **V18** | ✅ Yayında (2026-11-07) | Rakip çıpa fiyatlandırması (`scripts/anchor_price.py`: gümrük verisinden rakip fiyat aralığı + kendi maliyetiniz → agresif/orta/temkinli CIF seviyeleri; her biri kâr payı, marj, FOB karşılığı, örtük kâr oranı ve ne zaman kullanılacağıyla; teklif vermeden önce 5 maddelik kontrol listesi — maliyet, navlun, döviz kuru, ödeme koşulları, geçerlilik — kontrol edilmeyen her madde işaretlenir; maliyet altı uyarısı “maliyetin altında, siparişi almayın, önce hacim karşılığı fiyat pazarlığı yapın”; eksik medyan (düşük + yüksek) / 2 olarak tahmin edilir ve tahmin olarak işaretlenir; `--format json` / `--audience client`) + `docs/anchor-price.md` (kullanım + çıpa rehberi + birebir yapıştırılmış 2 gerçek çıktı) + `docs/06-quote.md` içinde bir satır (teklif öncesi çıpa) + `tests/` 187 standart kütüphane testi + 40 komut değişmedi (28 temel + 12 ileri düzey) + 11 script dosyası |
-| **V20** | ✅ Güncel (2026-11-14) | Yerel artımlı birleştirme + 10 sağlamlaştırma turu: birleşik CLI girişleri (sade dilde hatalar, uyumlu çıkış kodları) + güçlendirilmiş testler (tek mesaj modu, `--start-date` takma adı, çalışma kayıtları) + doküman rakamları uyumlu hale getirildi + lastik dışı örnek (8 LED aydınlatma potansiyel müşterisi) + demo sayfası V19 ile eşitlendi + hatalı CSV'ler için anlaşılır hatalar (eksik sütun / boş dosya / kapanmamış tırnak artık traceback vermiyor) + komut uyumu (P04-4 takip komutuna `--avoid-weekend` eklendi, P10-2 penceresi 48 saatte birleştirildi) + çalışma izleme eklendi (`logs/trace-YYYY-MM-DD.jsonl`, üç çekirdek scriptin her çalışması için bir satır) + kod temizliği (ortak yardımcılar tek yerde, net −151 satır; iki ölü yardımcı kaldırıldı) + `tests/` 586 standart kütüphane testi + 40 komut değişmedi (28 temel + 12 ileri düzey) + 15 script dosyası |
+| **V20** | ✅ Güncel (2026-11-14) | Yerel artımlı birleştirme + 10 sağlamlaştırma turu: birleşik CLI girişleri (sade dilde hatalar, uyumlu çıkış kodları) + güçlendirilmiş testler (tek mesaj modu, `--start-date` takma adı, çalışma kayıtları) + doküman rakamları uyumlu hale getirildi + lastik dışı örnek (8 LED aydınlatma potansiyel müşterisi) + demo sayfası V19 ile eşitlendi + hatalı CSV'ler için anlaşılır hatalar (eksik sütun / boş dosya / kapanmamış tırnak artık traceback vermiyor) + komut uyumu (P04-4 takip komutuna `--avoid-weekend` eklendi, P10-2 penceresi 48 saatte birleştirildi) + çalışma izleme eklendi (`logs/trace-YYYY-MM-DD.jsonl`, üç çekirdek scriptin her çalışması için bir satır) + kod temizliği (ortak yardımcılar tek yerde, net −151 satır; iki ölü yardımcı kaldırıldı) + `tests/` 647 standart kütüphane testi + 40 komut değişmedi (28 temel + 12 ileri düzey) + 15 script dosyası |
 | **V19** | ✅ Yayında (2026-11-07) | Etkileşimli 7 günlük hızlı yol (`scripts/fast_path.py`: `--day N` günün görevlerini gösterir — görev adı + ne üretileceği + hangi script/dokümanın kullanılacağı; `--done N` bir günü zaman damgasıyla işaretler ve `--state` JSON dosyasına yazar, tekrarlanan işaretleme zaten işaretlendiğini söyler ve iki kez kaydedilmez; `--progress` tamamlanan / kalan / geciken toplamlarını verir (geciken = planlanan tarihi bugünden önce olup işaretlenmemiş gün, planlanan tarih = `--start` 1. gün + (N-1) gün; `--start` yoksa geciken sayısı yoktur ve bu açıkça belirtilir); `--list` 7 günün tamamını gösterir; görevler `docs/fast-path.md` ile satır satır uyumludur, ikinci bir liste uydurulmadı; `--help` gerçek örnekler içerir, hatalı gün veya tarih sade dilde hata verir) + `docs/fast-path-interactive.md` (kullanım + durum dosyası biçimi + gecikme kuralı + 7 günlük genel bakış + birebir yapıştırılmış 2 gerçek çıktı) + `docs/fast-path.md` başına bir satır (etkileşimli giriş) + `docs/00-getting-started.md` B5 adımında bir satır (kalan 8 script → 9) + `tests/` 226 standart kütüphane testi + 40 komut değişmedi (28 temel + 12 ileri düzey) + 12 script dosyası |
 | **V17** | ✅ Yayında (2026-11-07) | Tam Portekizce ve Arapça README'ler (Brezilya Portekizcesiyle yeni `README_PT.md` ve RTL düzenli Arapça `README_AR.md`; ikisi de eksiksiz çevrildi ve README_EN.md ile uyumlu: aynı bölümler, tablolar, komutlar, script adları, dosya adları, sürüm ve rakamlar; tüm örnek şirketler/fiyatlar/iletişim bilgileri kurgusaldır, 【示例】 ile ve sample.example ayrılmış alan adıyla işaretlidir) + `tests/` 167 standart kütüphane testi + 40 komut değişmedi (28 temel + 12 ileri düzey) + 10 script dosyası |
 | **V16** | ✅ Yayında (2026-11-07) | Hatırlatma kütüphanesi (`scripts/nudge.py`: D3/D7/D14/D30 × teklif verildi/numune gönderildi/pazarlıkta, toplam 12 taslak, kısa WhatsApp sürümü + uzun e-posta sürümü, önce İngilizce ve her taslağın ardından Çince çevirisi; ton merdiveni — D3 hafif hatırlatma, D7 gelişmeyi sorma, D14 yüz kurtaran üç seçenek (daha düşük fiyat / farklı özellik / daha uzun ödeme vadesi), D30 kapıyı açık bırakan son not; 0. gün teklifin/numunenin/fiyat görüşmesinin yapıldığı gündür, followup_plan'ın ilk temas ritminden farklı bir başlangıç noktası, bir yazışma yalnızca tek bir hattı izler; `--channel whatsapp/email/both` / `--format json` / `--out`) + `docs/nudge.md` (kullanım + followup_plan ile nasıl örtüştüğü + birebir yapıştırılmış 2 gerçek çıktı) + `docs/00-getting-started.md` içinde bir satır (script listesi 6 → 7) + `tests/` 152 standart kütüphane testi + 40 komut değişmedi (28 temel + 12 ileri düzey) + 10 script dosyası |
@@ -224,7 +224,7 @@ Pandas yok, OpenAI SDK yok; bilerek. Ortam kurulumu, yeni başlayanların bırak
 | **Sonraki sürüm** | Belirlenecek | Sonraki yön belirlenecek (etkileşimli 7 günlük hızlı yol V19'da yayına girdi) |
 | **Uzun vade** | — | Sektör paketleri (lastik, yapı malzemeleri, makine, hırdavat); Fransızca/Rusça ilk temas metni (İspanyolca, Portekizce ve Arapça V13'te geldi); kimliksizleştirilmiş açık potansiyel müşteri veri setleri; otomatik rakip çıpa fiyatlandırması için teklif motorunun gümrük verilerine bağlanması |
 
-V20 sonraki sürümü beklemiyor: 10 sağlamlaştırma turu şimdiden kullanıma hazır (hatalı CSV'ler traceback yerine sade dilde hata veriyor, her çalışma bir iz satırı yazıyor, ortak yardımcılar tek yerde). Sonraki sürümü beklemenize gerek yok — scriptler zaten depoda ve 586 testin hepsi yeşil.
+V20 sonraki sürümü beklemiyor: 10 sağlamlaştırma turu şimdiden kullanıma hazır (hatalı CSV'ler traceback yerine sade dilde hata veriyor, her çalışma bir iz satırı yazıyor, ortak yardımcılar tek yerde). Sonraki sürümü beklemenize gerek yok — scriptler zaten depoda ve 647 testin hepsi yeşil.
 
 ---
 

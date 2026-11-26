@@ -33,7 +33,9 @@
     --cost          自家 FOB 成本（工厂/EXW 价），必填，币种由 --currency 决定
     --freight       到目的港海运费（每单位），默认 0
     --local         本地费用（报关/拖车/港杂，每单位），默认 0；进了成本基数，与 quote_engine 相同
-    --tax-rate      增值税率（%，默认 0 = 不算；给了三档价多一列含税价，与 quote_engine 同口径）
+    --tax-rate      增值税率（%，默认 0 = 不算；示例 13（【示例】，未核实），不是默认税率；
+                    适用税率以税务规定为准；不给税率时三档价都是不含税价，表里和 JSON 里
+                    都会明说缺了增值税率；给了三档价多一列含税价，与 quote_engine 同口径）
     --duty          关税税率（%），默认 0；给了才算 DDP 价
     --insurance     保险费率（占 CIF 货值的百分比 %），默认 0.15（海运险通常 0.1%-0.3%）
     --insurance-rate  高级入口：保险费率（比率），如 0.0015 = 0.15%，可覆盖 --insurance
@@ -70,6 +72,12 @@ DEFAULT_CONTINGENCY = 0.03       # 不可预见费比例（叠在成本上，与
 MAX_INSURANCE_RATE = 0.05        # 费率 >5% 判定为「单位输错」，直接报错
 MAX_DUTY_PCT = 1000.0            # 关税税率上限 1000%（反倾销税可能很高，但 1000% 以上基本是单位错）
 MAX_TAX_RATE_PCT = 100.0         # 增值税率上限 100%（超过基本是单位错）
+EXAMPLE_TAX_RATE_PCT = 13.0      # 示例增值税率 (example VAT rate ONLY)：只出现在 --help/示例里，
+                                 # 不是默认值（默认 0 = 不算税）。它等于中国增值税标准税率
+                                 # （见 landed_cost.py：PwC，中国一般纳税人销售/进口大多数货物
+                                 # 自 2019-04-01 起 13%，2026-11-24 核实），不是任何目的港的
+                                 # 进口增值税；适用税率以税务规定/清关代理核实为准，拿它当真
+                                 # 税率报含税价就是编数。
 AGGRESSIVE_CUT_PCT = 3.0         # 进取价 = 中位价 x (1 - 3%)
 CONSERVATIVE_PREMIUM_PCT = 3.0   # 保守价 = 中位价 x (1 + 3%)
 QUOTE_VALIDITY_DAYS = 30         # 报价有效期默认天数
@@ -205,8 +213,10 @@ def build_anchor(comp_low, comp_high, comp_median, cost, freight,
     if tax_rate_pct < 0:
         raise ValueError("增值税率不能为负")
     if tax_rate_pct > MAX_TAX_RATE_PCT:
-        raise ValueError("增值税率 %.1f%% 大得离谱（上限 %.0f%%）：这里填百分比，13 表示 13%%，"
-                         "不是 1300。" % (tax_rate_pct, MAX_TAX_RATE_PCT))
+        raise ValueError("增值税率 %.1f%% 大得离谱（上限 %.0f%%）：这里填百分比，例如 %.0f 表示 %.0f%%，"
+                         "不是 %.0f。" % (tax_rate_pct, MAX_TAX_RATE_PCT,
+                                        EXAMPLE_TAX_RATE_PCT, EXAMPLE_TAX_RATE_PCT,
+                                        EXAMPLE_TAX_RATE_PCT * 100))
     verified = normalize_verified(verified)
 
     # ---- 中位价：没给就用（最低+最高）/2 估算，并注明是估算
@@ -287,7 +297,7 @@ def build_anchor(comp_low, comp_high, comp_median, cost, freight,
                            "、".join(item["label"] for item in checklist
                                      if item["status"] == "待核")))
 
-    return {
+    result = {
         "comp_low": money(comp_low),
         "comp_high": money(comp_high),
         "comp_median": money(median),
@@ -310,6 +320,11 @@ def build_anchor(comp_low, comp_high, comp_median, cost, freight,
         "pending_count": pending_count,
         "warnings": warnings,
     }
+    result["tax_status"] = "provided" if tax_rate_pct > 0 else "not_provided"
+    if tax_rate_pct <= 0:
+        # 缺税率时明说缺了什么：三档价都是不含税价，含税价没算（与 quote_engine / landed_cost 同口径）。
+        result["tax_missing"] = ["增值税率 (VAT rate)"]
+    return result
 
 
 def client_view(a):
@@ -399,6 +414,12 @@ def render_table(a, currency=DEFAULT_CURRENCY, unit=DEFAULT_UNIT,
         s.append("   · 中位价是默认档：跟市场齐平，不拼低价也不高挂；进取价抢单用，"
                  "保守价只在品牌/认证/交期有优势时用。")
         s.append("   · 低于成本的档别报：先谈量换价（量翻倍换低价）或换便宜规格，别硬接。")
+        if a["tax_rate_pct"] > 0:
+            s.append("   · 含税价里的税率 %.2f%% 由调用方输入，脚本没有核实过；"
+                     "适用税率以税务规定为准。" % a["tax_rate_pct"])
+        else:
+            s.append("   · 增值税率：未填 —— 三档价都是不含税价；补上用 --tax-rate <税率>"
+                     "（示例 13，【示例】，未核实），适用税率以税务规定为准。")
 
     if not is_client and a.get("warnings"):
         s.append("-" * W)
@@ -418,7 +439,7 @@ def build_parser():
                     "三档建议报价（CIF 价），每档写清毛利空间和适用场景，报出去之前"
                     "再过一遍成本/运费/汇率/付款条件/有效期 5 项复核清单（只用标准库，不联网）",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""可直接复制的例子（【示例】价格全部虚构，亲手跑过，输出见 docs/anchor-price.md）:
+        epilog=f"""可直接复制的例子（【示例】价格全部虚构，亲手跑过，输出见 docs/anchor-price.md）:
   python scripts/anchor_price.py --comp-low 38 --comp-high 46 --comp-median 42 --cost 28 --freight 6 --duty 10
     → 三档 CIF 40.74 / 42.00 / 43.26，保本 CIF 34.90，中位价毛利率 16.91%
   python scripts/anchor_price.py --comp-low 30 --comp-high 36 --comp-median 33 --cost 28 --freight 6
@@ -429,8 +450,8 @@ def build_parser():
     → 中位价未给，按（44 + 56）/ 2 估算为 50.00，三档 CIF 48.50 / 50.00 / 51.50
   python scripts/anchor_price.py --comp-low 38 --comp-high 46 --comp-median 42 --cost 28 --freight 6 --duty 10 --format json
     → JSON 版，三档锚价 + 毛利 + 复核清单一次给全，方便贴进表格
-  python scripts/anchor_price.py --comp-low 38 --comp-high 46 --comp-median 42 --cost 28 --freight 6 --duty 10 --local 5 --tax-rate 13
-    → 本地费 5 进成本基数 33.84，保本 CIF 39.91；三档含税 CIF 46.04 / 47.46 / 48.88（【示例】税率虚构）
+  python scripts/anchor_price.py --comp-low 38 --comp-high 46 --comp-median 42 --cost 28 --freight 6 --duty 10 --local 5 --tax-rate {EXAMPLE_TAX_RATE_PCT:g}
+    → 本地费 5 进成本基数 33.84，保本 CIF 39.91；三档含税 CIF 46.04 / 47.46 / 48.88（【示例】13% 只是算例：它等于中国增值税标准税率，适用税率以税务规定为准；报含税价前按核实的税率算）
   发客户永远加 --audience client：内部视图的成本和毛利一旦寄出去就收不回来。""")
     p.add_argument("--comp-low", type=float, required=True,
                    help="竞品价最低价（海关数据，必填）")
@@ -445,7 +466,8 @@ def build_parser():
     p.add_argument("--local", type=float, default=0.0,
                    help="本地费用（每单位），默认 %(default)s；进了成本基数，与 quote_engine 相同")
     p.add_argument("--tax-rate", type=float, default=0.0,
-                   help="增值税率(%%)，默认 0=不算；给了三档价多一列含税价")
+                   help="增值税率(%%)，默认 0=不算；给了三档价多一列含税价；"
+                        "示例 13（【示例】，未核实）")
     p.add_argument("--duty", type=float, default=0.0,
                    help="关税税率(%%)，默认 %(default)s；给了才算 DDP 价")
     p.add_argument("--insurance", type=float, default=DEFAULT_INSURANCE_PCT,

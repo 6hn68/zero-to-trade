@@ -267,6 +267,16 @@ class TestCLI(unittest.TestCase):
         self.assertIn("--day D3 --scenario quoted", out)
         self.assertIn("--day D30 --scenario quoted", out)
 
+    def test_reproduce_line_uses_python3_not_bare_python(self):
+        # 2026-11-26 route-12: the demo's step-7 output prints a
+        # copy-paste reproduce command; bare `python` does not exist on
+        # stock Linux (only `python3`), so it must say python3.
+        code, out = run_cli("--day", "D7", "--scenario", "quoted")
+        self.assertEqual(code, 0)
+        self.assertIn("python3 scripts/nudge.py --day D7 --scenario quoted",
+                      out)
+        self.assertNotIn("python scripts/", out)
+
 
 class TestDailyList(unittest.TestCase):
     TODAY = "2026-11-22"

@@ -172,3 +172,13 @@ trace-*.jsonl
 # 最省心的办法根本不是记这些文件名：把产物写进 private/ 或 internal/ 就行——
 # python scripts/lead_score.py private/my_leads.csv --out private/scored.json
 # 那两个目录整个是黑的，随便你往里堆什么名字。
+
+# ---- 运行状态文件（打卡/进度状态，跑一遍就变，不属于源码）----
+# fulfillment_checklist.py --state 默认写 fulfillment_state.json（当前目录），
+# fast_path.py --state 默认写 fast_path_state.json；里面是你自己的订单进度
+# 和打卡日期，进仓库既没用还会把私人进度公开。*_state.json 兜底：以后再有
+# 脚本加 --state，默认文件名也照这个规矩起，就不用再改这文件。
+# 注意：这只挡还没被跟踪的文件；万一已经误提交过，先 git rm --cached 再说。
+fulfillment_state.json
+fast_path_state.json
+*_state.json

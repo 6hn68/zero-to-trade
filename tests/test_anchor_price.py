@@ -385,5 +385,57 @@ class TestTaxInclusiveTiers(unittest.TestCase):
         self.assertNotIn("cost_base", payload["anchor_price"])
 
 
+class TestTaxRateIsExplicitInput(unittest.TestCase):
+    """Route-04 (round 3, following round-2 route-07): 13% is an example rate,
+    never a default; a missing rate is named out loud (tax_status /
+    tax_missing / table note), never silent."""
+
+    def test_example_rate_is_named_not_default(self):
+        # The example rate lives in one named constant; the default stays 0.
+        self.assertEqual(ap.EXAMPLE_TAX_RATE_PCT, 13.0)
+        a = ap.build_anchor(38, 46, 42, 28, 6)
+        self.assertEqual(a["tax_rate_pct"], 0.0)
+        self.assertEqual(a["tax_status"], "not_provided")
+        self.assertEqual(a["tax_missing"], ["增值税率 (VAT rate)"])
+        for t in a["tiers"]:
+            self.assertNotIn("price_cif_tax_incl", t)
+            self.assertNotIn("price_ddp_tax_incl", t)
+
+    def test_tax_provided_clears_missing(self):
+        # Same locked numbers as test_tiers_tax_incl_13, input via the constant.
+        a = ap.build_anchor(38, 46, 42, 28, 6, duty_pct=10,
+                            tax_rate_pct=ap.EXAMPLE_TAX_RATE_PCT)
+        self.assertEqual(a["tax_status"], "provided")
+        self.assertNotIn("tax_missing", a)
+        self.assertEqual(a["tax_rate_pct"], 13.0)
+        tiers = {t["key"]: t for t in a["tiers"]}
+        self.assertEqual(tiers["median"]["price_cif_tax_incl"], 47.46)
+
+    def test_table_without_tax_says_what_is_missing(self):
+        code, out = run_anchor("--comp-low", "38", "--comp-high", "46",
+                               "--comp-median", "42", "--cost", "28",
+                               "--freight", "6")
+        self.assertEqual(code, 0)
+        self.assertIn("增值税率：未填", out)
+        self.assertIn("不含税价", out)
+
+    def test_table_with_tax_says_rate_is_unverified_input(self):
+        code, out = run_anchor("--comp-low", "38", "--comp-high", "46",
+                               "--comp-median", "42", "--cost", "28",
+                               "--freight", "6", "--duty", "10",
+                               "--tax-rate", "13")
+        self.assertEqual(code, 0)
+        self.assertIn("没有核实过", out)
+        self.assertIn("47.46", out)
+
+    def test_help_labels_13_as_example(self):
+        code, out = run_anchor("--help")
+        self.assertEqual(code, 0)
+        self.assertIn("13% 只是算例", out)
+        # argparse wraps the --tax-rate help across lines, so check the
+        # label with all whitespace collapsed.
+        self.assertIn("示例13（【示例】，未核实）", "".join(out.split()))
+
+
 if __name__ == "__main__":
     unittest.main()

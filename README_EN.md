@@ -23,14 +23,16 @@ No need to read the docs first. Seven steps, one line each, one copy-paste comma
 | Step | In one line | Command (copy-paste) |
 |---|---|---|
 | 1 Get a list | Copy the sample into your own file; your real leads go only in this copy | `cp examples/leads_example.csv my_leads.csv` |
-| 2 Tier it | 10 leads sorted into T0–T3; call 2 of them today | `python scripts/lead_score.py my_leads.csv` |
-| 3 Vet the T0s | Check a T0 is not a shell company before you write; anything you did not provide comes back "to verify" | `python scripts/due_diligence.py --company "【示例】海湾轮胎贸易"` |
-| 4 Write the first touch | Outreach draft for the T0 tier, English to send, Chinese for your own review | `python scripts/outreach_gen.py my_leads.csv --tier T0` |
-| 5 Plan follow-ups | D0/D2/D5 rhythm: 3 touches in 6 days, stop after the third silence | `python scripts/followup_plan.py --tier T0 --start 2026-11-24 --csv my_leads.csv` |
-| 6 Quote when they reply | Cost + freight + margin → FOB/CIF range + a three-step concession ladder | `python scripts/quote_engine.py --cost 28 --freight 6 --margin 15` |
-| 7 Nudge when they go quiet | 7 days after the quote with no reply, ask about progress — firm, not desperate | `python scripts/nudge.py --day D7 --scenario quoted` |
+| 2 Tier it | 10 leads sorted into T0–T3; call 2 of them today | `python3 scripts/lead_score.py my_leads.csv` |
+| 3 Vet the T0s | Run it with only the company name first: anything you did not provide comes back "to verify" and it lands on C — that is the demo; a real vet feeds in the facts you found before deciding | `python3 scripts/due_diligence.py --company "【示例】海湾轮胎贸易"` |
+| 4 Write the first touch | Outreach draft for the T0 tier, English to send, Chinese for your own review | `python3 scripts/outreach_gen.py my_leads.csv --tier T0` |
+| 5 Plan follow-ups | D0/D2/D5 rhythm: 3 touches in 6 days, stop after the third silence | `python3 scripts/followup_plan.py --tier T0 --start 2026-11-24 --csv my_leads.csv` |
+| 6 Quote when they reply | Cost + freight + margin → FOB/CIF range + a three-step concession ladder | `python3 scripts/quote_engine.py --cost 28 --freight 6 --margin 15` |
+| 7 Nudge when they go quiet | 7 days after the quote with no reply, ask about progress — firm, not desperate | `python3 scripts/nudge.py --day D7 --scenario quoted` |
 
 After step 4 you hold a first-touch email you can actually send; after step 5 you know what to do each day for the next 6 days. For step 5, put the day you run it in `--start` (2026-11-24 above — swap in today); don't let D5 land on a Friday (Jumu'ah) — the script warns you to shift it if it does.
+
+Step 3 with only a company name returns C and tells you to gather evidence before outreach — correct behaviour: with no evidence it will not invent a good rating. For a real vet, fill in the facts you found (website, years, source, customs record); the A-grade example in `python3 scripts/due_diligence.py --help` rates this same company A. Step 4 still drafts the outreach because step 2 already tiered it T0 on the CSV's source, email and years evidence.
 
 No Python? Open the website, [6hn68.github.io/zero-to-trade](https://6hn68.github.io/zero-to-trade/) (or double-click [`index.html`](index.html) in a local copy). It has four tools that run in the browser — lead scoring, outreach, follow-up plan and quote — with the same rules as the scripts, and the interface comes in 12 languages (top-right menu). Load the sample list → score it and find your T0s → generate the first-touch message and copy it → replace the `[ ]` placeholders with your own name, company and WhatsApp → plan the D0/D2/D5 follow-ups → quote when they reply. Nothing is uploaded: your list never leaves the browser. The first-touch copy on the website comes in English with a Chinese reference; for Spanish, Portuguese or Arabic copy, use `outreach_gen.py --lang es/pt/ar`.
 
@@ -50,8 +52,8 @@ This repo does the opposite: **take one task and keep breaking it down until it'
 |---|---|
 | "Do background research" | L1 screen, three checks: does the site exist, how long has the company been registered, are the social accounts alive. Fail any one and the lead is dead. |
 | "Quality matters more than quantity" | 10 leads get sorted into T0/T1/T2/T3, each tier with its own next move and its own time budget. |
-| "Follow up with them" | Day 1, 3, 5, 7. A different angle each time, and day 7 ends with a decision: push or drop. |
-| "AI is changing trade" | Fifteen stdlib-only Python scripts (fourteen business scripts, one of them a quoting engine, plus one privacy guard). `python scripts/lead_score.py examples/leads_example.csv` and you have the full tiering in about thirty seconds. |
+| "Follow up with them" | Day 0, day 2, day 5 — three touches, a different angle each time, and the day-5 note closes it; after that, stop. |
+| "AI is changing trade" | Fifteen stdlib-only Python scripts (fourteen business scripts, one of them a quoting engine, plus one privacy guard). `python3 scripts/lead_score.py examples/leads_example.csv` and you have the full tiering in about thirty seconds. |
 
 Same information. Different **grain size**. That's the entire difference. Every claim in here has to survive one question: what do I open this afternoon, and what do I type?
 
@@ -75,7 +77,7 @@ One chain, start to finish: pick a country, end with money in the bank. One doc 
 
 Stage docs live in `docs/`, one file per stage, all following the same six-part structure (see [CONTRIBUTING.md](CONTRIBUTING.md)): **what this stage is for → how to do it, step by step → the pass/fail criteria → the classic mistakes → copy-paste templates → the AI prompts for this stage.**
 
-**Never done this before?** [`docs/00-getting-started.md`](docs/00-getting-started.md) assumes no git and no Python, and gets you moving in about 10 minutes. In a hurry instead? [`docs/fast-path.md`](docs/fast-path.md) is seven days from zero to your first reply.
+**Never done this before?** [`docs/00-getting-started.md`](docs/00-getting-started.md) assumes no git and no Python: about 2 minutes in the browser with nothing to install, or about 20 minutes the first time if you install Python. In a hurry instead? [`docs/fast-path.md`](docs/fast-path.md) is seven days from zero to your first reply.
 
 ---
 
@@ -87,16 +89,16 @@ Fifteen script files: fourteen business scripts, one of them the quoting engine,
 
 ```bash
 # 1. Tier your leads. CSV in, T0-T3 out, each tier with its next move.
-python scripts/lead_score.py examples/leads_example.csv
+python3 scripts/lead_score.py examples/leads_example.csv
 
 # 2. Draft outreach copy for one tier, English and 中文 side by side.
-python scripts/outreach_gen.py examples/leads_example.csv --tier T0
+python3 scripts/outreach_gen.py examples/leads_example.csv --tier T0
 
 # 3. Build the follow-up plan. Three touches, real dates.
-python scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv examples/leads_example.csv
+python3 scripts/followup_plan.py --tier T0 --start 2026-10-08 --csv examples/leads_example.csv
 
 # 4. Quote: cost + freight + margin -> FOB/CIF range + a 3-step concession ladder.
-python scripts/quote_engine.py --cost 28 --freight 6 --margin 15
+python3 scripts/quote_engine.py --cost 28 --freight 6 --margin 15
 ```
 
 What that first command actually prints, on 10 sample leads. The script outputs in Chinese; 【示例】 is just a marker meaning "sample", and the last column is translated here:
@@ -177,7 +179,7 @@ zero-to-trade/
 │   ├── leads_example.csv  # Sample data, runnable as-is
 │   ├── leads_example_lighting.csv  # Non-tyre sample: 8 LED lighting leads
 │   └── trade_show_example.csv  # Sample exhibitors, one per interest level
-├── tests/                 # 586 standard-library tests
+├── tests/                 # 647 standard-library tests
 ├── prompts/
 │   └── AI_PROMPTS.md      # 40 copy-paste prompts (28 core + 12 advanced), grouped by stage
 └── assets/                # Screenshots, diagrams
@@ -209,7 +211,7 @@ No pandas, no OpenAI SDK, on purpose. Environment setup is where beginners quit.
 |---|---|---|
 | **V13** | ✅ Landed (2026-11-07) | Multilingual outreach (`scripts/outreach_gen.py --lang es/pt/ar`: Spanish/Portuguese/Arabic copy + English original after every draft; templates mirror the English T0/T1/T2 one-to-one, single inline dict in the script) + `docs/04-outreach.md` new section (usage + 3 real outputs pasted verbatim) + `tests/` 80 stdlib tests + 40 prompts unchanged (28 core + 12 advanced) + 7 script files |
 | **V18** | ✅ Landed (2026-11-07) | Competitor anchor pricing (`scripts/anchor_price.py`: customs-data competitor price range + your own cost → aggressive/median/conservative CIF tiers, each with profit room, margin, FOB equivalent, implied markup and when to use it; a 5-item checklist — cost, freight, FX, payment terms, validity — before you quote, any unchecked item flagged; below-cost warning “below cost, don't take the order, negotiate volume for price first”; missing median estimated as (low + high) / 2 and marked as an estimate; `--format json` / `--audience client`) + `docs/anchor-price.md` (usage + anchor guide + 2 real outputs pasted verbatim) + one line in `docs/06-quote.md` (anchor before you quote) + `tests/` 187 stdlib tests + 40 prompts unchanged (28 core + 12 advanced) + 11 script files |
-| **V20** | ✅ Current (2026-11-14) | Local-increment merge + 10 hardening rounds: unified CLI entries (plain-language errors, aligned exit codes) + stronger tests (single-message mode, `--start-date` alias, run logs) + doc numbers aligned + non-tyre example (8 LED lighting leads) + demo page synced with V19 + friendly errors for bad CSVs (missing column / empty file / unclosed quote no longer traceback) + prompt alignment (P04-4 follow-up command gains `--avoid-weekend`, P10-2 window unified at 48 hours) + run tracing landed (`logs/trace-YYYY-MM-DD.jsonl`, one line per run of the three core scripts) + code cleanup (shared helpers kept in one place, net −151 lines; two dead helpers removed) + `tests/` 586 stdlib tests + 40 prompts unchanged (28 core + 12 advanced) + 15 script files |
+| **V20** | ✅ Current (2026-11-14) | Local-increment merge + 10 hardening rounds: unified CLI entries (plain-language errors, aligned exit codes) + stronger tests (single-message mode, `--start-date` alias, run logs) + doc numbers aligned + non-tyre example (8 LED lighting leads) + demo page synced with V19 + friendly errors for bad CSVs (missing column / empty file / unclosed quote no longer traceback) + prompt alignment (P04-4 follow-up command gains `--avoid-weekend`, P10-2 window unified at 48 hours) + run tracing landed (`logs/trace-YYYY-MM-DD.jsonl`, one line per run of the three core scripts) + code cleanup (shared helpers kept in one place, net −151 lines; two dead helpers removed) + `tests/` 647 stdlib tests + 40 prompts unchanged (28 core + 12 advanced) + 15 script files |
 | **V19** | ✅ Landed (2026-11-07) | Interactive 7-day fast path (`scripts/fast_path.py`: `--day N` shows the day's tasks — task name + what to produce + which script/doc to use; `--done N` checks a day off with a timestamp, written to the `--state` JSON file, a repeat check-in says already checked in and is not recorded twice; `--progress` totals done / remaining / overdue (overdue = planned date earlier than today and not checked off, planned date = `--start` day 1 + (N-1) days; no `--start` means no overdue count, stated plainly); `--list` shows all 7 days; tasks aligned line by line with `docs/fast-path.md`, no second list invented; `--help` carries real examples, a bad day or date gets a plain-language error) + `docs/fast-path-interactive.md` (usage + state-file format + overdue rule + 7-day overview + 2 real outputs pasted verbatim) + one line at the top of `docs/fast-path.md` (interactive entry) + one line in `docs/00-getting-started.md` step B5 (8 remaining scripts → 9) + `tests/` 226 stdlib tests + 40 prompts unchanged (28 core + 12 advanced) + 12 script files |
 | **V17** | ✅ Landed (2026-11-07) | Full Portuguese and Arabic READMEs (new `README_PT.md` in Brazilian Portuguese and `README_AR.md` in Arabic with RTL layout, both translated in full and aligned with README_EN.md: same sections, tables, commands, script names, file names, version and numbers; all sample companies/prices/contacts are fictional, marked 【示例】 with the sample.example reserved domain) + `tests/` 167 stdlib tests + 40 prompts unchanged (28 core + 12 advanced) + 10 script files |
 | **V16** | ✅ Landed (2026-11-07) | Nudge library (`scripts/nudge.py`: D3/D7/D14/D30 × quoted/sampled/negotiating, 12 drafts in total, short WhatsApp version + longer email version, English first with Chinese translation after every draft; tone ladder — D3 light reminder, D7 ask for progress, D14 three options to save face (lower price / different spec / longer payment terms), D30 final note that leaves the door open; Day 0 is the day the quote/sample/price talk went out, a different anchor from followup_plan's first-touch cadence, one thread follows one line only; `--channel whatsapp/email/both` / `--format json` / `--out`) + `docs/nudge.md` (usage + how it lines up with followup_plan + 2 real outputs pasted verbatim) + one line in `docs/00-getting-started.md` (script list 6 → 7) + `tests/` 152 stdlib tests + 40 prompts unchanged (28 core + 12 advanced) + 10 script files |
@@ -224,7 +226,7 @@ No pandas, no OpenAI SDK, on purpose. Environment setup is where beginners quit.
 | **Next version** | To be decided | Next direction to be decided (interactive 7-day fast path landed in V19) |
 | **Long term** | — | Industry packs (tyres, building materials, machinery, hardware); outreach copy in French/Russian (Spanish, Portuguese and Arabic landed in V13); public de-identified lead datasets; wiring the quoting engine to customs data for automatic competitor anchor pricing |
 
-V20 does not wait for the next version: the 10 hardening rounds are ready to use now (bad CSVs get plain-language errors instead of tracebacks, every run writes one trace line, shared helpers live in one place). No need to wait for the next version — the scripts are already in the repo, with 586 tests all green.
+V20 does not wait for the next version: the 10 hardening rounds are ready to use now (bad CSVs get plain-language errors instead of tracebacks, every run writes one trace line, shared helpers live in one place). No need to wait for the next version — the scripts are already in the repo, with 647 tests all green.
 
 ---
 
@@ -251,7 +253,7 @@ All fourteen business scripts (`lead_score` / `outreach_gen` / `followup_plan` /
 - Want it inside your own tool? Every script imports clean. `score_lead()`, `render()`, `plan_followups()`, `build_quote()` are pure functions returning dicts and lists. No network, no files written.
 - CI runs `py_compile` plus the test suite (Python 3.10–3.13) plus a privacy gate on every PR, so a bad edit doesn't sneak through.
 
-> The bias here is **verifiable over clever.** Don't take my word for it: run `python scripts/lead_score.py examples/leads_example.csv` and read what comes out.
+> The bias here is **verifiable over clever.** Don't take my word for it: run `python3 scripts/lead_score.py examples/leads_example.csv` and read what comes out.
 
 ---
 

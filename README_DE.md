@@ -18,7 +18,7 @@ Kein Kurs zum Kaufen. Keine Bezahlstufe. Keine E-Mail-Schranke. MIT-lizenziert, 
 
 ## Demo in 7 Schritten: eine echte Liste einstufen und die erste Ansprache in 2 Minuten schreiben
 
-Sie müssen vorher keine Doku lesen. Sieben Schritte, je eine Zeile, je ein Befehl zum Kopieren – insgesamt etwa 2 Minuten. Alle sieben Befehle unten wurden in diesem Repo tatsächlich ausgeführt (2026-11-22, Python 3.x, nur Standardbibliothek). Die Beispieldaten sind fiktiv; Firmennamen tragen das Präfix 【示例】 („Beispiel“).
+Sie müssen vorher keine Doku lesen. Sieben Schritte, je eine Zeile, je ein Befehl zum Kopieren – insgesamt etwa 2 Minuten. Alle sieben Befehle unten wurden in diesem Repo tatsächlich ausgeführt (2026-11-24, Python 3.x, nur Standardbibliothek). Die Beispieldaten sind fiktiv; Firmennamen tragen das Präfix 【示例】 („Beispiel“).
 
 | Schritt | In einer Zeile | Befehl (zum Kopieren) |
 |---|---|---|
@@ -26,7 +26,7 @@ Sie müssen vorher keine Doku lesen. Sieben Schritte, je eine Zeile, je ein Befe
 | 2 Einstufen | 10 Leads in T0–T3 sortiert; 2 davon rufen Sie heute an | `python scripts/lead_score.py my_leads.csv` |
 | 3 T0 prüfen | Prüfen Sie, ob ein T0 keine Briefkastenfirma ist, bevor Sie schreiben; alles, was Sie nicht angegeben haben, kommt als „zu prüfen“ zurück | `python scripts/due_diligence.py --company "【示例】海湾轮胎贸易"` |
 | 4 Erstkontakt schreiben | Entwurf für die Stufe T0, Englisch zum Versenden, Chinesisch für Ihre eigene Prüfung | `python scripts/outreach_gen.py my_leads.csv --tier T0` |
-| 5 Nachfassen planen | Rhythmus D0/D2/D5: 3 Kontakte in 6 Tagen, nach dem dritten Schweigen ist Schluss | `python scripts/followup_plan.py --tier T0 --start 2026-11-22 --csv my_leads.csv` |
+| 5 Nachfassen planen | Rhythmus D0/D2/D5: 3 Kontakte in 6 Tagen, nach dem dritten Schweigen ist Schluss | `python scripts/followup_plan.py --tier T0 --start 2026-11-24 --csv my_leads.csv` |
 | 6 Anbieten, wenn eine Antwort kommt | Kosten + Fracht + Marge → FOB/CIF-Spanne + eine dreistufige Zugeständnisleiter | `python scripts/quote_engine.py --cost 28 --freight 6 --margin 15` |
 | 7 Nachhaken, wenn es still wird | 7 Tage nach dem Angebot ohne Antwort nach dem Stand fragen – bestimmt, nicht verzweifelt | `python scripts/nudge.py --day D7 --scenario quoted` |
 
@@ -110,9 +110,9 @@ Das gibt der erste Befehl bei 10 Beispiel-Leads tatsächlich aus. Das Skript ant
 | T1 | 【示例】尼罗河商贸 | Ägypten | 67 | diese Woche; Text heute entwerfen |
 | T1 | 【示例】迪拜轮毂行 | VAE | 65 | diese Woche; Text heute entwerfen |
 | T1 | 【示例】利雅得汽配 | Saudi-Arabien | 60 | diese Woche; Text heute entwerfen |
-| T2 | 【示例】尼日利亚先锋 | Nigeria | 46 | kalter Pool, einmal täglich durchsehen |
-| T3 | 【示例】黎凡特供配 | Libanon | 20 | zu wenig Infos, zuerst Kontakt + Bedarf finden |
-| T3 | 【示例】利雅得零件店 | Saudi-Arabien | 10 | zu wenig Infos, zuerst Kontakt + Bedarf finden |
+| T2 | 【示例】尼日利亚先锋 | Nigeria | 50 | kalter Pool, einmal täglich durchsehen |
+| T3 | 【示例】黎凡特供配 | Libanon | 24 | zu wenig Infos, zuerst Kontakt + Bedarf finden |
+| T3 | 【示例】利雅得零件店 | Saudi-Arabien | 17 | zu wenig Infos, zuerst Kontakt + Bedarf finden |
 
 Zusammenfassung: **T0:2 / T1:5 / T2:1 / T3:2**. Heute kontaktieren: 【示例】海湾轮胎贸易, 【示例】三角洲轮胎. Diese Woche: 【示例】阿曼蓝海, 【示例】半岛汽车, 【示例】尼罗河商贸, 【示例】迪拜轮毂行, 【示例】利雅得汽配. Vorerst liegen lassen: 【示例】黎凡特供配, 【示例】利雅得零件店.
 
@@ -177,7 +177,7 @@ zero-to-trade/
 │   ├── leads_example.csv  # Beispieldaten, sofort lauffähig
 │   ├── leads_example_lighting.csv  # Beispiel ohne Reifen: 8 Leads für LED-Beleuchtung
 │   └── trade_show_example.csv  # Beispiel-Aussteller, einer pro Interessensstufe
-├── tests/                 # 586 Tests mit der Standardbibliothek
+├── tests/                 # 647 Tests mit der Standardbibliothek
 ├── prompts/
 │   └── AI_PROMPTS.md      # 40 Prompts zum Kopieren (28 Kern + 12 fortgeschritten), nach Etappe gruppiert
 └── assets/                # Screenshots, Diagramme
@@ -209,7 +209,7 @@ Kein pandas, kein OpenAI SDK, mit Absicht. Bei der Einrichtung der Umgebung gebe
 |---|---|---|
 | **V13** | ✅ Ausgeliefert (2026-11-07) | Mehrsprachige Ansprache (`scripts/outreach_gen.py --lang es/pt/ar`: Texte auf Spanisch/Portugiesisch/Arabisch + englisches Original nach jedem Entwurf; die Vorlagen spiegeln die englischen T0/T1/T2 eins zu eins, ein einziges Inline-Dict im Skript) + neuer Abschnitt in `docs/04-outreach.md` (Nutzung + 3 echte Ausgaben wörtlich eingefügt) + `tests/` 80 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 7 Skriptdateien |
 | **V18** | ✅ Ausgeliefert (2026-11-07) | Preisanker am Wettbewerb (`scripts/anchor_price.py`: Konkurrenzpreisspanne aus Zolldaten + eigene Kosten → aggressive/mittlere/konservative CIF-Stufe, jeweils mit Gewinnspielraum, Marge, FOB-Äquivalent, implizitem Aufschlag und wann man sie nutzt; eine 5-Punkte-Checkliste – Kosten, Fracht, Wechselkurs, Zahlungsbedingungen, Gültigkeit – vor dem Angebot, jeder offene Punkt wird markiert; Warnung unter Kosten „unter Kosten, Auftrag nicht annehmen, erst Menge gegen Preis verhandeln“; fehlender Median wird als (niedrig + hoch) / 2 geschätzt und als Schätzung markiert; `--format json` / `--audience client`) + `docs/anchor-price.md` (Nutzung + Anker-Leitfaden + 2 echte Ausgaben wörtlich eingefügt) + eine Zeile in `docs/06-quote.md` (vor dem Angebot ankern) + `tests/` 187 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 11 Skriptdateien |
-| **V20** | ✅ Aktuell (2026-11-14) | Zusammenführung lokaler Änderungen + 10 Härtungsrunden: einheitliche CLI-Einstiege (Fehler in Klartext, abgestimmte Exit-Codes) + stärkere Tests (Einzelnachricht-Modus, Alias `--start-date`, Laufprotokolle) + Zahlen in der Doku abgeglichen + Beispiel ohne Reifen (8 Leads für LED-Beleuchtung) + Demoseite mit V19 synchronisiert + freundliche Fehler bei fehlerhaften CSVs (fehlende Spalte / leere Datei / nicht geschlossenes Anführungszeichen ergeben keinen Traceback mehr) + Prompts abgeglichen (der Nachfassbefehl in P04-4 bekommt `--avoid-weekend`, das Fenster in P10-2 einheitlich 48 Stunden) + Lauf-Tracing eingeführt (`logs/trace-YYYY-MM-DD.jsonl`, eine Zeile pro Lauf der drei Kernskripte) + Code aufgeräumt (gemeinsame Hilfsfunktionen an einer Stelle, netto −151 Zeilen; zwei tote Hilfsfunktionen entfernt) + `tests/` 586 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 15 Skriptdateien |
+| **V20** | ✅ Aktuell (2026-11-14) | Zusammenführung lokaler Änderungen + 10 Härtungsrunden: einheitliche CLI-Einstiege (Fehler in Klartext, abgestimmte Exit-Codes) + stärkere Tests (Einzelnachricht-Modus, Alias `--start-date`, Laufprotokolle) + Zahlen in der Doku abgeglichen + Beispiel ohne Reifen (8 Leads für LED-Beleuchtung) + Demoseite mit V19 synchronisiert + freundliche Fehler bei fehlerhaften CSVs (fehlende Spalte / leere Datei / nicht geschlossenes Anführungszeichen ergeben keinen Traceback mehr) + Prompts abgeglichen (der Nachfassbefehl in P04-4 bekommt `--avoid-weekend`, das Fenster in P10-2 einheitlich 48 Stunden) + Lauf-Tracing eingeführt (`logs/trace-YYYY-MM-DD.jsonl`, eine Zeile pro Lauf der drei Kernskripte) + Code aufgeräumt (gemeinsame Hilfsfunktionen an einer Stelle, netto −151 Zeilen; zwei tote Hilfsfunktionen entfernt) + `tests/` 647 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 15 Skriptdateien |
 | **V19** | ✅ Ausgeliefert (2026-11-07) | Interaktiver 7-Tage-Schnellstart (`scripts/fast_path.py`: `--day N` zeigt die Aufgaben des Tages – Aufgabenname + was entstehen soll + welches Skript/Dokument; `--done N` hakt einen Tag mit Zeitstempel ab und schreibt in die `--state`-JSON-Datei, ein erneutes Abhaken meldet „bereits abgehakt“ und wird nicht doppelt erfasst; `--progress` zählt erledigt / offen / überfällig (überfällig = geplantes Datum vor heute und nicht abgehakt, geplantes Datum = `--start` Tag 1 + (N-1) Tage; ohne `--start` keine Überfällig-Zählung, das wird klar gesagt); `--list` zeigt alle 7 Tage; Aufgaben Zeile für Zeile mit `docs/fast-path.md` abgestimmt, keine zweite Liste erfunden; `--help` enthält echte Beispiele, ein ungültiger Tag oder ein ungültiges Datum ergibt einen Fehler in Klartext) + `docs/fast-path-interactive.md` (Nutzung + Format der Statusdatei + Überfällig-Regel + 7-Tage-Überblick + 2 echte Ausgaben wörtlich eingefügt) + eine Zeile oben in `docs/fast-path.md` (interaktiver Einstieg) + eine Zeile in `docs/00-getting-started.md` Schritt B5 (8 verbleibende Skripte → 9) + `tests/` 226 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 12 Skriptdateien |
 | **V17** | ✅ Ausgeliefert (2026-11-07) | Vollständige READMEs auf Portugiesisch und Arabisch (neu `README_PT.md` in brasilianischem Portugiesisch und `README_AR.md` auf Arabisch mit RTL-Layout, beide vollständig übersetzt und mit README_EN.md abgeglichen: gleiche Abschnitte, Tabellen, Befehle, Skriptnamen, Dateinamen, Version und Zahlen; alle Beispielfirmen/-preise/-kontakte sind fiktiv, mit 【示例】 und der reservierten Domain sample.example markiert) + `tests/` 167 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 10 Skriptdateien |
 | **V16** | ✅ Ausgeliefert (2026-11-07) | Nachhak-Bibliothek (`scripts/nudge.py`: D3/D7/D14/D30 × quoted/sampled/negotiating, insgesamt 12 Entwürfe, kurze WhatsApp-Version + längere E-Mail-Version, zuerst Englisch, nach jedem Entwurf die chinesische Übersetzung; Tonleiter – D3 sanfte Erinnerung, D7 nach dem Stand fragen, D14 drei gesichtswahrende Optionen (niedrigerer Preis / andere Spezifikation / längeres Zahlungsziel), D30 letzte Nachricht, die die Tür offen lässt; Tag 0 ist der Tag, an dem Angebot/Muster/Preisgespräch rausging – ein anderer Anker als der Erstkontakt-Rhythmus von followup_plan, ein Thread folgt nur einer Linie; `--channel whatsapp/email/both` / `--format json` / `--out`) + `docs/nudge.md` (Nutzung + Zusammenspiel mit followup_plan + 2 echte Ausgaben wörtlich eingefügt) + eine Zeile in `docs/00-getting-started.md` (Skriptliste 6 → 7) + `tests/` 152 Tests mit der Standardbibliothek + 40 Prompts unverändert (28 Kern + 12 fortgeschritten) + 10 Skriptdateien |
@@ -224,7 +224,7 @@ Kein pandas, kein OpenAI SDK, mit Absicht. Bei der Einrichtung der Umgebung gebe
 | **Nächste Version** | Noch offen | Nächste Richtung noch offen (interaktiver 7-Tage-Schnellstart in V19 ausgeliefert) |
 | **Langfristig** | — | Branchenpakete (Reifen, Baustoffe, Maschinen, Eisenwaren); Ansprache-Texte auf Französisch/Russisch (Spanisch, Portugiesisch und Arabisch in V13 ausgeliefert); öffentliche anonymisierte Lead-Datensätze; Anbindung der Angebots-Engine an Zolldaten für automatische Wettbewerbs-Ankerpreise |
 
-V20 wartet nicht auf die nächste Version: Die 10 Härtungsrunden sind jetzt schon nutzbar (fehlerhafte CSVs ergeben Fehler in Klartext statt Tracebacks, jeder Lauf schreibt eine Trace-Zeile, gemeinsame Hilfsfunktionen liegen an einer Stelle). Sie müssen nicht auf die nächste Version warten – die Skripte sind bereits im Repo, und alle 586 Tests sind grün.
+V20 wartet nicht auf die nächste Version: Die 10 Härtungsrunden sind jetzt schon nutzbar (fehlerhafte CSVs ergeben Fehler in Klartext statt Tracebacks, jeder Lauf schreibt eine Trace-Zeile, gemeinsame Hilfsfunktionen liegen an einer Stelle). Sie müssen nicht auf die nächste Version warten – die Skripte sind bereits im Repo, und alle 647 Tests sind grün.
 
 ---
 

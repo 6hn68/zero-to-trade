@@ -612,11 +612,12 @@ class TestBackcheckCli(unittest.TestCase):
 
 class TestRealFormatDirectory(unittest.TestCase):
     """Real-format readiness: the official Dubai list is a web search page
-    (no official downloadable CSV — real file format not verified), and
-    the 2016 official PDF lists Exhibitor Name / Country / Product
-    Section / Stand Number. The reader must accept that shape instead
-    of failing on the header, and carry booth / product section /
-    website over instead of dropping them."""
+    (no official downloadable CSV for the current edition), and the only
+    verified official downloadable file is the 2021 Dubai PDF — exactly
+    three columns, Company Name / Country / Booth Number, no product
+    section, no contact (verified 2026-11-26, route-07, opened firsthand).
+    The reader must accept that shape instead of failing on the header,
+    and carry booth over instead of dropping it."""
 
     def _write(self, rows, header, delimiter=","):
         tmp = tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False,
@@ -653,6 +654,38 @@ class TestRealFormatDirectory(unittest.TestCase):
         self.assertEqual(rows[1]["status"], "待核实")
         self.assertEqual(rows[1]["decision_maker"], "没核实")
         self.assertEqual(rows[1]["import_record"], "没核实")
+
+    def test_verified_2021_official_pdf_format(self):
+        # Verified 2026-11-26 (route-07): the only official downloadable
+        # exhibitor file found is the 2021 Dubai PDF on the organiser's
+        # own domain (AMDU21 – Exhibitor List.pdf, 14–16 Dec 2021) — three
+        # columns only, Company Name / Country / Booth Number, no product
+        # section, no contact. Rows below are copied from that PDF as
+        # opened firsthand: a normal row, a "-" (missing) booth, and one
+        # row carrying two booths. A CSV converted from that PDF must run
+        # through --backcheck: every row kept as 待核实, missing booth
+        # counted, double booth carried as-is.
+        path = self._write([
+            ["1Logistics Żuralski", "Poland", "7-F30"],
+            ["Al Mokamel Auto Spare Parts Trading Llc",
+             "United Arab Emirates", "5-C28"],
+            ["Africon GmbH", "Germany", "-"],
+            ["Balu Forge Industries Ltd.", "India", "6-H22, 6-H20"],
+        ], header=("Company Name", "Country", "Booth Number"))
+        directory = ts.read_directory(path)
+        summary = ts.summarize_directory(directory)
+        self.assertEqual(summary["total"], 4)
+        self.assertEqual(summary["ready"], 0)
+        self.assertEqual(summary["pending"], 4)
+        self.assertEqual(summary["skipped"], 0)
+        self.assertEqual(summary["missing_booth"], 1)
+        rows = ts.build_backcheck_rows(directory)
+        self.assertEqual([r["booth"] for r in rows],
+                         ["7-F30", "5-C28", "", "6-H22, 6-H20"])
+        # The PDF's "-" booth is normalised to "missing" (not carried as "-").
+        self.assertTrue(all(r["product"] == "" for r in rows))
+        self.assertTrue(all(r["website"] == "没核实" for r in rows))
+        self.assertTrue(all(r["status"] == "待核实" for r in rows))
 
     def test_company_name_alias_for_followup_reader(self):
         path = self._write([

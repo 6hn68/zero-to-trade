@@ -63,14 +63,20 @@ class TestBarrierMarkets(unittest.TestCase):
         self.assertEqual(item["tier"], "T0")
         self.assertIn("已确认转口/保税区", item["detail"]["市场"])
 
-    def test_brazil_full_signal_capped_at_t1_rate_unverified(self):
-        # Brazil has an anti-dumping duty on Chinese truck/bus tyres, but
-        # the rate was never written down in this repo: the label must say
-        # so (没核实) instead of inventing a number.
+    def test_brazil_full_signal_capped_at_t1_rate_verified(self):
+        # Brazil has an anti-dumping duty on Chinese truck/bus tyres:
+        # US$1.05-2.59/kg per producer (Gecex 198/2021). Verified
+        # 2026-11-26 against the DOU text: the sunset review was opened
+        # by SECEX Circular 20/2026 (DOU 20/03/2026), the duty stays in
+        # force while the review runs, and the review's conclusion
+        # deadline was extended to 12 months (SECEX Circular 94/2026,
+        # DOU 13/10/2026) — outcome still open, so the label says so.
         item = analyze_one(row(country="Brazil"))
         self.assertEqual(item["score"], 95)
         self.assertEqual(item["tier"], "T1")
-        self.assertIn("没核实", item["detail"]["市场"])
+        self.assertIn("日落复审", item["detail"]["市场"])
+        self.assertIn("2026-03-20", item["detail"]["市场"])
+        self.assertIn("结果未定", item["detail"]["市场"])
         self.assertNotIn("%", item["detail"]["市场"])
 
 
@@ -139,9 +145,15 @@ class TestMarketRulesTable(unittest.TestCase):
         self.assertEqual(set(mr.TARGET_MARKETS), set(tp.MARKETS))
 
     def test_barrier_rates_are_not_invented(self):
-        # Brazil's rate is None on purpose: the repo never recorded one.
+        # Brazil's rate is None on purpose: the duty is US$/kg per
+        # producer, there is no % rate to write. rate_verified is True
+        # since 2026-11-26: the sunset review was confirmed opened
+        # (SECEX Circular 20/2026, DOU 20/03/2026) and still running
+        # with its deadline extended to 12 months (SECEX Circular
+        # 94/2026, DOU 13/10/2026), and the duty stays in force during
+        # the review — so the per-kg range is the rate in force today.
         self.assertIsNone(mr.BARRIERS["brazil"]["rate_pct"])
-        self.assertFalse(mr.BARRIERS["brazil"]["rate_verified"])
+        self.assertTrue(mr.BARRIERS["brazil"]["rate_verified"])
         # Turkey's 60% verified 2026-11-24 against the official gazette
         # (Resmî Gazete 2024/1, Art. 4 table, 60% of CIF; Art. 5(4):
         # lapses 2029-02-06) — flag flipped at merge time with this test.

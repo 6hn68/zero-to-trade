@@ -497,7 +497,7 @@ def get_nudge(day, scenario, company=None, contact=None, product=None):
             "Day 0 是报价/发样/谈价那天，不是首触那天。报价前走 followup_plan.py "
             "（T0 D0/D2/D5、T1 D0/D3/D6、T2 D0/D7/D14），报价后走本脚本，"
             "同一客户同一线程只走一条线，别两边同时发。"),
-        "reproduce": ("python scripts/nudge.py --day %s --scenario %s "
+        "reproduce": ("python3 scripts/nudge.py --day %s --scenario %s "
                       "--company %r --contact %s --product %s"
                       % (day, scenario, company, contact, product)),
     }

@@ -682,7 +682,7 @@ def print_plan(tier, start, rows, companies, market="gcc", scope="(本级全部�
     print("节奏提醒: %s" % CADENCE_HINT[tier])
     print("")
     print("文案衔接：D0 那封直接用 outreach_gen.py 吐出来的，别自己另憋一版：")
-    print("    python scripts/outreach_gen.py %s --tier %s" % (csv_path or "你的.csv", tier))
+    print("    python3 scripts/outreach_gen.py %s --tier %s" % (csv_path or "你的.csv", tier))
     print("")
     print("-" * 74)
     for i, r in enumerate(rows, 1):

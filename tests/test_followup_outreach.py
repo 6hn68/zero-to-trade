@@ -58,6 +58,17 @@ class TestFollowupPlan(unittest.TestCase):
         for date in ("2026-10-08", "2026-10-10", "2026-10-13"):
             self.assertIn(date, out)
 
+    def test_printed_commands_use_python3_not_bare_python(self):
+        # 2026-11-26 route-12: the demo table prints a copy-paste outreach
+        # command; bare `python` does not exist on stock Linux (only
+        # `python3`), so the printed command must say python3.
+        code, out = run_script("followup_plan.py", "--tier", "T0",
+                               "--start", "2026-11-24",
+                               "--csv", "examples/leads_example.csv")
+        self.assertEqual(code, 0)
+        self.assertIn("python3 scripts/outreach_gen.py", out)
+        self.assertNotIn("python scripts/", out)
+
     def test_start_date_alias_matches_start(self):
         code, out = run_script("followup_plan.py", "--tier", "T0",
                                "--start-date", "2026-10-08",

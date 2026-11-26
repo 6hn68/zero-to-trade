@@ -15,9 +15,15 @@
 有真数据就打印文件名和第几行，并退出码1（挡住提交）。
 干净就打印一行「没查到真实客户数据」，退出码 0。
 
-`.xlsx` 按 zip/XML 解析（共享字符串 + 工作表单元格），不是
-按文本读——表格里的邮箱/电话也能扫到。`.xls` 是旧二进制格式，
-标准库解析不了，仍按文本读，里面的内容要人工复核。
+`.xlsx` 按 zip/XML 解析（共享字符串 + 工作表单元格 + 单元格批注），
+不是按文本读——表格里的邮箱/电话也能扫到。`.xls` 是 OLE2 二进制
+格式，也用标准库解析：先读复合文件里的 Workbook 流，再走 BIFF
+记录（共享字符串、单元格字符串、数字、批注作者 NOTE、批注文本
+TXO），外加全流可打印字符串兜底扫。解析不了的表格（损坏、加密、
+改名）不静默放过：先回退纯文本扫，没扫到就明确报“请人工复核”。
+没扫到的部分：批注文本只从 TXO 记录体里抽字符串，没做完整 MSO
+图形对象解析，极个别特殊编码的批注可能漏网——兜底扫是补网，
+不是保证；加密工作簿（FILEPASS）读不出内容，直接报，不放过。
 
 零依赖，跟仓库里其他脚本一个规矩。
 """
@@ -213,6 +219,13 @@ def _local(tag):
     return tag.rsplit("}", 1)[-1]
 
 
+def _ref_row(ref):
+    """Cell ref ("B2", "AA12") -> 1-based row number; 0 if unparsable.
+    单元格引用转行号，解析不出记 0。"""
+    m = re.match(r"^[A-Za-z]+(\d+)", ref or "")
+    return int(m.group(1)) if m else 0
+
+
 def _xlsx_text_parts(path):
     """Extract scannable text from an .xlsx file (stdlib zipfile + XML):
     every worksheet cell (shared strings resolved, inline strings and
@@ -284,6 +297,35 @@ def _xlsx_text_parts(path):
                         else:
                             continue
                     parts.append((name, row_no, value))
+        # Cell comments (xl/comments*.xml) and threaded comments
+        # (xl/threadedComments/*.xml): the note text and the author
+        # names. A comment is not a cell, so the row is the cell the
+        # comment is anchored to (from its ref="B2"); authors have
+        # no cell and report row 0. xl/persons/person.xml holds the
+        # display names threaded comments point at -- scanned too.
+        # 单元格批注和 threaded 批注：批注文本和作者名也扫；行号取
+        # 批注挂的单元格，作者没有单元格、行号记 0。
+        for name in sorted(zf.namelist()):
+            if not (name.endswith(".xml") and (
+                    name.startswith("xl/comments") or
+                    name.startswith("xl/threadedComments/") or
+                    name == "xl/persons/person.xml")):
+                continue
+            try:
+                root = ET.fromstring(zf.read(name))
+            except (ET.ParseError, zipfile.BadZipFile, KeyError):
+                continue
+            for el in root.iter():
+                tag = _local(el.tag)
+                if tag in ("author", "displayName"):
+                    if el.text:
+                        parts.append((name, 0, el.text))
+                elif tag in ("comment", "threadedComment"):
+                    text = "".join(
+                        t.text or "" for t in el.iter()
+                        if _local(t.tag) == "t")
+                    if text:
+                        parts.append((name, _ref_row(el.get("ref")), text))
         # Shared strings never referenced by a scanned cell are still
         # scanned on their own; referenced ones are skipped here so
         # the same value is not reported twice.
@@ -297,17 +339,11 @@ def _xlsx_text_parts(path):
     return parts
 
 
-def _scan_xlsx(path):
-    """Scan an .xlsx file cell by cell, with the same email/phone
-    checks as the text scan. Returns [(row number, why)] -- the row
-    number is the sheet row for cells, or the shared-string index
-    for unreferenced shared strings. Returns None if the file is
-    not a readable zip (the caller falls back to a text scan).
-    按单元格扫 .xlsx，邮箱/电话检查和文本扫描同一套；返回
-    [(行号, 原因)]。文件不是合法 zip 就返回 None（调用方回退）。"""
-    parts = _xlsx_text_parts(path)
-    if parts is None:
-        return None
+def _scan_parts(parts):
+    """Run the email/phone checks over [(part, row, text)] -- the
+    same checks as the text scan, with the part name attached to
+    each hit so the report says where the value hid.
+    对 [(部位, 行号, 文本)] 跑同一套邮箱/电话检查，命中里带部位名。"""
     hits = []
     for part, no, text in parts:
         low = text.lower()
@@ -327,17 +363,544 @@ def _scan_xlsx(path):
     return hits
 
 
-def scan_file(path):
-    """返回 [(行号, 为什么中招)]，干净就返回空列表。"""
-    if path.lower().endswith(".xlsx"):
-        hits = _scan_xlsx(path)
-        if hits is not None:
-            return hits
-        # Not a readable zip (corrupt or misnamed file): fall through
-        # to the plain-text scan below, so anything visible in the
-        # raw bytes is still caught instead of silently passed.
-        # 不是合法 zip（损坏或改名文件）：往下走纯文本扫描，
-        # 原始字节里看得见的东西照样能抓住，不静默放过。
+def _scan_xlsx(path):
+    """Scan an .xlsx file cell by cell, with the same email/phone
+    checks as the text scan. Returns [(row number, why)] -- the row
+    number is the sheet row for cells, or the shared-string index
+    for unreferenced shared strings. Returns None if the file is
+    not a readable zip (the caller falls back to a text scan, then
+    to an explicit warning).
+    按单元格扫 .xlsx，邮箱/电话检查和文本扫描同一套；返回
+    [(行号, 原因)]。文件不是合法 zip 就返回 None（调用方回退）。"""
+    parts = _xlsx_text_parts(path)
+    if parts is None:
+        return None
+    return _scan_parts(parts)
+
+
+# ---------------------------------------------------------------------------
+# .xls (OLE2 / BIFF) -- stdlib only, and no new imports at all: every
+# integer is read with int.from_bytes, so ci.yml's ALLOWED list needs
+# no new entry (no struct, no extra module).
+# .xls（OLE2 / BIFF）——只用标准库，而且一个新 import 都没加：
+# 整数全用 int.from_bytes 读，ci.yml 白名单不用动。
+# ---------------------------------------------------------------------------
+
+_OLE_SIGNATURE = bytes([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1])
+_ENDOFCHAIN = 0xFFFFFFFE
+_FREESECT = 0xFFFFFFFF
+
+
+def _u16(data, off):
+    return int.from_bytes(data[off:off + 2], "little")
+
+
+def _u32(data, off):
+    return int.from_bytes(data[off:off + 4], "little")
+
+
+def _ieee754_double(raw8):
+    """Decode 8 little-endian bytes as an IEEE 754 double, without
+    struct (not in ci.yml's ALLOWED list -- int.from_bytes is enough).
+    8 字节小端解成双精度浮点，不用 struct（它不在 ci 白名单里）。"""
+    bits = int.from_bytes(raw8, "little")
+    sign = -1.0 if bits >> 63 else 1.0
+    exp = (bits >> 52) & 0x7FF
+    mant = bits & ((1 << 52) - 1)
+    if exp == 0:
+        if mant == 0:
+            return 0.0
+        return sign * mant * 2.0 ** -1074
+    if exp == 0x7FF:
+        if mant == 0:
+            return sign * float("inf")
+        return float("nan")
+    return sign * (1.0 + mant / 2.0 ** 52) * 2.0 ** (exp - 1023)
+
+
+def _rk_value(raw4):
+    """Decode a BIFF RK value (a 4-byte packed number) to float.
+    RK 是 BIFF 里 4 字节打包的数字，解成浮点。"""
+    v = int.from_bytes(raw4, "little")
+    if v & 2:
+        n = v >> 2
+        if n & (1 << 29):
+            n -= 1 << 30
+        num = float(n)
+    else:
+        num = _ieee754_double(((v & 0xFFFFFFFC) << 32).to_bytes(8, "little"))
+    if v & 1:
+        num /= 100.0
+    return num
+
+
+def _format_number(num):
+    """A cell number as scannable text: a whole number stored as a
+    float prints with a trailing .0 -- drop it, so the phone check
+    sees the digits it would see in the sheet.
+    单元格数字转成可扫描文本：整数去掉 .0，电话检查才能认出来。"""
+    if num != num or num in (float("inf"), float("-inf")):
+        return ""
+    if num == int(num) and abs(num) < 10 ** 16:
+        return str(int(num))
+    return repr(num)
+
+
+def _cfb_read_stream(data):
+    """Read the Workbook/Book stream out of an OLE2 compound file
+    (the .xls container), stdlib only. Returns (bytes, None) on
+    success, or (None, reason) with reason in "not-ole" (not an
+    OLE2 file at all), "damaged" (signature OK but FAT/directory
+    broken) or "no-workbook" (OLE2 file, no Workbook/Book stream).
+    只用标准库读 OLE2 复合文件里的 Workbook 流。"""
+    if len(data) < 512 or data[:8] != _OLE_SIGNATURE:
+        return None, "not-ole"
+    try:
+        sector_shift = _u16(data, 30)
+        if sector_shift not in (9, 12):
+            return None, "damaged"
+        if _u16(data, 32) != 6:
+            return None, "damaged"
+        ss = 1 << sector_shift
+        num_fat = _u32(data, 40)
+        first_dir = _u32(data, 44)
+        mini_cutoff = _u32(data, 52)
+        first_minifat = _u32(data, 56)
+        num_minifat = _u32(data, 60)
+        first_difat = _u32(data, 64)
+        num_difat = _u32(data, 68)
+
+        def sector(n):
+            start = (n + 1) * ss
+            if n < 0 or start + ss > len(data):
+                return None
+            return data[start:start + ss]
+
+        # DIFAT: 109 entries in the header, then DIFAT sectors chained
+        # through their last slot.
+        difat = [_u32(data, 72 + 4 * i) for i in range(109)]
+        difat = [d for d in difat if d != _FREESECT]
+        nxt = first_difat
+        guard = 0
+        while nxt != _ENDOFCHAIN and nxt != _FREESECT \
+                and guard <= num_difat + 1:
+            guard += 1
+            sec = sector(nxt)
+            if sec is None:
+                return None, "damaged"
+            per = ss // 4
+            difat.extend(_u32(sec, 4 * i) for i in range(per - 1))
+            nxt = _u32(sec, 4 * (per - 1))
+        difat = [d for d in difat if d != _FREESECT]
+
+        fat = []
+        for fsec in difat:
+            sec = sector(fsec)
+            if sec is None:
+                return None, "damaged"
+            fat.extend(_u32(sec, 4 * i) for i in range(ss // 4))
+        if len(fat) < num_fat:
+            return None, "damaged"
+
+        def chain(start):
+            out = []
+            seen = set()
+            cur = start
+            while cur != _ENDOFCHAIN and cur != _FREESECT:
+                if cur in seen or cur >= len(fat):
+                    return None
+                seen.add(cur)
+                out.append(cur)
+                cur = fat[cur]
+            return out
+
+        def read_chain(start, size):
+            secs = chain(start)
+            if secs is None:
+                return None
+            buf = bytearray()
+            for s in secs:
+                sec = sector(s)
+                if sec is None:
+                    return None
+                buf += sec
+            if len(buf) < size:
+                return None
+            return bytes(buf[:size])
+
+        dir_secs = chain(first_dir)
+        if dir_secs is None:
+            return None, "damaged"
+        directory = bytearray()
+        for s in dir_secs:
+            sec = sector(s)
+            if sec is None:
+                return None, "damaged"
+            directory += sec
+        entries = []
+        for off in range(0, len(directory) - 127, 128):
+            ent = directory[off:off + 128]
+            name_len = _u16(ent, 64)
+            if name_len < 2 or name_len > 64:
+                name = ""
+            else:
+                name = ent[:name_len - 2].decode("utf-16-le", "replace")
+            entries.append({
+                "name": name,
+                "type": ent[66],
+                "start": _u32(ent, 116),
+                "size": _u32(ent, 120),
+            })
+        if not entries:
+            return None, "damaged"
+        root = None
+        target = None
+        for ent in entries:
+            if ent["type"] == 5 and root is None:
+                root = ent
+            if ent["type"] == 2 and ent["name"].lower() in ("workbook", "book"):
+                target = ent
+        if target is None:
+            return None, "no-workbook"
+        if root is None:
+            return None, "damaged"
+
+        size = target["size"]
+        if size >= mini_cutoff:
+            blob = read_chain(target["start"], size)
+            if blob is None:
+                return None, "damaged"
+            return blob, None
+        # Small stream: lives inside the root entry's mini stream,
+        # addressed through the MiniFAT (64-byte mini sectors).
+        if root["start"] in (_ENDOFCHAIN, _FREESECT):
+            return None, "damaged"
+        mini_stream = read_chain(root["start"], root["size"])
+        if mini_stream is None:
+            return None, "damaged"
+        minifat = []
+        secs = chain(first_minifat)
+        if secs is None:
+            return None, "damaged"
+        for s in secs:
+            sec = sector(s)
+            if sec is None:
+                return None, "damaged"
+            minifat.extend(_u32(sec, 4 * i) for i in range(ss // 4))
+        out = bytearray()
+        cur = target["start"]
+        seen = set()
+        while cur != _ENDOFCHAIN and cur != _FREESECT:
+            if cur in seen or cur >= len(minifat):
+                return None, "damaged"
+            seen.add(cur)
+            start = cur * 64
+            out += mini_stream[start:start + 64]
+            cur = minifat[cur]
+        if len(out) < size:
+            return None, "damaged"
+        return bytes(out[:size]), None
+    except (IndexError, ValueError, OverflowError):
+        return None, "damaged"
+
+
+def _string_runs(payload):
+    """Printable string runs inside a raw BIFF payload, both
+    encodings: plain ASCII runs and UTF-16LE runs (every second byte
+    0x00). Yields each run of >= 4 characters. Used for NOTE authors
+    and TXO comment text, where the exact field layout varies
+    between BIFF versions -- the runs are the text, whatever wraps
+    them -- and as the safety-net sweep over the whole stream.
+    从原始记录体里抽可打印字符串：ASCII 和 UTF-16LE 两种，>=4 字符。"""
+    runs = []
+    buf = []
+    for b in payload:
+        if 0x20 <= b <= 0x7E:
+            buf.append(chr(b))
+        else:
+            if len(buf) >= 4:
+                runs.append("".join(buf))
+            buf = []
+    if len(buf) >= 4:
+        runs.append("".join(buf))
+    buf = []
+    i = 0
+    while i + 1 < len(payload):
+        b, z = payload[i], payload[i + 1]
+        if z == 0 and 0x20 <= b <= 0x7E:
+            buf.append(chr(b))
+            i += 2
+        else:
+            if len(buf) >= 4:
+                runs.append("".join(buf))
+            buf = []
+            i += 1
+    if len(buf) >= 4:
+        runs.append("".join(buf))
+    return runs
+
+
+class _SegReader(object):
+    """Cursor over an SST record plus its CONTINUE segments.
+    Reads across segment boundaries; when a string's character data
+    is split across a CONTINUE, the new segment starts with a flag
+    byte (bit 0 = 16-bit chars) that is skipped, not data.
+    SST 记录 + CONTINUE 段上的游标：字符串被 CONTINUE 截断时，
+    新段开头 1 字节是标志位，不是数据。"""
+
+    def __init__(self, segments):
+        self.segs = [s for s in segments if s]
+        self.i = 0
+        self.off = 0
+
+    def _skip_empty(self):
+        while self.i < len(self.segs) and self.off >= len(self.segs[self.i]):
+            self.i += 1
+            self.off = 0
+
+    def has_data(self):
+        self._skip_empty()
+        return self.i < len(self.segs)
+
+    def read(self, n):
+        """Read n bytes across segments (no flag-byte handling:
+        use only for record headers / run data, never for string
+        characters)."""
+        out = bytearray()
+        while len(out) < n and self.has_data():
+            seg = self.segs[self.i]
+            take = min(n - len(out), len(seg) - self.off)
+            out += seg[self.off:self.off + take]
+            self.off += take
+        return bytes(out)
+
+    def read_chars(self, count, is_unicode):
+        """Read `count` characters of a split-able SST string.
+        The encoding may flip at a CONTINUE boundary; the flag byte
+        there says which. Returns the text."""
+        out = []
+        remaining = count
+        while remaining > 0:
+            if not self.has_data():
+                break
+            seg = self.segs[self.i]
+            avail = len(seg) - self.off
+            bpc = 2 if is_unicode else 1
+            n = min(remaining, avail // bpc)
+            if n == 0:
+                # A lone trailing byte (a 2-byte char split across
+                # records -- not valid BIFF): stop, keep what we have.
+                break
+            raw = self.read(n * bpc)
+            if is_unicode:
+                out.append(raw.decode("utf-16-le", "replace"))
+            else:
+                out.append(raw.decode("latin-1"))
+            remaining -= n
+            if remaining > 0:
+                cur = self.i
+                if self.has_data() and self.i != cur:
+                    # Entered a CONTINUE segment mid-string: its
+                    # first byte is the continuation flag byte.
+                    flag = self.read(1)
+                    if flag:
+                        is_unicode = bool(flag[0] & 1)
+        return "".join(out)
+
+
+def _parse_sst(segments):
+    """Parse an SST record (+ its CONTINUE segments) into a list of
+    strings. A malformed tail stops the parse; strings already read
+    are kept -- a half-broken table still gets scanned, and the raw
+    byte sweep below covers the rest.
+    解析 SST（共享字符串表），尾部损坏就停，已读到的照样扫。"""
+    r = _SegReader(segments)
+    head = r.read(8)
+    if len(head) < 8:
+        return []
+    unique = _u32(head, 4)
+    strings = []
+    for _ in range(unique):
+        cch_b = r.read(2)
+        flag_b = r.read(1)
+        if len(cch_b) < 2 or len(flag_b) < 1:
+            break
+        cch = _u16(cch_b, 0)
+        flags = flag_b[0]
+        runs = 0
+        ext_len = 0
+        if flags & 0x08:
+            rb = r.read(2)
+            if len(rb) < 2:
+                break
+            runs = _u16(rb, 0)
+        if flags & 0x04:
+            eb = r.read(4)
+            if len(eb) < 4:
+                break
+            ext_len = _u32(eb, 0)
+        strings.append(r.read_chars(cch, bool(flags & 0x01)))
+        # Formatting runs and extended data are skipped unread;
+        # they carry no cell text.
+        skip = runs * 4 + ext_len
+        while skip > 0 and r.has_data():
+            seg = r.segs[r.i]
+            take = min(skip, len(seg) - r.off)
+            r.off += take
+            skip -= take
+    return strings
+
+
+def _biff_text_parts(stream):
+    """Walk BIFF records in a Workbook stream and pull out every
+    scannable string: shared strings (SST), cell strings (LABELSST /
+    LABEL / formula STRING results), numbers (NUMBER / RK, formatted
+    as text), comment authors (NOTE) and comment text (TXO).
+    Returns (parts, encrypted): parts is [(part, row, text)] with
+    1-based sheet rows (0 = no cell, e.g. the raw-byte sweep);
+    encrypted is True if a FILEPASS record says the book is locked.
+    遍历 Workbook 流里的 BIFF 记录，抽出所有可扫描字符串。"""
+    # Split into records; CONTINUE payloads are kept as extra
+    # segments of the previous record (SST/TXO strings can span them).
+    records = []
+    pos = 0
+    while pos + 4 <= len(stream):
+        op = _u16(stream, pos)
+        ln = _u16(stream, pos + 2)
+        data = stream[pos + 4:pos + 4 + ln]
+        if op == 0x003C and records:
+            records[-1][1].append(data)
+        else:
+            records.append((op, [data]))
+        pos += 4 + ln
+
+    version = 0x0600
+    sst = []
+    parts = []
+    used_sst = set()
+    last_formula_row = None
+    encrypted = False
+    for op, segments in records:
+        data = segments[0]
+        if op == 0x0809:  # BOF: version decides the LABEL layout
+            if len(data) >= 2:
+                version = _u16(data, 0)
+        elif op == 0x002F:  # FILEPASS: encrypted book, unreadable
+            encrypted = True
+        elif op == 0x00FC:  # SST
+            sst = _parse_sst(segments)
+        elif op == 0x00FD:  # LABELSST
+            if len(data) >= 10:
+                row = _u16(data, 0)
+                idx = _u32(data, 6)
+                if 0 <= idx < len(sst):
+                    used_sst.add(idx)
+                    parts.append(("Workbook", row + 1, sst[idx]))
+        elif op == 0x0204:  # LABEL
+            if len(data) >= 8:
+                row = _u16(data, 0)
+                cch = _u16(data, 6)
+                if version >= 0x0600:
+                    flag = data[8] if len(data) > 8 else 0
+                    raw = data[9:9 + cch * (2 if flag & 1 else 1)]
+                    text = (raw.decode("utf-16-le", "replace") if flag & 1
+                            else raw.decode("latin-1"))
+                else:
+                    text = data[8:8 + cch].decode("latin-1")
+                parts.append(("Workbook", row + 1, text))
+        elif op == 0x0203:  # NUMBER: row + col + xf + 8-byte double
+            if len(data) >= 14:
+                row = _u16(data, 0)
+                parts.append(("Workbook", row + 1,
+                              _format_number(_ieee754_double(data[6:14]))))
+        elif op == 0x027E:  # RK: row + col + xf + 4-byte packed number
+            if len(data) >= 10:
+                row = _u16(data, 0)
+                parts.append(("Workbook", row + 1,
+                              _format_number(_rk_value(data[6:10]))))
+        elif op == 0x0006:  # FORMULA: remember its row for STRING
+            if len(data) >= 2:
+                last_formula_row = _u16(data, 0)
+        elif op == 0x0207:  # STRING: a formula's string result
+            if len(data) >= 3:
+                cch = _u16(data, 0)
+                flag = data[2]
+                raw = data[3:3 + cch * (2 if flag & 1 else 1)]
+                text = (raw.decode("utf-16-le", "replace") if flag & 1
+                        else raw.decode("latin-1"))
+                row = (last_formula_row + 1
+                       if last_formula_row is not None else 0)
+                parts.append(("Workbook", row, text))
+        elif op == 0x001C:  # NOTE: comment author
+            if len(data) >= 6:
+                row = _u16(data, 0)
+                for run in _string_runs(data[6:]):
+                    parts.append(("Workbook（批注作者）", row + 1, run))
+        elif op == 0x01B6:  # TXO: comment text
+            for run in _string_runs(data[16:]):
+                parts.append(("Workbook（批注）", 0, run))
+    # Shared strings no cell references are still scanned on their own.
+    for i, text in enumerate(sst):
+        if i not in used_sst:
+            parts.append(("Workbook（共享字符串）", i + 1, text))
+    # Safety net: printable runs over the whole stream, skipping
+    # texts the record walk already found (same value, reported once
+    # with its real row). This catches string payloads in records
+    # the walk above does not know by opcode.
+    # 兜底：全流可打印字符串，已从记录里找到的文本不再重复报。
+    seen = set(text for _, _, text in parts)
+    for run in _string_runs(stream):
+        if run not in seen:
+            parts.append(("Workbook（原始字节扫描）", 0, run))
+            seen.add(run)
+    return parts, encrypted
+
+
+def _xls_text_parts(path):
+    """Extract scannable text from a .xls file (OLE2 + BIFF, stdlib
+    only). Returns (parts, None) on success, or (None, reason) when
+    the file cannot be parsed at all -- reason is a short string for
+    the "please review by hand" report, never a silent pass.
+    What this does NOT cover (stated, not hidden): comment text in
+    an MSO drawing object is recovered from the TXO record payload,
+    not from a full MSO drawing parse, so a comment stored with an
+    unusual encoding can still be missed by the record walk -- the
+    raw-byte sweep is the net for that case. An encrypted (FILEPASS)
+    workbook cannot be read at all and is reported as such.
+    从 .xls 里抽可扫描文本（OLE2 + BIFF，只用标准库）。"""
+    try:
+        with open(path, "rb") as fh:
+            data = fh.read()
+    except (OSError, IOError):
+        return None, "读不到文件"
+    blob, problem = _cfb_read_stream(data)
+    if blob is None:
+        return None, {
+            "not-ole": "不是 OLE2 格式的 .xls 文件",
+            "damaged": "OLE2 结构损坏，读不出 Workbook 流",
+            "no-workbook": "OLE2 文件里找不到 Workbook/Book 流",
+        }.get(problem, "无法解析")
+    parts, encrypted = _biff_text_parts(blob)
+    if encrypted:
+        return None, "工作簿已加密（FILEPASS），读不出内容"
+    return parts, None
+
+
+def _scan_xls(path):
+    """Scan a .xls file. Returns (hits, None) when parsed, or
+    (None, reason) when unparsable (the caller falls back to a
+    text scan, then to an explicit warning)."""
+    parts, problem = _xls_text_parts(path)
+    if parts is None:
+        return None, problem
+    return _scan_parts(parts), None
+
+
+def _scan_text_file(path):
+    """Plain-text scan: one line at a time, same email/phone checks.
+    Returns [] when the file cannot be read (matches the old
+    behaviour for unreadable files).
+    纯文本扫描：一行一行，同一套邮箱/电话检查。"""
     try:
         with open(path, encoding="utf-8", errors="ignore") as fh:
             lines = fh.readlines()
@@ -361,6 +924,43 @@ def scan_file(path):
             hits.append((no, "手机号/座机号（看着像真号码）"))
 
     return hits
+
+
+def _scan_unparsable(path, kind, problem):
+    """A spreadsheet that cannot be parsed at all: first a plain
+    text scan (a misnamed text file still gets caught), and if that
+    finds nothing, an explicit whole-file warning -- never a silent
+    pass. Empty files are clean (there is nothing to leak) and never
+    reach here.
+    解析不了的表格：先纯文本扫一遍，没扫到东西就明确报“请人工复核”，
+    不静默放过。空文件干净，不会走到这里。"""
+    hits = _scan_text_file(path)
+    if hits:
+        return hits
+    return [(0, "整个文件无法解析（%s：%s），内容没扫到，请人工复核后再提交"
+            % (kind, problem))]
+
+
+def scan_file(path):
+    """返回 [(行号, 为什么中招)]，干净就返回空列表。"""
+    low = path.lower()
+    if low.endswith(".xlsx"):
+        hits = _scan_xlsx(path)
+        if hits is not None:
+            return hits
+        return _scan_unparsable(path, ".xlsx", "不是合法的 zip 文件")
+    if low.endswith(".xls"):
+        try:
+            size = os.path.getsize(path)
+        except OSError:
+            size = 0
+        if size == 0:
+            return []
+        hits, problem = _scan_xls(path)
+        if hits is not None:
+            return hits
+        return _scan_unparsable(path, ".xls", problem or "无法解析")
+    return _scan_text_file(path)
 
 
 def _repo_root():

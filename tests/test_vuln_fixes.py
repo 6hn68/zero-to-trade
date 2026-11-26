@@ -15,6 +15,7 @@ and fictional; nothing is sent anywhere.
 import csv
 import json
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
@@ -279,10 +280,11 @@ class TestXlsxPrivacyScan(unittest.TestCase):
     .xlsx 按 zip/XML 解析的回归：上轮仍按文本读，表格里的地址
     未必扫得到。全部数据虚构，电话用顺序号段。"""
 
-    def _scan_xlsx(self, shared_strings, rows):
+    def _scan_xlsx(self, shared_strings, rows, comments=None, threaded=None):
         with tempfile.TemporaryDirectory() as d:
             path = str(Path(d) / "probe.xlsx")
-            _make_xlsx(path, shared_strings, rows)
+            _make_xlsx(path, shared_strings, rows,
+                       comments=comments, threaded=threaded)
             return cpd.scan_file(path)
 
     def test_shared_string_email_flagged(self):
@@ -383,17 +385,77 @@ class TestXlsxPrivacyScan(unittest.TestCase):
         self.assertTrue(any("customer-mail.example" in why
                             for _, why in hits))
 
+    def test_comment_email_flagged(self):
+        """Route 05 (2026-11-26): an email in a cell comment
+        (xl/comments*.xml) must be caught -- it is not a cell value,
+        so the worksheet scan never sees it.
+        单元格批注里的邮箱必须被抓住（它不是单元格值，工作表扫描看不到）。"""
+        hits = self._scan_xlsx(
+            ["Contact"], [(1, [("A1", "s", 0)])],
+            comments=[("B2", "Alex", "call buyer@customer-mail.example")])
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
 
-def _make_xlsx(path, shared_strings, rows):
+    def test_comment_row_reported(self):
+        """A comment's hit reports the row of the cell it is anchored
+        to (ref="B2" -> row 2), not row 0.
+        批注命中的行号是它挂的单元格的行号。"""
+        hits = self._scan_xlsx(
+            [], [], comments=[("B2", "Alex", "buyer@customer-mail.example")])
+        flagged = [no for no, why in hits
+                   if "customer-mail.example" in why]
+        self.assertEqual(flagged, [2])
+
+    def test_threaded_comment_phone_flagged(self):
+        """Route 05 (2026-11-26): a phone in a threaded comment
+        (xl/threadedComments/*.xml) must be caught too.
+        threaded 批注里的电话也要抓住。"""
+        hits = self._scan_xlsx(
+            [], [], threaded=[("C3", "phone +86 139 1234 5678")])
+        flagged = [no for no, why in hits if "手机" in why]
+        self.assertEqual(flagged, [3])
+
+    def test_comment_clean_passes(self):
+        """sample.example mail in a comment stays clean, like in a cell.
+        批注里的示例域名干净。"""
+        hits = self._scan_xlsx(
+            [], [], comments=[("B2", "Alex", "demo01@sample.example")])
+        self.assertEqual(hits, [])
+
+    def test_comment_example_marked_exempt(self):
+        """A comment marked 【示例】 is still exempt.
+        标了【示例】的批注仍豁免。"""
+        hits = self._scan_xlsx(
+            [], [],
+            comments=[("B2", "Alex", "【示例】 buyer@customer-mail.example")])
+        self.assertEqual(hits, [])
+
+    def test_corrupt_xlsx_no_text_explicit_hit(self):
+        """Route 05 (2026-11-26): a corrupt .xlsx with nothing
+        visible in a text scan must NOT pass silently -- it reports
+        an explicit whole-file warning instead.
+        损坏又扫不出东西的 .xlsx 不能静默放过，要明确报请人工复核。"""
+        with tempfile.TemporaryDirectory() as d:
+            path = str(Path(d) / "probe.xlsx")
+            Path(path).write_bytes(b"\x00\x01\x02garbage, no text here\n")
+            hits = cpd.scan_file(path)
+        self.assertTrue(any("人工复核" in why for _, why in hits))
+
+
+def _make_xlsx(path, shared_strings, rows, comments=None, threaded=None):
     """Build a minimal .xlsx with the stdlib only (zipfile).
     shared_strings is a list of strings (None omits
     xl/sharedStrings.xml); rows is a list of (row_no,
     [(ref, kind, value)]) with kind 's' (shared-string index),
     'inline' (inline string) or 'n' (plain number).
+    comments is a list of (ref, author, text) written to
+    xl/comments1.xml; threaded is a list of (ref, text) written to
+    xl/threadedComments/threadedComment1.xml.
     只用标准库造一个最小 .xlsx；shared_strings 是字符串列表
     （None 表示不写 sharedStrings.xml），rows 是
     (行号, [(格子, 类型, 值)])，类型 s=共享字符串序号、
-    inline=内联字符串、n=纯数字。"""
+    inline=内联字符串、n=纯数字。comments 写进 xl/comments1.xml，
+    threaded 写进 xl/threadedComments/threadedComment1.xml。"""
     def esc(s):
         return (s.replace("&", "&amp;").replace("<", "&lt;")
                  .replace(">", "&gt;"))
@@ -449,9 +511,392 @@ def _make_xlsx(path, shared_strings, rows):
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
         '<sheetData>%s</sheetData></worksheet>' % "".join(sheet_rows))
+    if comments is not None:
+        authors = sorted({a for _, a, _ in comments})
+        items = "".join(
+            '<comment ref="%s" authorId="%d"><text><t>%s</t></text></comment>'
+            % (ref, authors.index(a), esc(t))
+            for ref, a, t in comments)
+        auth = "".join("<author>%s</author>" % esc(a) for a in authors)
+        parts["xl/comments1.xml"] = (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<comments xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            "<authors>%s</authors><commentList>%s</commentList></comments>"
+            % (auth, items))
+    if threaded is not None:
+        items = "".join(
+            '<threadedComment ref="%s"><text><t>%s</t></text></threadedComment>'
+            % (ref, esc(t)) for ref, t in threaded)
+        parts["xl/threadedComments/threadedComment1.xml"] = (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<ThreadedComments xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            "%s</ThreadedComments>" % items)
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
         for name, data in parts.items():
             zf.writestr(name, data)
+
+
+def _biff_rec(opcode, data):
+    """One BIFF record: opcode (2) + length (2) + payload."""
+    return struct.pack("<HH", opcode, len(data)) + data
+
+
+def _biff_bof(version=0x0600):
+    """BOF: version 0x0600 = BIFF8, 0x0500 = BIFF5."""
+    return _biff_rec(0x0809,
+                     struct.pack("<HHHH", version, 0x0005, 0, 0) + b"\x00" * 8)
+
+
+def _biff_eof():
+    return _biff_rec(0x000A, b"")
+
+
+def _biff_sst(strings):
+    """SST record: total + unique counts, then each string as
+    char-count (2) + flags (1, 0x01 = 16-bit) + UTF-16LE chars."""
+    body = struct.pack("<II", len(strings), len(strings))
+    for s in strings:
+        body += struct.pack("<HB", len(s), 0x01) + s.encode("utf-16-le")
+    return _biff_rec(0x00FC, body)
+
+
+def _biff_labelsst(row, col, idx):
+    return _biff_rec(0x00FD, struct.pack("<HHHI", row, col, 0, idx))
+
+
+def _biff_label8(row, col, text):
+    """BIFF8 LABEL: row + col + xf + char-count + flags + UTF-16LE."""
+    raw = text.encode("utf-16-le")
+    return _biff_rec(0x0204, struct.pack("<HHH", row, col, 0)
+                     + struct.pack("<HB", len(text), 0x01) + raw)
+
+
+def _biff_label5(row, col, text):
+    """BIFF5 LABEL: row + col + xf + char-count + latin-1 bytes
+    (no flags byte -- the BOF version decides the layout)."""
+    raw = text.encode("latin-1")
+    return _biff_rec(0x0204, struct.pack("<HHH", row, col, 0)
+                     + struct.pack("<H", len(text)) + raw)
+
+
+def _biff_number(row, col, value):
+    return _biff_rec(0x0203, struct.pack("<HHH", row, col, 0)
+                     + struct.pack("<d", value))
+
+
+def _biff_note(row, col, author):
+    """NOTE record: row + col + flags + author char-count + author."""
+    raw = author.encode("latin-1")
+    return _biff_rec(0x001C, struct.pack("<HHH", row, col, 0)
+                     + struct.pack("<H", len(raw)) + raw)
+
+
+def _biff_txo(text):
+    """TXO record: grbit + rot + reserved + cchText + cbRuns +
+    reserved + text bytes (latin-1 here; the scanner reads the
+    payload's printable runs, either encoding)."""
+    raw = text.encode("latin-1")
+    return _biff_rec(0x01B6, struct.pack("<HH", 0, 0) + b"\x00" * 4
+                     + struct.pack("<HH", len(text), 0) + b"\x00" * 4 + raw)
+
+
+def _ole_dir_entry(name, obj_type, start, size, child=None):
+    """One 128-byte OLE2 directory entry."""
+    raw_name = name.encode("utf-16-le") + b"\x00\x00"
+    raw_name = raw_name + b"\x00" * (64 - len(raw_name))
+    return (raw_name
+            + struct.pack("<H", len(name.encode("utf-16-le")) + 2)
+            + bytes([obj_type, 0])
+            + struct.pack("<III", 0xFFFFFFFF, 0xFFFFFFFF,
+                          0xFFFFFFFF if child is None else child)
+            + b"\x00" * 16
+            + struct.pack("<I", 0)
+            + b"\x00" * 16
+            + struct.pack("<III", start, size, 0))
+
+
+def _ole_header(first_dir=1, num_fat=1, first_minifat=0xFFFFFFFE,
+                num_minifat=0):
+    """A 512-byte OLE2 header for the layouts below."""
+    header = bytearray(512)
+    header[0:8] = bytes([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1])
+    struct.pack_into("<H", header, 24, 0x003E)  # minor version
+    struct.pack_into("<H", header, 26, 3)       # major: 512-byte sectors
+    struct.pack_into("<H", header, 28, 0xFFFE)  # byte order
+    struct.pack_into("<H", header, 30, 9)       # sector shift: 512
+    struct.pack_into("<H", header, 32, 6)       # mini sector shift: 64
+    struct.pack_into("<I", header, 36, 1)       # num directory sectors
+    struct.pack_into("<I", header, 40, num_fat)  # num FAT sectors
+    struct.pack_into("<I", header, 44, first_dir)  # first dir sector
+    struct.pack_into("<I", header, 52, 4096)    # mini stream cutoff
+    struct.pack_into("<I", header, 56, first_minifat)
+    struct.pack_into("<I", header, 60, num_minifat)
+    struct.pack_into("<I", header, 64, 0xFFFFFFFE)  # first DIFAT: none
+    struct.pack_into("<I", header, 68, 0)       # num DIFAT sectors
+    struct.pack_into("<I", header, 72, 0)       # DIFAT[0]: FAT sector 0
+    for i in range(1, 109):
+        struct.pack_into("<I", header, 72 + 4 * i, 0xFFFFFFFF)
+    return bytes(header)
+
+
+def _make_xls_mini(path, stream):
+    """Same minimal OLE2 .xls, but the Workbook stream is small
+    (< 4096 bytes) so it legally lives in the mini stream: the root
+    entry holds the mini stream, the MiniFAT chains its 64-byte
+    mini sectors. Covers the scanner's MiniFAT path.
+    Layout: sector 0 = FAT, 1 = directory, 2 = MiniFAT,
+    sectors 3.. = the mini stream.
+    小流版 .xls：Workbook 流 < 4096 字节，走 MiniFAT，覆盖扫描器的
+    MiniFAT 分支。"""
+    ss = 512
+    mini = stream + b"\x00" * ((64 - len(stream) % 64) % 64)
+    n_mini = len(mini) // 64
+    n_mini_sectors = (len(mini) + ss - 1) // ss
+    fat = [0xFFFFFFFF] * 128
+    fat[0] = 0xFFFFFFFD
+    fat[1] = 0xFFFFFFFE
+    fat[2] = 0xFFFFFFFE
+    for i in range(n_mini_sectors):
+        s = 3 + i
+        fat[s] = s + 1 if i + 1 < n_mini_sectors else 0xFFFFFFFE
+    fat_sector = b"".join(struct.pack("<I", v) for v in fat)
+    minifat = [0xFFFFFFFF] * 128
+    for i in range(n_mini):
+        minifat[i] = i + 1 if i + 1 < n_mini else 0xFFFFFFFE
+    minifat_sector = b"".join(struct.pack("<I", v) for v in minifat)
+    root = _ole_dir_entry("Root Entry", 5, 3, len(mini), child=1)
+    book = _ole_dir_entry("Workbook", 2, 0, len(stream))
+    directory = root + book + b"\x00" * (ss - 256)
+    mini_stream = mini + b"\x00" * (n_mini_sectors * ss - len(mini))
+    with open(path, "wb") as fh:
+        fh.write(_ole_header(first_minifat=2, num_minifat=1))
+        fh.write(fat_sector)
+        fh.write(directory)
+        fh.write(minifat_sector)
+        fh.write(mini_stream)
+
+
+def _make_xls(path, stream):
+    """Build a minimal OLE2 .xls file (stdlib only) holding `stream`
+    as the Workbook stream. The stream is padded to >= 4096 bytes
+    so it goes through the regular FAT chain (no MiniFAT needed).
+    Layout: sector 0 = FAT, sector 1 = directory (root + Workbook),
+    sectors 2.. = the Workbook stream.
+    只用标准库造一个最小 OLE2 .xls：stream 当 Workbook 流，补到
+    4096 字节以上、走普通 FAT 链（不用 MiniFAT）。扇区 0=FAT、
+    扇区 1=目录（根 + Workbook）、扇区 2 起是流数据。"""
+    ss = 512
+    n_sectors = max(8, (len(stream) + ss - 1) // ss)
+    padded = stream + b"\x00" * (n_sectors * ss - len(stream))
+    first_stream_sector = 2
+    fat = [0xFFFFFFFF] * 128
+    fat[0] = 0xFFFFFFFD  # this sector is a FAT sector
+    fat[1] = 0xFFFFFFFE  # directory: single sector, end of chain
+    for i in range(n_sectors):
+        s = first_stream_sector + i
+        fat[s] = s + 1 if i + 1 < n_sectors else 0xFFFFFFFE
+    fat_sector = b"".join(struct.pack("<I", v) for v in fat)
+
+    root = _ole_dir_entry("Root Entry", 5, 0xFFFFFFFE, 0, child=1)
+    # NOTE: the entry size is the padded length (>= 4096), so the
+    # stream goes through the regular FAT chain, not the MiniFAT.
+    # (An entry smaller than the 4096 mini-stream cutoff would
+    # legally belong in the mini stream instead.)
+    book = _ole_dir_entry("Workbook", 2, first_stream_sector, len(padded))
+    directory = root + book + b"\x00" * (ss - 256)
+    header = bytearray(512)
+    header[0:8] = bytes([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1])
+    struct.pack_into("<H", header, 24, 0x003E)  # minor version
+    struct.pack_into("<H", header, 26, 3)       # major: 512-byte sectors
+    struct.pack_into("<H", header, 28, 0xFFFE)  # byte order
+    struct.pack_into("<H", header, 30, 9)       # sector shift: 512
+    struct.pack_into("<H", header, 32, 6)       # mini sector shift: 64
+    struct.pack_into("<I", header, 36, 1)       # num directory sectors
+    struct.pack_into("<I", header, 40, 1)       # num FAT sectors
+    struct.pack_into("<I", header, 44, 1)       # first directory sector
+    struct.pack_into("<I", header, 52, 4096)    # mini stream cutoff
+    struct.pack_into("<I", header, 56, 0xFFFFFFFE)  # first MiniFAT: none
+    struct.pack_into("<I", header, 60, 0)       # num MiniFAT sectors
+    struct.pack_into("<I", header, 64, 0xFFFFFFFE)  # first DIFAT: none
+    struct.pack_into("<I", header, 68, 0)       # num DIFAT sectors
+    struct.pack_into("<I", header, 72, 0)       # DIFAT[0]: FAT sector 0
+    for i in range(1, 109):
+        struct.pack_into("<I", header, 72 + 4 * i, 0xFFFFFFFF)
+    with open(path, "wb") as fh:
+        fh.write(bytes(header))
+        fh.write(fat_sector)
+        fh.write(directory)
+        fh.write(padded)
+
+
+class TestXlsPrivacyScan(unittest.TestCase):
+    """Route 05 (2026-11-26): .xls files are parsed as OLE2/BIFF now.
+    Route 04 left them as plain text, so a real address inside a
+    binary .xls scanned clean unless it happened to show up in the
+    raw bytes. All fixtures are synthetic and fictional; phone
+    digits are sequential patterns, domains are .example.
+    .xls 按 OLE2/BIFF 解析的回归：上轮仍按文本读，二进制表格里
+    的地址扫不到。全部数据虚构，电话用顺序号段。"""
+
+    def _scan_xls(self, stream_bytes):
+        with tempfile.TemporaryDirectory() as d:
+            path = str(Path(d) / "probe.xls")
+            _make_xls(path, stream_bytes)
+            return cpd.scan_file(path)
+
+    def test_labelsst_email_flagged(self):
+        """An email in SST, referenced by a LABELSST cell, is caught.
+        SST 里的邮箱、被单元格引用，必须被抓住。"""
+        hits = self._scan_xls(
+            _biff_bof() + _biff_sst(["buyer@customer-mail.example"])
+            + _biff_labelsst(0, 0, 0) + _biff_eof())
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
+
+    def test_mini_stream_labelsst_flagged(self):
+        """A small Workbook stream (< 4096 bytes) legally lives in
+        the mini stream -- the MiniFAT path must find it too.
+        小 Workbook 流走 MiniFAT，也要扫得到。"""
+        stream = (_biff_bof()
+                  + _biff_sst(["buyer@customer-mail.example"])
+                  + _biff_labelsst(0, 0, 0) + _biff_eof())
+        with tempfile.TemporaryDirectory() as d:
+            path = str(Path(d) / "probe.xls")
+            _make_xls_mini(path, stream)
+            hits = cpd.scan_file(path)
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
+
+    def test_sst_unreferenced_flagged(self):
+        """A shared string no cell references is still scanned.
+        没被任何单元格引用的共享字符串也要扫。"""
+        hits = self._scan_xls(
+            _biff_bof() + _biff_sst(["buyer@customer-mail.example"])
+            + _biff_eof())
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
+
+    def test_label8_phone_flagged(self):
+        """A BIFF8 LABEL cell holding a phone number is caught.
+        BIFF8 LABEL 单元格里的电话必须被抓住。"""
+        hits = self._scan_xls(
+            _biff_bof() + _biff_label8(1, 0, "+86 139 1234 5678")
+            + _biff_eof())
+        self.assertTrue(any("手机" in why for _, why in hits))
+
+    def test_label5_email_flagged(self):
+        """A BIFF5 LABEL cell (no flags byte, latin-1) is caught too
+        -- the BOF version decides the layout.
+        BIFF5 LABEL（无标志位、latin-1）也要抓住。"""
+        hits = self._scan_xls(
+            _biff_bof(0x0500)
+            + _biff_label5(0, 0, "buyer@customer-mail.example")
+            + _biff_eof())
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
+
+    def test_number_phone_flagged(self):
+        """A bare 11-digit NUMBER cell is a phone, not just a number
+        (same rule as the .xlsx numeric cell).
+        纯数字 NUMBER 单元格里的 11 位号也是电话。"""
+        hits = self._scan_xls(
+            _biff_bof() + _biff_number(1, 1, 13912345678.0) + _biff_eof())
+        self.assertTrue(any("手机" in why for _, why in hits))
+
+    def test_comment_text_txo_flagged(self):
+        """Comment text in a TXO record is caught -- a comment is
+        not a cell value, so the cell scan never sees it.
+        TXO 批注文本里的邮箱必须被抓住。"""
+        hits = self._scan_xls(
+            _biff_bof()
+            + _biff_txo("call buyer@customer-mail.example")
+            + _biff_eof())
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
+
+    def test_comment_author_note_flagged(self):
+        """A NOTE record's author holding an email is caught.
+        NOTE 批注作者里的邮箱也要抓住。"""
+        hits = self._scan_xls(
+            _biff_bof()
+            + _biff_note(2, 2, "buyer@customer-mail.example")
+            + _biff_eof())
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
+
+    def test_no_double_report(self):
+        """An email reached through LABELSST is reported once, not
+        once for the cell and once for the raw-byte sweep.
+        同一个值只报一次，不重复。"""
+        hits = self._scan_xls(
+            _biff_bof() + _biff_sst(["buyer@customer-mail.example"])
+            + _biff_labelsst(0, 0, 0) + _biff_eof())
+        flagged = [h for h in hits if "customer-mail.example" in h[1]]
+        self.assertEqual(len(flagged), 1)
+
+    def test_clean_xls_passes(self):
+        """sample.example mail + placeholder phone stay clean.
+        示例域名 + 占位电话的表格干净。"""
+        hits = self._scan_xls(
+            _biff_bof()
+            + _biff_sst(["demo01@sample.example", "+000 00 000 0000"])
+            + _biff_labelsst(0, 0, 0) + _biff_labelsst(0, 1, 1)
+            + _biff_eof())
+        self.assertEqual(hits, [])
+
+    def test_empty_xls_clean(self):
+        """An empty .xls file scans clean, no crash.
+        空 .xls 文件干净、不报错。"""
+        with tempfile.TemporaryDirectory() as d:
+            path = str(Path(d) / "probe.xls")
+            Path(path).write_bytes(b"")
+            self.assertEqual(cpd.scan_file(path), [])
+
+    def test_corrupt_xls_not_silently_passed(self):
+        """A non-empty .xls that is not OLE2 at all must NOT pass
+        silently -- it reports an explicit whole-file warning.
+        根本不是 OLE2 的 .xls 不能静默放过，要明确报请人工复核。"""
+        with tempfile.TemporaryDirectory() as d:
+            path = str(Path(d) / "probe.xls")
+            Path(path).write_bytes(
+                b"this is not an ole file, nothing sensitive here\n")
+            hits = cpd.scan_file(path)
+        self.assertTrue(any("人工复核" in why for _, why in hits))
+
+    def test_corrupt_xls_text_fallback(self):
+        """A .xls that is really a text file still gets its visible
+        email caught by the text fallback.
+        改名成 .xls 的文本文件，里面的邮箱仍被文本回退抓住。"""
+        with tempfile.TemporaryDirectory() as d:
+            path = str(Path(d) / "probe.xls")
+            Path(path).write_text(
+                "contact buyer@customer-mail.example\n", encoding="utf-8")
+            hits = cpd.scan_file(path)
+        self.assertTrue(any("customer-mail.example" in why
+                            for _, why in hits))
+
+    def test_truncated_ole_not_silently_passed(self):
+        """A .xls with a valid OLE2 signature but a broken body
+        (truncated file) is reported, not passed.
+        签名对但正文截断的 .xls 也要报出来，不能放过。"""
+        with tempfile.TemporaryDirectory() as d:
+            good = str(Path(d) / "good.xls")
+            _make_xls(good, _biff_bof() + _biff_eof())
+            raw = Path(good).read_bytes()[:600]
+            path = str(Path(d) / "probe.xls")
+            Path(path).write_bytes(raw)
+            hits = cpd.scan_file(path)
+        self.assertTrue(any("人工复核" in why for _, why in hits))
+
+    def test_encrypted_xls_flagged(self):
+        """A FILEPASS (encrypted) workbook cannot be read -- it is
+        reported as encrypted, not passed.
+        加密工作簿读不出来，要报“已加密”，不能放过。"""
+        stream = (_biff_bof()
+                  + _biff_rec(0x002F, struct.pack("<H", 1) + b"\x00" * 4)
+                  + _biff_eof())
+        hits = self._scan_xls(stream)
+        self.assertTrue(any("加密" in why for _, why in hits))
 
 
 class TestTableRender(unittest.TestCase):

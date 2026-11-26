@@ -13,7 +13,7 @@ python3 scripts/followup_plan.py   # 跟进计划表（T0 为 D0/D2/D5）
 
 - 全部 15 个脚本（14 个业务脚本 + 1 个脱敏自查脚本）见 `scripts/README.md`。
 - 只用 Python 标准库，零依赖。`pip install` 之前先过 plan 门。
-- 跑测试：`python3 -m unittest discover -s tests`（586 个测试）+ 三个核心脚本各跑一遍冒烟。
+- 跑测试：`python3 -m unittest discover -s tests`（647 个测试）+ 三个核心脚本各跑一遍冒烟。
 
 ## 协作规则
 

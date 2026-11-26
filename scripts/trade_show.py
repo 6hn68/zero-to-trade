@@ -101,18 +101,39 @@ PLACEHOLDERS = {"", "-", "--", "---", "/", "n/a", "na", "n.a.", "none", "null",
 FALLBACK_ENCODINGS = ("utf-8-sig", "gb18030", "utf-8", "big5", "latin-1")
 
 # Real-directory column aliases (真实名录列名别名).
-# Real exhibitor directories rarely use our tidy headers: the official
-# Automechanika Dubai list is a web search page (no official downloadable
-# CSV — real file format not verified, 真实文件格式没核实), and the 2016
-# official PDF lists "Exhibitor Name / Country / Product Section / Stand
-# Number". Third-party exports add Email / Website / Booth. So the
-# directory reader accepts these aliases instead of failing on the
-# header — a real export must run, not error out on "Exhibitor Name".
-# 真实名录的表头很少是我们这套干净列名：迪拜展官方名录是网页检索页（没有
-# 官方可下载 CSV，真实文件格式没核实），2016 年官方 PDF 用的是 Exhibitor
-# Name / Country / Product Section / Stand Number；第三方导出还带 Email /
-# Website / Booth。所以名录读取认下面这些别名，表头写 "Exhibitor Name"
-# 也能跑，不会在第一行就报错。
+# Real exhibitor directories rarely use our tidy headers. Verified
+# 2026-11-26 (route-07, re-check of the last round's conclusion):
+#   - Current editions (2025/2026 Dubai) are a web search page only —
+#     no official downloadable CSV/XLSX/PDF for the current edition.
+#     Official 2026 list: automechanika-dubai.ae.messefrankfurt.com/
+#     dubai/en/exhibitor-list.html (search by company / product group,
+#     floor-plan view, no export link). Riyadh 2027 (21-23 June 2027,
+#     official site automechanika-riyadh.ksa.messefrankfurt.com): no
+#     official downloadable list found either.
+#   - The only verified official downloadable file is the 2021 Dubai
+#     exhibitor-list PDF on the organiser's own domain (opened firsthand):
+#     .../2021/downloads/AMDU21 – Exhibitor List.pdf — exactly three
+#     columns, "Company Name / Country / Booth Number", no product
+#     section, no email, no website; some booths are "-" (missing) and
+#     some rows carry two booths ("6-H22, 6-H20"). That shape already
+#     runs through --backcheck (aliases below accept "Company Name" and
+#     "Booth Number"; a missing booth is counted, not dropped) — but the
+#     file is a PDF, so convert it to CSV first; --backcheck reads CSV.
+#   - Everything else called a "downloadable list" is third-party, not
+#     official: a free PDF compiled from the web list (dubaifastliving,
+#     1,021 companies, 2026-11-02 snapshot), paid data-vendor CSVs
+#     (VisitorsList / Lensmor), and paid scraper tools. None of these
+#     is the organiser's file, so none of their formats is treated as
+#     the official format here.
+# So the directory reader accepts these aliases instead of failing on
+# the header — a real export must run, not error out on "Exhibitor Name".
+# 真实名录的表头很少是我们这套干净列名：现届迪拜展官方名录只有网页检索页，
+# 没有官方可下载文件；唯一核实过的官方可下载文件是 2021 年迪拜展 PDF，
+# 只有 Company Name / Country / Booth Number 三列，没有产品分区、没有联系
+# 方式，部分展位号是 "-"，个别一行带两个展位号。这套表头 --backcheck 本来
+# 就认（下面别名里有 Company Name 和 Booth Number），缺展位号只计数不丢行；
+# 但那是 PDF，得先转成 CSV 再喂 --backcheck。市面上其余所谓“可下载名录”
+# 全是第三方编译或付费卖的，不是官方文件，不当官方格式用。
 COMPANY_ALIASES = ("company", "company name", "exhibitor",
                    "exhibitor name", "exhibitor company")
 PRODUCT_ALIASES = ("product", "product section", "product category",
@@ -913,8 +934,11 @@ high/medium/low），不填按「低」处理。联系方式邮箱/电话/WhatsA
 表头认这些别名：公司名 company / Company Name / Exhibitor Name；产品
 product / Product Section / Category；展位 booth / Stand Number；官网
 website；地点 Location（"City, Country" 取逗号后一段当国家）。分隔符
-逗号 / 分号 / 制表符都认。真实文件格式没核实：迪拜展官方名录是网页检
-索页，没有官方可下载的 CSV，先用 --backcheck 跑一遍看汇总再说。""")
+逗号 / 分号 / 制表符都认。已核实（2026-11-26）：现届迪拜展官方名录只有
+网页检索页，没有官方可下载的 CSV；唯一核实过的官方可下载文件是 2021 年
+迪拜展 PDF（Company Name / Country / Booth Number 三列，无产品分区、无
+联系方式），须先转成 CSV 再喂 --backcheck，这套表头本来就认。利雅得展
+（2027-06-21–23）同样没找到官方可下载名录。先用 --backcheck 跑一遍看汇总再说。""")
     p.add_argument("--add", help="逐条加一家展商：--add 公司名（一次命令加一家）")
     p.add_argument("--country", help="国家（如 Saudi Arabia）")
     p.add_argument("--product", help="意向产品（如 TBR 12.00R20）")

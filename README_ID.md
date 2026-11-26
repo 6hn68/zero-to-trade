@@ -18,7 +18,7 @@ Tanpa kursus yang harus dibeli. Tanpa paket berbayar. Tanpa harus menyerahkan em
 
 ## Demo 7 langkah: kelompokkan daftar nyata dan tulis penjangkauan pertama Anda dalam 2 menit
 
-Tidak perlu membaca dokumentasi dulu. Tujuh langkah, masing-masing satu baris dan satu perintah yang tinggal disalin — sekitar 2 menit dari awal sampai akhir. Ketujuh perintah di bawah ini benar-benar dijalankan di repo ini (2026-11-22, Python 3.x, hanya pustaka standar). Data contohnya fiktif; nama perusahaan diberi awalan 【示例】 ("contoh").
+Tidak perlu membaca dokumentasi dulu. Tujuh langkah, masing-masing satu baris dan satu perintah yang tinggal disalin — sekitar 2 menit dari awal sampai akhir. Ketujuh perintah di bawah ini benar-benar dijalankan di repo ini (2026-11-24, Python 3.x, hanya pustaka standar). Data contohnya fiktif; nama perusahaan diberi awalan 【示例】 ("contoh").
 
 | Langkah | Dalam satu baris | Perintah (salin-tempel) |
 |---|---|---|
@@ -26,7 +26,7 @@ Tidak perlu membaca dokumentasi dulu. Tujuh langkah, masing-masing satu baris da
 | 2 Kelompokkan | 10 prospek diurutkan ke T0–T3; hubungi 2 di antaranya hari ini | `python scripts/lead_score.py my_leads.csv` |
 | 3 Periksa T0 | Pastikan T0 bukan perusahaan cangkang sebelum Anda menulis; apa pun yang tidak Anda berikan kembali dengan tanda "perlu diverifikasi" | `python scripts/due_diligence.py --company "【示例】海湾轮胎贸易"` |
 | 4 Tulis sentuhan pertama | Draf penjangkauan untuk tingkat T0, bahasa Inggris untuk dikirim, bahasa Mandarin untuk Anda periksa sendiri | `python scripts/outreach_gen.py my_leads.csv --tier T0` |
-| 5 Rencanakan tindak lanjut | Ritme D0/D2/D5: 3 sentuhan dalam 6 hari, berhenti setelah diam yang ketiga | `python scripts/followup_plan.py --tier T0 --start 2026-11-22 --csv my_leads.csv` |
+| 5 Rencanakan tindak lanjut | Ritme D0/D2/D5: 3 sentuhan dalam 6 hari, berhenti setelah diam yang ketiga | `python scripts/followup_plan.py --tier T0 --start 2026-11-24 --csv my_leads.csv` |
 | 6 Beri penawaran saat mereka membalas | Biaya + ongkos kirim + margin → kisaran FOB/CIF + tangga konsesi tiga langkah | `python scripts/quote_engine.py --cost 28 --freight 6 --margin 15` |
 | 7 Ingatkan saat mereka diam | 7 hari setelah penawaran tanpa balasan, tanyakan perkembangannya — tegas, bukan putus asa | `python scripts/nudge.py --day D7 --scenario quoted` |
 
@@ -110,9 +110,9 @@ Inilah yang benar-benar dicetak oleh perintah pertama, untuk 10 prospek contoh. 
 | T1 | 【示例】尼罗河商贸 | Mesir | 67 | minggu ini; siapkan drafnya hari ini |
 | T1 | 【示例】迪拜轮毂行 | UEA | 65 | minggu ini; siapkan drafnya hari ini |
 | T1 | 【示例】利雅得汽配 | Arab Saudi | 60 | minggu ini; siapkan drafnya hari ini |
-| T2 | 【示例】尼日利亚先锋 | Nigeria | 46 | kelompok dingin, cek sekali sehari |
-| T3 | 【示例】黎凡特供配 | Lebanon | 20 | info belum cukup, cari dulu kontak + kebutuhannya |
-| T3 | 【示例】利雅得零件店 | Arab Saudi | 10 | info belum cukup, cari dulu kontak + kebutuhannya |
+| T2 | 【示例】尼日利亚先锋 | Nigeria | 50 | kelompok dingin, cek sekali sehari |
+| T3 | 【示例】黎凡特供配 | Lebanon | 24 | info belum cukup, cari dulu kontak + kebutuhannya |
+| T3 | 【示例】利雅得零件店 | Arab Saudi | 17 | info belum cukup, cari dulu kontak + kebutuhannya |
 
 Ringkasan: **T0:2 / T1:5 / T2:1 / T3:2**. Hubungi hari ini: 【示例】海湾轮胎贸易, 【示例】三角洲轮胎. Minggu ini: 【示例】阿曼蓝海, 【示例】半岛汽车, 【示例】尼罗河商贸, 【示例】迪拜轮毂行, 【示例】利雅得汽配. Biarkan dulu: 【示例】黎凡特供配, 【示例】利雅得零件店.
 
@@ -177,7 +177,7 @@ zero-to-trade/
 │   ├── leads_example.csv  # Data contoh, bisa langsung dijalankan
 │   ├── leads_example_lighting.csv  # Contoh non-ban: 8 prospek lampu LED
 │   └── trade_show_example.csv  # Contoh peserta pameran, satu per tingkat minat
-├── tests/                 # 586 tes pustaka standar
+├── tests/                 # 647 tes pustaka standar
 ├── prompts/
 │   └── AI_PROMPTS.md      # 40 prompt siap salin (28 inti + 12 lanjutan), dikelompokkan per tahap
 └── assets/                # Tangkapan layar, diagram
@@ -209,7 +209,7 @@ Tanpa pandas, tanpa OpenAI SDK, dan itu disengaja. Penyiapan lingkungan adalah t
 |---|---|---|
 | **V13** | ✅ Rampung (2026-11-07) | Penjangkauan multibahasa (`scripts/outreach_gen.py --lang es/pt/ar`: teks Spanyol/Portugis/Arab + teks asli bahasa Inggris setelah setiap draf; templat mencerminkan T0/T1/T2 bahasa Inggris satu per satu, satu dict inline di dalam skrip) + bagian baru di `docs/04-outreach.md` (cara pakai + 3 keluaran nyata ditempel apa adanya) + `tests/` 80 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 7 file skrip |
 | **V18** | ✅ Rampung (2026-11-07) | Harga patokan pesaing (`scripts/anchor_price.py`: kisaran harga pesaing dari data bea cukai + biaya Anda → tingkat CIF agresif/tengah/konservatif, masing-masing dengan ruang laba, margin, padanan FOB, markup tersirat, dan kapan dipakai; daftar periksa 5 butir — biaya, ongkos kirim, kurs, syarat pembayaran, masa berlaku — sebelum memberi penawaran, butir yang belum dicek ditandai; peringatan di bawah biaya “di bawah biaya, jangan ambil pesanan, negosiasikan volume untuk harga dulu”; nilai tengah yang hilang diperkirakan sebagai (rendah + tinggi) / 2 dan ditandai sebagai perkiraan; `--format json` / `--audience client`) + `docs/anchor-price.md` (cara pakai + panduan patokan + 2 keluaran nyata ditempel apa adanya) + satu baris di `docs/06-quote.md` (tetapkan patokan sebelum memberi penawaran) + `tests/` 187 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 11 file skrip |
-| **V20** | ✅ Saat ini (2026-11-14) | Penggabungan inkremen lokal + 10 putaran penguatan: titik masuk CLI terpadu (pesan galat dalam bahasa sederhana, kode keluar diseragamkan) + tes lebih kuat (mode satu pesan, alias `--start-date`, log eksekusi) + angka dokumentasi diselaraskan + contoh non-ban (8 prospek lampu LED) + halaman demo disinkronkan dengan V19 + pesan galat ramah untuk CSV bermasalah (kolom hilang / file kosong / tanda kutip tak tertutup tidak lagi menampilkan traceback) + penyelarasan prompt (perintah tindak lanjut P04-4 mendapat `--avoid-weekend`, jendela P10-2 diseragamkan menjadi 48 jam) + pelacakan eksekusi diterapkan (`logs/trace-YYYY-MM-DD.jsonl`, satu baris per eksekusi tiga skrip inti) + perapian kode (helper bersama disimpan di satu tempat, bersih −151 baris; dua helper mati dihapus) + `tests/` 586 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 15 file skrip |
+| **V20** | ✅ Saat ini (2026-11-14) | Penggabungan inkremen lokal + 10 putaran penguatan: titik masuk CLI terpadu (pesan galat dalam bahasa sederhana, kode keluar diseragamkan) + tes lebih kuat (mode satu pesan, alias `--start-date`, log eksekusi) + angka dokumentasi diselaraskan + contoh non-ban (8 prospek lampu LED) + halaman demo disinkronkan dengan V19 + pesan galat ramah untuk CSV bermasalah (kolom hilang / file kosong / tanda kutip tak tertutup tidak lagi menampilkan traceback) + penyelarasan prompt (perintah tindak lanjut P04-4 mendapat `--avoid-weekend`, jendela P10-2 diseragamkan menjadi 48 jam) + pelacakan eksekusi diterapkan (`logs/trace-YYYY-MM-DD.jsonl`, satu baris per eksekusi tiga skrip inti) + perapian kode (helper bersama disimpan di satu tempat, bersih −151 baris; dua helper mati dihapus) + `tests/` 647 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 15 file skrip |
 | **V19** | ✅ Rampung (2026-11-07) | Jalur cepat 7 hari interaktif (`scripts/fast_path.py`: `--day N` menampilkan tugas hari itu — nama tugas + apa yang dihasilkan + skrip/dokumen yang dipakai; `--done N` mencentang satu hari dengan stempel waktu, ditulis ke file JSON `--state`, centang ulang akan memberi tahu sudah dicentang dan tidak dicatat dua kali; `--progress` menghitung total selesai / tersisa / terlambat (terlambat = tanggal rencana lebih awal dari hari ini dan belum dicentang, tanggal rencana = hari ke-1 `--start` + (N-1) hari; tanpa `--start` tidak ada hitungan terlambat, dan itu dinyatakan dengan jelas); `--list` menampilkan ketujuh hari; tugas diselaraskan baris demi baris dengan `docs/fast-path.md`, tanpa daftar kedua yang dikarang; `--help` memuat contoh nyata, hari atau tanggal yang salah mendapat pesan galat dalam bahasa sederhana) + `docs/fast-path-interactive.md` (cara pakai + format file state + aturan terlambat + ikhtisar 7 hari + 2 keluaran nyata ditempel apa adanya) + satu baris di bagian atas `docs/fast-path.md` (pintu masuk interaktif) + satu baris di langkah B5 `docs/00-getting-started.md` (8 skrip tersisa → 9) + `tests/` 226 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 12 file skrip |
 | **V17** | ✅ Rampung (2026-11-07) | README lengkap bahasa Portugis dan Arab (`README_PT.md` baru dalam bahasa Portugis Brasil dan `README_AR.md` dalam bahasa Arab dengan tata letak RTL, keduanya diterjemahkan penuh dan selaras dengan README_EN.md: bagian, tabel, perintah, nama skrip, nama file, versi, dan angka yang sama; semua perusahaan/harga/kontak contoh fiktif, ditandai 【示例】 dengan domain cadangan sample.example) + `tests/` 167 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 10 file skrip |
 | **V16** | ✅ Rampung (2026-11-07) | Pustaka pengingat (`scripts/nudge.py`: D3/D7/D14/D30 × sudah ditawar/sudah kirim sampel/sedang negosiasi, total 12 draf, versi WhatsApp singkat + versi email lebih panjang, bahasa Inggris dulu dengan terjemahan Mandarin setelah setiap draf; tangga nada — D3 pengingat ringan, D7 tanyakan perkembangan, D14 tiga pilihan untuk menjaga muka (harga lebih rendah / spesifikasi lain / syarat pembayaran lebih panjang), D30 catatan terakhir yang tetap membuka pintu; Hari 0 adalah hari penawaran/sampel/pembahasan harga dikirim, patokan yang berbeda dari ritme sentuhan pertama followup_plan, satu utas hanya mengikuti satu jalur; `--channel whatsapp/email/both` / `--format json` / `--out`) + `docs/nudge.md` (cara pakai + keselarasannya dengan followup_plan + 2 keluaran nyata ditempel apa adanya) + satu baris di `docs/00-getting-started.md` (daftar skrip 6 → 7) + `tests/` 152 tes pustaka standar + 40 prompt tidak berubah (28 inti + 12 lanjutan) + 10 file skrip |
@@ -224,7 +224,7 @@ Tanpa pandas, tanpa OpenAI SDK, dan itu disengaja. Penyiapan lingkungan adalah t
 | **Versi berikutnya** | Belum diputuskan | Arah berikutnya belum diputuskan (jalur cepat 7 hari interaktif rampung di V19) |
 | **Jangka panjang** | — | Paket industri (ban, bahan bangunan, mesin, perkakas); teks penjangkauan dalam bahasa Prancis/Rusia (Spanyol, Portugis, dan Arab rampung di V13); dataset prospek publik yang dianonimkan; menghubungkan mesin penawaran ke data bea cukai untuk harga patokan pesaing otomatis |
 
-V20 tidak menunggu versi berikutnya: 10 putaran penguatan sudah bisa dipakai sekarang (CSV bermasalah mendapat pesan galat dalam bahasa sederhana alih-alih traceback, setiap eksekusi menulis satu baris jejak, helper bersama ada di satu tempat). Tidak perlu menunggu versi berikutnya — skripnya sudah ada di repo, dengan 586 tes yang semuanya hijau.
+V20 tidak menunggu versi berikutnya: 10 putaran penguatan sudah bisa dipakai sekarang (CSV bermasalah mendapat pesan galat dalam bahasa sederhana alih-alih traceback, setiap eksekusi menulis satu baris jejak, helper bersama ada di satu tempat). Tidak perlu menunggu versi berikutnya — skripnya sudah ada di repo, dengan 647 tes yang semuanya hijau.
 
 ---
 
