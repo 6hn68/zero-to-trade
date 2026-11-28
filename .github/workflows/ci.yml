@@ -255,7 +255,7 @@ jobs:
           echo "=========================================================="
 
   tests:
-    name: 647 个测试 / Python ${{ matrix.python-version }}
+    name: 680 个测试 / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -271,7 +271,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: 全量测试（647 个，标准库 unittest）
+      - name: 全量测试（680 个，标准库 unittest）
         run: python -m unittest discover -s tests -v
 
   repo:
