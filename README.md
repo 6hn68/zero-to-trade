@@ -18,7 +18,9 @@
 >
 > **在线演示（不用装 Python）**：[https://6hn68.github.io/zero-to-trade/](https://6hn68.github.io/zero-to-trade/) ——浏览器打开就能用 4 个工具：线索分级、建联文案、跟进计划、报价，界面支持 12 种语言（右上角切换），名单不上传。
 >
-> **版本状态**：V20（15 个脚本、647 项测试全绿），仓库和网站都是这一版；网站有 4 个浏览器工具，界面 12 种语言；CI 在 Python 3.10–3.13 上跑。终端演示 GIF 待录制，录制脚本见 [`tape.vhs`](tape.vhs)。
+> **版本状态**：V20（15 个脚本、647 项测试全绿），仓库和网站都是这一版；网站有 4 个浏览器工具，界面 12 种语言；CI 在 Python 3.10–3.13 上跑。终端演示 GIF 见下图（真实命令输出），录制脚本见 [`tape.vhs`](tape.vhs)。
+
+![终端演示：10 条线索跑一遍分级](assets/demo.gif)
 
 ## 7 步 Demo 导航：2 分钟跑通一次真实分级 + 建联消息
 
@@ -51,7 +53,7 @@
 
 分工就一句话：**AI 干重活，人做判断。**
 
-**An open-source workflow for new foreign-trade sellers: a 7-stage workflow plus 12 Python tools that turn finding leads, checking them, reaching out and following up into repeatable steps.**
+**An open-source workflow for new foreign-trade sellers: a 7-stage workflow plus 15 Python scripts that turn finding leads, checking them, reaching out and following up into repeatable steps.**
 > Core idea in one line: **AI does the heavy lifting, you make the calls.**
 
 > MIT 开源 · 不卖课 · 不收费 · 不要你留邮箱 · 脚本零依赖、跑得通（CI 已在跑）· 作者匿名，可信度靠内容本身

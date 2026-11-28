@@ -164,9 +164,9 @@ git ls-files | xargs grep -noE "\b[a-zA-Z0-9-]+\.(com|cn|net|de|ru|br|ae|sa)\b" 
 
 ---
 
-## 6. 发 v0.1 Release（P0 · ⬜）
+## 6. 发 v0.1 Release（P0 · ✅ 已完成 2026-10-09）
 
-这是目前**唯一确定还欠着的仓库内动作**（`git tag` 现在是空的）。发一个能被 Google 收录，也让仓库页看着像个还在维护的项目。
+v0.1 Release 已发布（tag `v0.1` 已推到 origin），下面的命令**留作记录，不用再执行**。
 
 ### A. 命令行
 

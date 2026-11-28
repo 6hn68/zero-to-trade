@@ -41,14 +41,14 @@
 |---|---|---|
 | 1 | 补满 Topics + 重写 About（关键词前置） | ✅ 已完成（见 GITHUB_LAUNCH step 1） |
 | 2 | Social Preview 图（1280×640） | ⚠️ 图在仓库里（`assets/social-preview.png`），但**还没上传到 GitHub Settings**——得手动传，见 `GITHUB_LAUNCH.md` 第 5 步 |
-| 3 | README 首屏 Demo GIF + 信任条三行 | ✅ 已完成（信任条已上线；Demo GIF 以仓库实际为准） |
+| 3 | README 首屏 Demo GIF + 信任条三行 | ✅ 已完成（信任条已上线；Demo GIF 已补：`assets/demo.gif`，2026-11-27 由真实命令输出渲染，`tape.vhs` 录制脚本在 root 沙箱跑不通，见本文件末尾备注） |
 | 4 | 删掉「你可以是第一个 star」→ 活跃信号 | ✅ 已完成 |
-| 5 | 发 v0.1 Release（带 changelog） | ❌ **未做**：本地 `git tag` 为空，还没在 GitHub 发 Release。命令见 `GITHUB_LAUNCH.md` 第 6 步 |
+| 5 | 发 v0.1 Release（带 changelog） | ✅ 已完成（v0.1 Release 已于 2026-10-09 发布；本地 `git tag v0.1` 已推到 origin。本行 2026-11-27 订正，此前写的“本地 git tag 为空”已过期） |
 | 6 | For Developers / Hackable 区块（中英双语） | ✅ 已完成 |
 | 7 | KOL 私信模板 + UTM 分渠道链接清单 | ✅ 已完成（见第四节） |
 | 8 | UTM 归因看板说明（飞书多维表字段） | ✅ 已完成（见第五节） |
 
-> **结论**：仓库内的活儿还剩两件——**发 v0.1 Release** 和 **上传 social preview 图**，都在 `GITHUB_LAUNCH.md` 里（第 5、6 步），加起来大概 10 分钟。剩下的都是往外发内容，那部分没人能替你做。
+> **结论**：仓库内的活儿还剩一件——**上传 social preview 图**（`GITHUB_LAUNCH.md` 第 5 步，须手动在 Settings 里传，约 2 分钟）。v0.1 Release 已发（2026-10-09），Demo GIF 已补（2026-11-27）。剩下的都是往外发内容，那部分没人能替你做。
 
 ### 3.1 30 天判定闸门（到那天只看这几个数）
 
