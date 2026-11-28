@@ -43,7 +43,7 @@ Due diligence graded every lead A/B/C; the outreach stage uses T0–T3 to decide
 
 > Note: A is not automatically all T0, and B is not automatically all T1 — it also depends on "is the decision maker confirmed, is the need clear"; but C never enters the active outreach sequence.
 
-T0 is your lifeline. T0s are usually only a small share of the list (the share depends on how strictly you filtered in [02-find-leads_en.md](02-find-leads_en.md) and [03-due-diligence.md](03-due-diligence.md); there is no universal number), but that tier is worth the most of your time.
+T0 is your lifeline. T0s are usually only a small share of the list (the share depends on how strictly you filtered in [02-find-leads_en.md](02-find-leads_en.md) and [03-due-diligence.md](03-due-diligence_en.md); there is no universal number), but that tier is worth the most of your time.
 
 **Email first-touch timing**: T0 defaults to email + LinkedIn + WhatsApp **all three on the same day** (email is the main battlefield). If the target market carries a high risk of emails landing in spam, **the email may be deferred to D1**, but it must sit inside the same follow-up plan (counted from the same `--start` day) — do not start a separate plan.
 
@@ -86,7 +86,7 @@ Spec sheets, catalogs and quotation sheets get sent **after they reply** (which 
 
 - Content: all-caps words, several exclamation marks in a row, stacked words like `free` / `cheapest` / `100% guaranteed` / `best price` / `urgent`, whole paragraphs in big red type, flashy HTML templates, a body that is one image instead of text. **First touch is always plain text.**
 - Rhythm: do not mass-send hundreds of emails in one minute. Spread them across time slots, randomize the gaps, and send during the other side's local working morning. Whole batches on the hour, hundreds in the same second, is machine behavior by definition.
-- List: **hard bounces (address does not exist) must be deleted from the list immediately**. Once the bounce rate climbs, domain reputation drops faster than anything else. Using emails verified in [03-due-diligence.md](03-due-diligence.md) keeps bounces far lower.
+- List: **hard bounces (address does not exist) must be deleted from the list immediately**. Once the bounce rate climbs, domain reputation drops faster than anything else. Using emails verified in [03-due-diligence.md](03-due-diligence_en.md) keeps bounces far lower.
 - Self-test: prepare a **seed list** (your own test mailboxes across 3–5 different email providers). Every time you change the template, send it to yourself first to see inbox vs. spam, then send it out.
 
 **Step 3: Three channels in parallel for first touch (same customer, same day)**
@@ -121,7 +121,7 @@ One counter-intuitive point: in some markets, WhatsApp first and email second ac
 
 **What the signature should carry**: name + company + one phrase of role. That is it. The script's `--sender` default is the one-line form `[Your Name] | [Company]` (override it with e.g. `--sender "Li | [Example] Far East Tire | Export"`). Do not stack a string of phones, three emails, a website link, WhatsApp, a company slogan and a banner image in the first email — links and images lower the spam score and turn a 150-word email into a 400-word ad. Full contact details come after they reply.
 
-**Three things the first email never carries**: no attachment, no link, no price. The reasons for the first two are in Step 2; why the price cannot be given yet is in [05-negotiation.md](05-negotiation.md) and [06-quote.md](06-quote.md). No company brochure.
+**Three things the first email never carries**: no attachment, no link, no price. The reasons for the first two are in Step 2; why the price cannot be given yet is in [05-negotiation.md](05-negotiation_en.md) and [06-quote.md](06-quote_en.md). No company brochure.
 
 > **A known conflict with the script (handle it as follows)**: the T0 / T1 templates in `scripts/outreach_gen.py` contain `price list` and FOB/CIF terms, while the same script's self-check list says "does the body contain a price? No = correct" — the script contradicts itself. **This project follows "no price in the first email"**: after the script generates a draft, manually delete the price-list sentence and replace it with specs or container loading quantities. This conflict is already recorded; the script will be fixed later.
 
@@ -412,7 +412,7 @@ Remember one thing: every follow-up must carry new information — never just "f
 4. **Change the angle**: if the first three emails all talked specs, switch to the market angle next round (market movement / certification / delivery risk). Change the angle of approach, not the wording.
 5. **Downgrade, do not delete**: T0 → T1/T2 rhythm, into the long list, swept once a quarter. A change of season, a price rise, a new certification, or the period around a trade fair are all legitimate reasons to touch them again. Entering the long list does not mean never contacting them again — it means no more weekly investment.
 6. **Stop line**: three non-responses from the same person on the same angle (including read-but-unanswered) means stop. Continuing to send will not raise the reply probability — it only burns domain reputation and the few chances you have to show your face in this market. The script writes this as a hard stop-loss (`MAX_TOUCHES`), with the original reasoning: "continuing to send only lowers domain reputation, and they have already told you the answer with their behavior." An explicit refusal on D0 means stop on the spot — no need to wait for the third touch.
-7. **Fix the upstream**: if a whole market's batch of leads gets 0 replies, the problem is most likely not in 04 — it is in 02 (inaccurate list) or 03 (due diligence not done properly). Go back to [02-find-leads_en.md](02-find-leads_en.md) and [03-due-diligence.md](03-due-diligence.md) and redo them. Do not grind on copy inside 04.
+7. **Fix the upstream**: if a whole market's batch of leads gets 0 replies, the problem is most likely not in 04 — it is in 02 (inaccurate list) or 03 (due diligence not done properly). Go back to [02-find-leads_en.md](02-find-leads_en.md) and [03-due-diligence.md](03-due-diligence_en.md) and redo them. Do not grind on copy inside 04.
 
 **Step 9: Record responses and review**
 
@@ -712,6 +712,6 @@ Please forward this to whoever handles {product category} sourcing. We manufactu
 
 ## 8. Next stage
 
-Someone has replied — asking for a price, asking for samples, anything counts — the conversation is open. The next step is **Qualifying** [05-negotiation.md](05-negotiation.md): before quoting, get the requirements clear.
+Someone has replied — asking for a price, asking for samples, anything counts — the conversation is open. The next step is **Qualifying** [05-negotiation.md](05-negotiation_en.md): before quoting, get the requirements clear.
 
-If there are still 0 replies after three touches, go through the Step 8 action sequence first; if the whole batch of leads has no replies, the problem is in [02-find-leads_en.md](02-find-leads_en.md) or [03-due-diligence.md](03-due-diligence.md), not in this document.
+If there are still 0 replies after three touches, go through the Step 8 action sequence first; if the whole batch of leads has no replies, the problem is in [02-find-leads_en.md](02-find-leads_en.md) or [03-due-diligence.md](03-due-diligence_en.md), not in this document.

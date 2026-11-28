@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/6hn68/zero-to-trade/actions/workflows/ci.yml/badge.svg) ![License](https://img.shields.io/badge/license-MIT-blue) ![Python](https://img.shields.io/badge/python-3.10%2B-306998)
 
-**Sete etapas, de "que país eu escolho" até "o dinheiro chegou." Mais catorze scripts Python que fazem o trabalho chato, e um site com quatro ferramentas que rodam direto no seu navegador. Não se presume nenhuma experiência. É esse o ponto.**
+**Sete etapas, de "que país eu escolho" até "o dinheiro chegou." Mais quinze scripts Python que fazem o trabalho chato, e um site com quatro ferramentas que rodam direto no seu navegador. Não se presume nenhuma experiência. É esse o ponto.**
 
 > Você mandou 200 e-mails frios e recebeu zero respostas. Não é o seu inglês. É a ordem das operações.
 >
@@ -35,7 +35,7 @@ Este repositório faz o oposto: **pegar uma tarefa e continuar quebrando-a até 
 | "Faça pesquisa de antecedentes" | Triagem L1, três verificações: o site existe, há quanto tempo a empresa está registrada, as contas nas redes sociais estão vivas. Falhou em uma e o lead está morto. |
 | "Qualidade importa mais que quantidade" | 10 leads são ordenados em T0/T1/T2/T3, cada nível com seu próximo passo e seu próprio orçamento de tempo. |
 | "Faça acompanhamento" | Dias 1, 3, 5, 7. Um ângulo diferente a cada vez, e o dia 7 termina com uma decisão: empurrar ou descartar. |
-| "A IA está mudando o comércio" | Dez scripts Python só com a biblioteca padrão (um deles o motor de cotação, ainda em alfa). `python scripts/lead_score.py examples/leads_example.csv` e você tem a classificação completa em cerca de trinta segundos. |
+| "A IA está mudando o comércio" | Quinze scripts Python só com a biblioteca padrão (quatorze scripts de negócio, um deles o motor de cotação, mais um guarda de privacidade). `python scripts/lead_score.py examples/leads_example.csv` e você tem a classificação completa em cerca de trinta segundos. |
 
 A mesma informação. Um **tamanho de grão** diferente. Essa é toda a diferença. Cada afirmação aqui tem de sobreviver a uma pergunta: o que eu abro nesta tarde e o que eu digito?
 
@@ -107,7 +107,7 @@ company,country,product,source,email,phone,years,contact,note
 
 Só `company` é obrigatório. Todo o resto pode ficar em branco, e brancos pontuam no mínimo. `source` é o que mais mexe na nota: `referral` / `trade_show` / `customs` / `linkedin` / `search`.
 
-Todos os catorze scripts aceitam `--help`. O `lead_score.py` também tem `--format json` e filtros `--country` / `--product`, caso você queira jogar o resultado numa planilha.
+Todos os quinze scripts aceitam `--help`. O `lead_score.py` também tem `--format json` e filtros `--country` / `--product`, caso você queira jogar o resultado numa planilha.
 
 Os scripts só decidem o que uma máquina pode decidir: se há e-mail, se há site, se passa da barra do T0. Se um lead merece a sua tarde, isso está nos documentos — e na sua cabeça.
 
@@ -152,11 +152,14 @@ zero-to-trade/
 │   ├── nudge.py           # Biblioteca de lembretes, V16: D3/D7/D14/D30 × cotado/amostra enviada/preço em negociação → versão curta de WhatsApp + versão longa de e-mail (inglês + chinês)
 │   ├── anchor_price.py    # Fixação de preço por âncora da concorrência, V18: faixa de preços da concorrência (dados de alfândega) + seu custo → três níveis CIF agressivo/médio/conservador + lista de verificação de 5 itens
 │   ├── fast_path.py     # Rota rápida interativa de 7 dias, V19: --day N mostra as tarefas, --done N marca, --progress resume (alinhada com docs/fast-path.md)
+│   ├── market_rules.py    # Regras de mercado: mercados-alvo, barreiras da Turquia/Brasil, exclusões México/EUA/UE
+│   ├── daily_video_list.py  # Lista diária de 5 vídeos (3 de manhã, 2 à tarde) com checagens de medida, mercado, argumento de venda e filmagem
 │   ├── fulfillment_checklist.py  # Checklist de cumprimento do pedido: PI → sinal → produção → inspeção → saldo → reserva → alfândega → B/L → documentos → pós-venda, travas de dinheiro em sinal/liberação/envio
 │   └── check_private_data.py  # Guarda de privacidade: verifica dados reais de clientes antes do commit
 ├── examples/
 │   ├── leads_example.csv  # Dados de exemplo, prontos para executar
 │   └── trade_show_example.csv  # Expositores de exemplo, um por nível de interesse
+├── tests/                 # 680 testes da biblioteca padrão
 ├── prompts/
 │   └── AI_PROMPTS.md      # 40 prompts de copiar e colar (28 principais + 12 avançados), agrupados por etapa
 └── assets/                # Capturas de tela, diagramas
@@ -186,7 +189,7 @@ Sem pandas, sem SDK da OpenAI, de propósito. A configuração do ambiente é on
 | Versão | Estado | Conteúdo |
 |---|---|---|
 | **V18** | ✅ Concluída (2026-11-07) | Fixação de preço por âncora da concorrência (`scripts/anchor_price.py`: faixa de preços da concorrência (dados de alfândega) + seu custo → três níveis CIF agressivo/médio/conservador, cada um com margem, rentabilidade, equivalente FOB, recargo implícito e quando usar; lista de verificação de 5 itens — custo, frete, câmbio, condições de pagamento, validade — antes de cotar, qualquer item sem verificação é sinalizado; aviso de baixo custo «abaixo do custo, não feche o pedido, negocie volume por preço primeiro»; sem mediana, estimada como (mínimo + máximo) / 2 e marcada como estimativa; `--format json` / `--audience client`) + `docs/anchor-price.md` (uso + guia de ancoragem + 2 saídas reais coladas palavra por palavra) + uma linha em `docs/06-quote.md` (ancorar antes de cotar) + `tests/` com 187 testes da biblioteca padrão + 40 prompts sem alteração (28 principais + 12 avançados) + 11 arquivos de script |
-| **V20** | ✅ Atual (2026-11-14) | Mesclagem dos incrementos locais + 10 rodadas de endurecimento: entradas de CLI unificadas (erros em linguagem clara, códigos de saída alinhados) + testes reforçados (modo de mensagem única, apelido `--start-date`, logs de execução) + números da documentação alinhados + exemplo fora de pneus (8 leads de iluminação LED) + página de demonstração sincronizada com a V19 + erros claros para CSVs ruins (coluna ausente / arquivo vazio / aspas sem fechar não dão mais traceback) + prompts alinhados (o comando de acompanhamento P04-4 ganha `--avoid-weekend`, a janela P10-2 unificada em 48 horas) + rastreamento de execução lançado (`logs/trace-YYYY-MM-DD.jsonl`, uma linha por execução dos três scripts principais) + limpeza de código (funções compartilhadas em um só lugar, −151 linhas líquidas; dois trechos mortos removidos) + `tests/` com 647 testes da biblioteca padrão + 40 prompts sem alteração (28 principais + 12 avançados) + 15 arquivos de script |
+| **V20** | ✅ Atual (2026-11-14) | Mesclagem dos incrementos locais + 10 rodadas de endurecimento: entradas de CLI unificadas (erros em linguagem clara, códigos de saída alinhados) + testes reforçados (modo de mensagem única, apelido `--start-date`, logs de execução) + números da documentação alinhados + exemplo fora de pneus (8 leads de iluminação LED) + página de demonstração sincronizada com a V19 + erros claros para CSVs ruins (coluna ausente / arquivo vazio / aspas sem fechar não dão mais traceback) + prompts alinhados (o comando de acompanhamento P04-4 ganha `--avoid-weekend`, a janela P10-2 unificada em 48 horas) + rastreamento de execução lançado (`logs/trace-YYYY-MM-DD.jsonl`, uma linha por execução dos três scripts principais) + limpeza de código (funções compartilhadas em um só lugar, −151 linhas líquidas; dois trechos mortos removidos) + `tests/` com 680 testes da biblioteca padrão + 40 prompts sem alteração (28 principais + 12 avançados) + 15 arquivos de script |
 | **V19** | ✅ Concluída (2026-11-07) | Rota rápida interativa de 7 dias (`scripts/fast_path.py`: `--day N` mostra as tarefas do dia — nome da tarefa + o que produzir + qual script ou documento usar; `--done N` marca um dia com carimbo de tempo, salvo no JSON de `--state`, repetir o registro avisa que já está marcado e não duplica; `--progress` resume feitos / pendentes / vencidos (vencido = data prevista anterior a hoje e sem marca, data prevista = primeiro dia de `--start` + (N-1) dias; sem `--start` não se contam vencidos, e isso é dito claro; `--list` mostra os 7 dias; tarefas alinhadas linha por linha com `docs/fast-path.md`, sem inventar outra lista; `--help` traz exemplos reais, um dia ou data inválidos dão um erro em linguagem clara) + `docs/fast-path-interactive.md` (uso + formato do arquivo de estado + regra de vencimento + panorama de 7 dias + 2 saídas reais coladas palavra por palavra) + uma linha no topo de `docs/fast-path.md` (entrada interativa) + uma linha em `docs/00-getting-started.md` passo B5 (8 scripts restantes → 9) + `tests/` com 226 testes da biblioteca padrão + 40 prompts sem alteração (28 principais + 12 avançados) + 12 arquivos de script |
 | **V17** | ✅ Concluída (2026-11-07) | READMEs completos em português e árabe (novos `README_PT.md` em português brasileiro e `README_AR.md` em árabe com layout RTL, ambos traduzidos por inteiro e alinhados com o README_EN.md: mesmas seções, tabelas, comandos, nomes de scripts, nomes de arquivos, versão e números; todas as empresas, preços e contatos de exemplo são fictícios, marcados com 【示例】 e domínio reservado sample.example) + `tests/` com 167 testes da biblioteca padrão + 40 prompts sem alteração (28 principais + 12 avançados) + 10 arquivos de script |
 | **V16** | ✅ Concluída (2026-11-07) | Biblioteca de lembretes (`scripts/nudge.py`: D3/D7/D14/D30 × cotado/amostra enviada/preço em negociação, 12 textos no total, versão curta de WhatsApp + versão longa de e-mail, inglês primeiro com tradução para o chinês depois de cada texto; escada de tom — D3 lembrete leve, D7 perguntar como vai, D14 três opções para salvar a cara (preço mais baixo / outra especificação / prazo de pagamento mais longo), D30 última mensagem sem queimar pontes; o dia 0 é o dia em que a cotação, a amostra ou a conversa de preço saiu, uma âncora diferente da cadência de primeiro contato do followup_plan, um fio segue uma só linha; `--channel whatsapp/email/both` / `--format json` / `--out`) + `docs/nudge.md` (uso + como se encaixa com o followup_plan + 2 saídas reais coladas palavra por palavra) + uma linha em `docs/00-getting-started.md` (lista de scripts 6 → 7) + `tests/` com 152 testes da biblioteca padrão + 40 prompts sem alteração (28 principais + 12 avançados) + 10 arquivos de script |
@@ -202,7 +205,7 @@ Sem pandas, sem SDK da OpenAI, de propósito. A configuração do ambiente é on
 | **Próxima versão** | A decidir | Direção a decidir (a rota rápida interativa de 7 dias chegou na V19) |
 | **Longo prazo** | — | Pacotes por indústria (pneus, materiais de construção, máquinas, ferragens); textos de contato em francês e russo (espanhol, português e árabe chegaram na V13); conjuntos públicos de leads sem identificação; ligar o motor de cotação aos dados aduaneiros para ancorar preços da concorrência automaticamente |
 
-A V20 não espera pela próxima versão: as 10 rodadas de endurecimento já podem ser usadas agora (CSVs ruins dão erros em linguagem clara em vez de traceback, cada execução escreve uma linha de rastreamento, as funções compartilhadas vivem em um só lugar). Não precisa esperar a próxima versão — os scripts já estão no repositório, com 647 testes todos verdes.
+A V20 não espera pela próxima versão: as 10 rodadas de endurecimento já podem ser usadas agora (CSVs ruins dão erros em linguagem clara em vez de traceback, cada execução escreve uma linha de rastreamento, as funções compartilhadas vivem em um só lugar). Não precisa esperar a próxima versão — os scripts já estão no repositório, com 680 testes todos verdes.
 
 ---
 ## Como contribuir

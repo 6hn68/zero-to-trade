@@ -139,8 +139,8 @@ Within 30 days: __ real leads / __ outreach emails / __ replies / __ quotation o
 **When you miss it, attribute in this order** (do not start by blaming the market):
 
 1. **Replies far below expectation** → most likely a list or channel problem. Go back to [02-find-leads_en.md](02-find-leads_en.md) and switch the route (customs → trade fair → social media). **Change the approach first, not the market.**
-2. **Replies come but nobody asks for a quote** → most likely a product-fit or qualification problem. Re-check the four items in the "barriers" column from Step 3 (certification system / tariffs / whether a local agent is needed / payment terms), and run through the three L1 checks in [03-due-diligence.md](03-due-diligence.md).
-3. **Quotation opportunities exist but every deal collapses** → that is good news: the market is right, the problem is in quotation and negotiation. Go to [05-negotiation.md](05-negotiation.md).
+2. **Replies come but nobody asks for a quote** → most likely a product-fit or qualification problem. Re-check the four items in the "barriers" column from Step 3 (certification system / tariffs / whether a local agent is needed / payment terms), and run through the three L1 checks in [03-due-diligence.md](03-due-diligence_en.md).
+3. **Quotation opportunities exist but every deal collapses** → that is good news: the market is right, the problem is in quotation and negotiation. Go to [05-negotiation.md](05-negotiation_en.md).
 4. **All four are 0 at the same time** → only then consider switching markets, and re-pull the candidate pool from Step 1.
 
 ## 3. Pass criteria
@@ -388,9 +388,9 @@ Next: [`02-find-leads_en.md`](02-find-leads_en.md). Four routes in parallel (cus
 |---|---|
 | The 3 browsable directory pages from Template C | Direct starting points for day-one collection — saves the time of finding entry points again |
 | HS subheading and UN Comtrade definition | Reused in [02-find-leads_en.md](02-find-leads_en.md) Step 2 when pulling the target country's import records — no need to re-define the definition |
-| The certification scheme name from the Barriers column | Used when judging whether a buyer is qualified to import ([03-due-diligence.md](03-due-diligence.md) L1) |
+| The certification scheme name from the Barriers column | Used when judging whether a buyer is qualified to import ([03-due-diligence.md](03-due-diligence_en.md) L1) |
 | The second-stop candidate list | **Do not** open it while finding leads; keep it on record and touch it only after the first stop's validation is done |
 
 **Fall back**: if the `To be verified` items in Template D's four-part form exceed 3 and you cannot check them right now, do not get stuck on this step — carry the `UNVERIFIED` marks into [02-find-leads_en.md](02-find-leads_en.md) and use real buyer feedback to fill the data in. That is usually faster than sitting at the computer researching.
 
-**Related docs**: [`03-due-diligence.md`](03-due-diligence.md) Due Diligence | [`04-outreach_en.md`](04-outreach_en.md) Outreach | [`05-negotiation.md`](05-negotiation.md) Qualifying | [`06-quote.md`](06-quote.md) Quotation | [`07-order-delivery.md`](07-order-delivery.md) Order & Delivery | [`deal-walkthrough.md`](deal-walkthrough.md) Full-deal walkthrough | [`fast-path.md`](fast-path.md) 7-day fast path | [README.md](../README.md) Overview
+**Related docs**: [`03-due-diligence.md`](03-due-diligence_en.md) Due Diligence | [`04-outreach_en.md`](04-outreach_en.md) Outreach | [`05-negotiation.md`](05-negotiation_en.md) Qualifying | [`06-quote.md`](06-quote_en.md) Quotation | [`07-order-delivery.md`](07-order-delivery_en.md) Order & Delivery | [`deal-walkthrough.md`](deal-walkthrough.md) Full-deal walkthrough | [`fast-path.md`](fast-path.md) 7-day fast path | [README.md](../README.md) Overview

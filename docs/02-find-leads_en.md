@@ -26,7 +26,7 @@ Three hard standards — a lead missing any one of them is a fake lead:
 
 **Step 0: Draw the legal boundary first (if this step is not done, everything after it is wasted)**
 
-Finding customers may only use **public information**. The allowed sources in this stage are exactly the same as the compliance red lines in [03 · Due Diligence](03-due-diligence.md):
+Finding customers may only use **public information**. The allowed sources in this stage are exactly the same as the compliance red lines in [03 · Due Diligence](03-due-diligence_en.md):
 
 Allowed:
 
@@ -158,7 +158,7 @@ Click path: type the company name in the search box → switch to **Companies** 
 | Named personal email (e.g. `a.rahman@sample.example`) | **Valid** | Record it in `email`; contactable; put the matching name in `contact` |
 | Department mailbox (`purchasing@sample.example` / `procurement@sample.example` / `import@sample.example`) | **Half-valid** | Record it in `email`, mark "department mailbox" in `note`; lower priority than a named email |
 | Public mailbox (`info@sample.example` / `sales@sample.example` / `support@sample.example` / `contact@sample.example`) | **Does not count as having a person** | You may record it, but `note` must say "public mailbox only" — it does not enter the priority contact sequence |
-| Personal free email (gmail / hotmail / yahoo) as the **only** contact method | **Suspicious** | Flag it in `note` and hand it to [03 · Due Diligence](03-due-diligence.md) for priority checking |
+| Personal free email (gmail / hotmail / yahoo) as the **only** contact method | **Suspicious** | Flag it in `note` and hand it to [03 · Due Diligence](03-due-diligence_en.md) for priority checking |
 
 **Step 5: Use trade fair directories to fill gaps and verify**
 Public trade fair exhibitor directories are publicly available information you can obtain legally. Two uses:
@@ -202,7 +202,7 @@ python scripts/lead_score.py my_leads.csv --format detail
 
 **On the grading vocabulary — do not mix them up**:
 
-- This stage (and [03 · Due Diligence](03-due-diligence.md)) grades **A/B/C customer ratings** — judging whether a company is worth investing in.
+- This stage (and [03 · Due Diligence](03-due-diligence_en.md)) grades **A/B/C customer ratings** — judging whether a company is worth investing in.
 - The **T0–T3** output by `lead_score.py` is a "who to contact first" sorting tool, not a customer rating. Do not copy it into the file as A/B/C.
 - The mapping from A/B/C to T0–T3 is defined solely by [04 · Outreach](04-outreach_en.md). Do not invent a separate standard in this stage.
 
@@ -214,7 +214,7 @@ python scripts/lead_score.py my_leads.csv --format detail
 | Time per day | **Fixed 30 minutes** (9 AM suggested) | Stop when time is up; do not stretch it because it feels good |
 | Time cap per lead | **5 minutes** (see the stop-loss rule in Step 3) | Over time → mark "contact details to be filled in" and store as T3 |
 | Weekly check | 5 days × 20 = **100 / week**; run the script grading once on the weekend | About 400 a month — enough to feed the due diligence stage |
-| Stage target | Move on to [03 · Due Diligence](03-due-diligence.md) after **200** raw names accumulated | 200 ≈ 10 working days. Do not loosen the three hard standards just to hit the number |
+| Stage target | Move on to [03 · Due Diligence](03-due-diligence_en.md) after **200** raw names accumulated | 200 ≈ 10 working days. Do not loosen the three hard standards just to hit the number |
 
 Channel discipline matters more than channel cleverness: **better 30 minutes every day than one 8-hour session followed by a week off.**
 
@@ -228,7 +228,7 @@ The hard standards for "this stage is done well":
 - There are four more gates before a lead enters the table (the door before entry): the company name is real + the city is identified + its main business matches your product + at least one **public** contact method. Missing any one goes into a separate "to be completed" pool first; it is only reviewed again once completed. **No inventing.**
 - Leads where you only got a public mailbox like `info@` are marked "public mailbox only" and **not counted** as "reachable contact person obtained".
 - The lead CSV header **strictly uses the script's 9 column names** (`company/country/product/source/email/phone/contact/years/note`), and `contact` has not been written under another name.
-- Every lead carries an initial A/B/C rating, with the reason written in `note` so it can be traced (rating definitions and criteria: see [03 · Due Diligence](03-due-diligence.md)).
+- Every lead carries an initial A/B/C rating, with the reason written in `note` so it can be traced (rating definitions and criteria: see [03 · Due Diligence](03-due-diligence_en.md)).
 - Invalid emails and unverified emails have been removed and have not entered mass sending; negative information (closure / lawsuits / sanctions) has been checked for one round.
 - **All information sources are public and legal**: no social engineering databases, no purchased private data, no impersonation to extract information.
 - 30 minutes of collection at a fixed time every day has run for **10 working days** without a break (about 200 raw names).
@@ -270,7 +270,7 @@ Note in Chinese (translated): this prompt turns a company website's raw text int
 | Item 3, products | `product` |
 | Items 4, 5, 7 (positioning / import-export / size) | Compressed into one sentence in `note` |
 | Item 6, contact details | Email → `email`; phone / WhatsApp → `phone`; role → `contact`; official site → extension table |
-| Item 8, red flags | Appended to `note`, handed to [03 · Due Diligence](03-due-diligence.md) |
+| Item 8, red flags | Appended to `note`, handed to [03 · Due Diligence](03-due-diligence_en.md) |
 
 > Do not stuff the official site address into `product` or any column other than `note` — the script does not read `website`, and stuffing it there scores nothing.
 
@@ -387,7 +387,7 @@ Note in Chinese (translated): this prompt gets you a whole search strategy in on
 **Trap 9: Mistaking a distributor for an importer**
 - What it looks like: finding a company whose website sells tires, treating it as an importer, and going straight to price and container quantities.
 - Why: the channel role was never distinguished. A distributor only buys wholesale locally — it does not clear customs or book containers. Talking FOB / CIF and 40HQ loading plans with it, it simply cannot decide.
-- The right move: write the channel role into `note` when the lead enters the table — **importer / distributor / retailer / end-user fleet**. Check three things: whether the website says "wholesale / distribution / agency", whether customs records show it clearing goods, and whether the competitor distributor page lists it as a distributor. Different roles mean completely different quotations and scripts later (see [06 · Quotation](06-quote.md)).
+- The right move: write the channel role into `note` when the lead enters the table — **importer / distributor / retailer / end-user fleet**. Check three things: whether the website says "wholesale / distribution / agency", whether customs records show it clearing goods, and whether the competitor distributor page lists it as a distributor. Different roles mean completely different quotations and scripts later (see [06 · Quotation](06-quote_en.md)).
 
 ## 7. Copy-paste templates (fill in, no AI needed)
 
@@ -418,7 +418,7 @@ company,website,channel_role,priority(A/B/C),status,next_followup,language,owner
 **Field-filling definitions:**
 
 - `source`: `referral` / `trade_show` / `customs` / `linkedin` / `search`
-- `priority`: A = contact within 3 days · B = within 2 weeks · C = nurture (definitions and criteria: see [03 · Due Diligence](03-due-diligence.md))
+- `priority`: A = contact within 3 days · B = within 2 weeks · C = nurture (definitions and criteria: see [03 · Due Diligence](03-due-diligence_en.md))
 - `channel_role` (extension table): importer / distributor / retailer / end-user fleet — see Trap 9
 - `note`: brands / price band / warehouse and store counts / import records / red flags — as specific as you can write them (the script looks for purchasing-signal keywords here)
 
@@ -439,7 +439,7 @@ python scripts/lead_score.py my_leads.csv --format detail
 
 ## 8. Next stage
 
-The list is ready — but do not send emails yet. It contains scammers, shell companies, and companies that simply do not buy. The next step is **[03 · Due Diligence](03-due-diligence.md)**: compress the 200 names into a batch of real buyers worth spending time on.
+The list is ready — but do not send emails yet. It contains scammers, shell companies, and companies that simply do not buy. The next step is **[03 · Due Diligence](03-due-diligence_en.md)**: compress the 200 names into a batch of real buyers worth spending time on.
 
 **Handover items (the three things passed to the due diligence stage):**
 

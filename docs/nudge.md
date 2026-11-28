@@ -19,13 +19,17 @@ python scripts/nudge.py --day D14 --scenario negotiating --company "【示例】
 # 30 天没回：最后通牒但不撕破脸；JSON 输出，存成文件
 python scripts/nudge.py --day D30 --scenario quoted --format json --out nudge.json
 
+# 只知道报价/发样/谈价那天、懒得手算过去了几天：--since 自己算档位
+# （下面这行是 2026-11-28 那天跑的：Day 0 是 11-20，已过 8 天，该发 D7）
+python3 scripts/nudge.py --since 2026-11-20 --scenario quoted --today 2026-11-28
+
 # 每天早上：一张清单，今天该跟谁、为什么、说什么（Daily list: who, why, what to say）
 python scripts/nudge.py --list followups.json --today 2026-11-22
 # JSON 输出，接进你自己的表格；--channel email 改出邮件长版
 python scripts/nudge.py --list followups.json --today 2026-11-22 --format json
 ```
 
-`--help` 里有上面这些能直接复制的例子。`--day` 和 `--scenario` 只在单条模式下必填（`--list` 模式不用填），缺了给人话报错，不裸奔。`--channel` 默认两者都出（`whatsapp` / `email` / `both`）。示例公司/联系人/产品全是虚构的（【示例】前缀），往外发之前必须换成真的。
+`--help` 里有上面这些能直接复制的例子。`--day` 和 `--scenario` 只在单条模式下必填（`--list` 模式不用填），缺了给人话报错，不裸奔。只知道报价/发样/谈价那天、不想手算过去了几天时，用 `--since YYYY-MM-DD` 代替 `--day`（两个二选一，仍要 `--scenario`）：脚本自己算该发 D3/D7/D14/D30 里哪档，并在输出顶部多一行 `Day 0：……（已过 X 天）→ 该发 D7 这档`；不到 3 天会明说还没到、不用发，不给空话术。`--day` 模式的输出一个字都不变。`--channel` 默认两者都出（`whatsapp` / `email` / `both`）。示例公司/联系人/产品全是虚构的（【示例】前缀），往外发之前必须换成真的。
 
 ## 四档语气（一天比一天重）
 

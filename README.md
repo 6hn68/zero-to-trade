@@ -18,7 +18,7 @@
 >
 > **在线演示（不用装 Python）**：[https://6hn68.github.io/zero-to-trade/](https://6hn68.github.io/zero-to-trade/) ——浏览器打开就能用 4 个工具：线索分级、建联文案、跟进计划、报价，界面支持 12 种语言（右上角切换），名单不上传。
 >
-> **版本状态**：V20（15 个脚本、647 项测试全绿），仓库和网站都是这一版；网站有 4 个浏览器工具，界面 12 种语言；CI 在 Python 3.10–3.13 上跑。终端演示 GIF 见下图（真实命令输出），录制脚本见 [`tape.vhs`](tape.vhs)。
+> **版本状态**：V20（15 个脚本、680 项测试全绿），仓库和网站都是这一版；网站有 4 个浏览器工具，界面 12 种语言；CI 在 Python 3.10–3.13 上跑。终端演示 GIF 见下图（真实命令输出），录制脚本见 [`tape.vhs`](tape.vhs)。
 
 ![终端演示：10 条线索跑一遍分级](assets/demo.gif)
 
@@ -265,7 +265,7 @@ zero-to-trade/
 │   ├── daily_video_list.py  # 每日 5 条视频清单：上午 3 条、下午 2 条，带规格、市场、卖点和拍摄检查项
 │   ├── fulfillment_checklist.py  # 订单交付核对：PI → 定金 → 生产 → 验货 → 尾款 → 订舱 → 报关 → 提单 → 清关单据 → 售后复购，定金/放单/出运三道钱关硬拦
 │   └── check_private_data.py  # 提交前自查：扫真实客户数据，抓到就挡住
-├── tests/                 # 647 项标准库 unittest，`python3 -m unittest discover -s tests`
+├── tests/                 # 680 项标准库 unittest，`python3 -m unittest discover -s tests`
 ├── examples/
 │   ├── leads_example.csv  # 示例数据（复制成 my_leads.csv 再填自己的）
 │   ├── leads_example_lighting.csv  # 非轮胎示例：8 条 LED 灯具线索
@@ -301,7 +301,7 @@ zero-to-trade/
 |---|---|---|
 | **V13** | ✅ 已落地（2026-11-07） | 多语言建联（`scripts/outreach_gen.py --lang es/pt/ar`：西/葡/阿正文 + 每条后附英文原文；模板与英文 T0/T1/T2 一一对应，脚本内嵌字典单份来源）+ `docs/04-outreach.md` 新一节（用法 + 3 份真实输出逐字贴）+ `tests/` 80 个标准库测试 + 提示词 40 条不变（核心 28 + 进阶 12）+ 7 个脚本文件 |
 | **V18** | ✅ 已落地（2026-11-07） | 竞品锚价（`scripts/anchor_price.py`：海关数据竞品价区间 + 自家成本 → 进取/中位/保守三档 CIF 锚价，每档毛利、毛利率、FOB 对等价、隐含加成与适用场景；报价前先过成本/运费/汇率/付款条件/有效期 5 项复核清单，任一项待核就提醒；低于成本警告“低于成本，别接单或先谈量换价”；缺中位价按（最低+最高）/2 估算并注明；`--format json` / `--audience client`）+ `docs/anchor-price.md`（用法 + 锚价指南 + 2 份真实输出逐字贴）+ `docs/06-quote.md` 补一行（报价前先锚价）+ `tests/` 187 个标准库测试 + 提示词 40 条不变（核心 28 + 进阶 12）+ 11 个脚本文件 |
-| **V20** | ✅ 当前版（2026-11-14） | 本地增量合并 + 10 轮打磨：CLI 入口统一（中文报错、退出码对齐）+ 测试补强（单条模式、`--start-date` 别名、运行日志）+ 文档数字对齐 + LED 灯具非轮胎示例（8 条）+ 演示页与 V19 同步 + 坏 CSV 人话报错（缺列/空文件/未闭合引号不再 traceback）+ 提示词对齐（P04-4 跟进命令补 `--avoid-weekend`、P10-2 窗口统一 48 小时）+ 操作日志落地（`logs/trace-YYYY-MM-DD.jsonl`，三个核心脚本每次运行写一行）+ 代码清理（共用函数只留一份，净减 151 行；anchor_price/tire_pack 两处死代码顺手清掉）+ `tests/` 647 个标准库测试 + 提示词 40 条不变（核心 28 + 进阶 12）+ 15 个脚本文件 |
+| **V20** | ✅ 当前版（2026-11-14） | 本地增量合并 + 10 轮打磨：CLI 入口统一（中文报错、退出码对齐）+ 测试补强（单条模式、`--start-date` 别名、运行日志）+ 文档数字对齐 + LED 灯具非轮胎示例（8 条）+ 演示页与 V19 同步 + 坏 CSV 人话报错（缺列/空文件/未闭合引号不再 traceback）+ 提示词对齐（P04-4 跟进命令补 `--avoid-weekend`、P10-2 窗口统一 48 小时）+ 操作日志落地（`logs/trace-YYYY-MM-DD.jsonl`，三个核心脚本每次运行写一行）+ 代码清理（共用函数只留一份，净减 151 行；anchor_price/tire_pack 两处死代码顺手清掉）+ `tests/` 680 个标准库测试 + 提示词 40 条不变（核心 28 + 进阶 12）+ 15 个脚本文件 |
 | **V19** | ✅ 已落地（2026-11-07） | 七天快路径互动版（`scripts/fast_path.py`：每天 `--day N` 看任务清单（任务名 + 要产出什么 + 用哪个脚本/哪篇文档）、干完 `--done N` 打卡（带打卡时间戳，写 `--state` JSON 文件，重复打卡提示已打卡过不重复记）、`--progress` 汇总已完成/待完成/逾期三数（逾期 = 计划日期早于今天且未打卡，计划日期 = `--start` 第 1 天 + (N-1) 天；没给 `--start` 时不算逾期，明确提示未设开始日期）、`--list` 列 7 天总览；任务清单与 `docs/fast-path.md` 逐条对齐，不另编一套；`--help` 带真实例子，非法天数/非法日期给人话报错）+ `docs/fast-path-interactive.md`（用法 + 打卡状态格式 + 逾期定义 + 7 天总览表 + 2 份真实输出逐字贴）+ `docs/fast-path.md` 顶部补一行（交互版入口）+ `docs/00-getting-started.md` B 路第五步补一行（剩下 8 个脚本 → 9 个）+ `tests/` 226 个标准库测试 + 提示词 40 条不变（核心 28 + 进阶 12）+ 12 个脚本文件 |
 | **V17** | ✅ 已落地（2026-11-07） | 葡语/阿语完整版 README（新增 `README_PT.md`（巴西葡语完整版）与 `README_AR.md`（阿语完整版，RTL 排版），内容与英文版对齐：章节结构、表格、代码命令、脚本名、文件名、版本号、数字全部一致；示例公司/价格/联系方式全是虚构的（【示例】前缀、sample.example 保留域）；`tests/` 167 个标准库测试 + 提示词 40 条不变（核心 28 + 进阶 12）+ 10 个脚本文件 |
 | **V16** | ✅ 已落地（2026-11-07） | 催单话术库（`scripts/nudge.py`：D3/D7/D14/D30 × 已报价未回/已发样未回/已谈价未定共 12 条话术，WhatsApp 短版 + 邮件长版，中英对照；语气分档 D3 轻提醒、D7 问进度、D14 给台阶（降价/换规格/延账期三选一）、D30 最后通牒但留后路；Day 0 是报价/发样/谈价那天，与 followup_plan 的首触节奏锚点不同，同一客户同一线程只走一条线；`--channel whatsapp/email/both` / `--format json` / `--out`）+ `docs/nudge.md`（用法 + 跟进节奏衔接表 + 2 份真实输出逐字贴）+ `docs/00-getting-started.md` 的脚本清单补一行（剩下 6 个脚本 → 7 个）+ `tests/` 152 个标准库测试 + 提示词 40 条不变（核心 28 + 进阶 12）+ 10 个脚本文件 |
@@ -316,7 +316,7 @@ zero-to-trade/
 | **下一版** | 待定 | 下一版方向待定（七天快路径互动版已在 V19 落地） |
 | **长期** | — | 行业包（轮胎、建材、机械、五金各自的环节细节）；多语言建联消息（法/俄，西/葡/阿已在 V13 落地）；真实线索集（脱敏后公开）；把报价引擎接到海关数据上做竞品锚价自动抓取 |
 
-V20 不等下一版：10 轮打磨已经能直接用（坏 CSV 给人话报错不再 traceback、每次运行写一行 trace 日志、共用函数只留一份）。想跑不用等下一版——脚本已经在仓库里，647 个测试全绿。
+V20 不等下一版：10 轮打磨已经能直接用（坏 CSV 给人话报错不再 traceback、每次运行写一行 trace 日志、共用函数只留一份）。想跑不用等下一版——脚本已经在仓库里，680 个测试全绿。
 
 ---
 
@@ -428,7 +428,7 @@ Ten sample leads come back tiered T0:2 / T1:5 / T2:1 / T3:2, each with its own n
 
 **What makes it different:** discipline, not tooling. The rules are what carry value — T0 gets contacted today, T3 goes in the cold pool, a concession without a condition is a donation. Anything that can be an `if/else` lives in a script, anything that needs judgment lives in the docs, anything that needs to sound like a human lives in `prompts/`.
 
-**Roadmap:** v0.1 (docs + scripts + 27 prompts) → v0.2 AI quoting engine → V19 (advanced modules, learning paths, 226 tests, 40 prompts, background-check agent, tire industry pack, multilingual outreach, landed cost estimation, trade show follow-up, nudge library, full Portuguese and Arabic READMEs, competitor anchor pricing, interactive 7-day fast path) → V20 (647 tests, local-increment merge, 10 hardening rounds: unified CLI, bad-CSV friendly errors, run tracing, shared helpers) → next: to be decided → long term: industry packs, more languages, real lead datasets.
+**Roadmap:** v0.1 (docs + scripts + 27 prompts) → v0.2 AI quoting engine → V19 (advanced modules, learning paths, 226 tests, 40 prompts, background-check agent, tire industry pack, multilingual outreach, landed cost estimation, trade show follow-up, nudge library, full Portuguese and Arabic READMEs, competitor anchor pricing, interactive 7-day fast path) → V20 (680 tests, local-increment merge, 10 hardening rounds: unified CLI, bad-CSV friendly errors, run tracing, shared helpers) → next: to be decided → long term: industry packs, more languages, real lead datasets.
 
 **Contributing:** the biggest gap here is country-specific field detail. If you actually sell into a market this repo knows nothing about, that's the highest-value contribution you can make. Read [CONTRIBUTING.md](CONTRIBUTING.md).
 

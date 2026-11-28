@@ -50,6 +50,10 @@ JSON 文件格式（公司名、联系人、产品全是虚构示例，【示例
 不填当没发过；size / market / li / speed 选填，填了就链上 tire_pack.py。
 --today 可以指定“今天是哪天”（默认就是今天，测试、补算旧账时用）。
 
+单条模式只给 Day 0 也行：--since 2026-11-20 --scenario quoted，脚本自己算
+过去了几天、该发 D3/D7/D14/D30 里哪档，不到 3 天会明说还没到、不用发；
+--since 和 --day 二选一，两个都给会报错。
+
 只用标准库，Python 3.10+ 可直接跑，不联网，不写文件（除非你加 --out）。
 
 用法见 --help（里面的例子都能直接复制）。
@@ -59,7 +63,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import date
+from datetime import date, timedelta
 from typing import Dict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -511,6 +515,10 @@ def render_table(nudge, channels=("whatsapp", "email")):
              "  客户：%s（联系人 %s）· 产品：%s"
              % (nudge["company"], nudge["contact"], nudge["product"]),
              "=" * 76, ""]
+    if nudge.get("day0") is not None:
+        # --since 模式才有这一行：--day 模式的输出一个字都不变。
+        lines.insert(3, "  Day 0：%s（已过 %d 天）→ 该发 %s 这档"
+                     % (nudge["day0"], nudge["days_elapsed"], nudge["day"]))
     if "whatsapp" in channels:
         wa = nudge["whatsapp"]
         lines += ["[WhatsApp 短版 — 直接复制发]", "",
@@ -543,6 +551,10 @@ def render_json(nudge, channels=("whatsapp", "email")):
                "stop_rule": nudge["stop_rule"],
                "followup_plan_note": nudge["followup_plan_note"],
                "reproduce": nudge["reproduce"]}
+    if nudge.get("day0") is not None:
+        # --since 模式才多这两个键：--day 模式的 JSON 一个键都不变。
+        payload["day0"] = nudge["day0"]
+        payload["days_elapsed"] = nudge["days_elapsed"]
     for ch in channels:
         payload[ch] = nudge[ch]
     return json.dumps(payload, ensure_ascii=False, indent=2)
@@ -622,6 +634,35 @@ def next_nudge(elapsed_days, sent):
     if elapsed_days > rung:
         return "D%d" % rung, "overdue", elapsed_days - rung, 0
     return "D%d" % rung, "upcoming", 0, rung - elapsed_days
+
+
+def pick_day_since(day0, today=None):
+    """Single-nudge shortcut: which rung to send, given only the Day 0 date.
+
+    day0: the day the quote went out / sample shipped / price talk started
+    (YYYY-MM-DD, or a date). today: a date, a YYYY-MM-DD string, or None
+    (= today). Returns (day, elapsed_days): day is the latest rung whose
+    day has already passed ("D3"/"D7"/"D14"/"D30"), or None when fewer
+    than 3 days have passed (nothing to send yet). Raises ValueError on a
+    bad date or a Day 0 in the future — same plain-language style as
+    parse_date, never a traceback.
+
+    单条省事写法：只给 Day 0（报价/发样/谈价那天），脚本自己算过去了几天、
+    该发哪档。返回（档，过去的天数）：档是已经过去的那一档里最晚的
+    （比如过去 8 天就是 D7）；不到 3 天返回（None，天数），意思是还没到
+    发的时候。日期写错、Day 0 还没到都直接报人话错，不裸奔。
+    """
+    today = _coerce_today(today)
+    start = day0 if isinstance(day0, date) else parse_date(day0)
+    if start > today:
+        raise ValueError("Day 0 %s 还没到：报价/发样/谈价还没发生，"
+                         "先确认一下日期是不是写错了（今天是 %s）。"
+                         % (start.isoformat(), today.isoformat()))
+    elapsed = (today - start).days
+    for rung in (30, 14, 7, 3):
+        if elapsed >= rung:
+            return "D%d" % rung, elapsed
+    return None, elapsed
 
 
 def _pack_for_item(entry):
@@ -891,6 +932,10 @@ def build_parser():
   python scripts/nudge.py --day D14 --scenario negotiating --company "【示例】海湾轮胎贸易" --contact Alex --product "TBR 12.00R20"
   python scripts/nudge.py --day D30 --scenario quoted --format json --out nudge.json
 
+只知道报价/发样/谈价那天、懒得手算过去了几天、该用哪档，就用 --since
+（和 --day 二选一，仍要 --scenario；不到 3 天会明说还没到、不用发）：
+  python3 scripts/nudge.py --since 2026-11-20 --scenario quoted --today 2026-11-28
+
 每天一张清单（--list）：给它一个 JSON 文件，里面是每个客户的 Day 0 和已发过哪几档，
 它吐出「今天该跟谁、为什么、说什么」，逾期的排最前面、标 ⚠ OVERDUE：
   python scripts/nudge.py --list followups.json
@@ -908,13 +953,18 @@ company / day0 / scenario 必填；contact / product 不填就用虚构示例值
 sent 是已发过的档，不填当没发过；size / market / li / speed 选填，填了就链上 tire_pack.py，
 清单里贴规格包一句话摘要 + 缺什么没核实。
 
---day 和 --scenario：单条话术模式必填；--list 模式不用填。
+--day 和 --since：单条话术模式二选一必填（知道过去了几天就用 --day，只知道报价/
+发样/谈价那天就用 --since）；--scenario 单条模式必填；--list 模式这三个都不用填。
 --channel 默认两者都出（whatsapp/email/both）；--list 模式默认只出 WhatsApp 短版，
 --channel email 改出邮件长版。
 Day 0 是报价/发样/谈价那天，不是首触那天——报价前走 followup_plan.py，
 报价后走这个脚本，同一客户同一线程只走一条线。""")
     p.add_argument("--day", required=False, default=None,
-                   help="过去了几天：D3 / D7 / D14 / D30（单条模式必填）")
+                   help="过去了几天：D3 / D7 / D14 / D30（单条模式必填，和 --since 二选一）")
+    p.add_argument("--since", default=None, metavar="YYYY-MM-DD",
+                   help="单条模式省事写法：报价/发样/谈价那天（Day 0），脚本自己算"
+                        "过去了几天、该用哪档，不用你手算；和 --day 二选一，仍要 "
+                        "--scenario；不到 3 天会明说还没到、不用发")
     p.add_argument("--scenario", required=False, default=None,
                    help="卡在哪一步：quoted（已报价未回）/ sampled（已发样未回）/ "
                         "negotiating（已谈价未定）（单条模式必填）")
@@ -922,7 +972,8 @@ Day 0 是报价/发样/谈价那天，不是首触那天——报价前走 follo
                    help="每日清单模式：JSON 文件路径，里面是跟进中的客户列表"
                         "（格式见 --help 末尾的例子）")
     p.add_argument("--today", default=None, metavar="YYYY-MM-DD",
-                   help="清单模式里“今天是哪天”，默认就是今天（测试、补算旧账时用）")
+                   help="“今天是哪天”，默认就是今天（清单模式和 --since 都能用；"
+                        "测试、补算旧账时用）")
     p.add_argument("--company", default=DEFAULT_COMPANY,
                    help="客户公司名（默认虚构示例：%s；往外发之前必须换成真的）"
                         % DEFAULT_COMPANY)
@@ -995,18 +1046,49 @@ def main():
             print("已写入 %s" % args.out)
         return
 
-    # Single-nudge mode: --day and --scenario are required here.
-    # 单条模式：--day 和 --scenario 必填。
-    if not args.day or not args.scenario:
+    # Single-nudge mode: --day or --since, plus --scenario.
+    # 单条模式：--day 或 --since 二选一，再加 --scenario。
+    if args.day and args.since:
+        raise SystemExit("错误：--day 和 --since 只能二选一：知道过去了几天就用 "
+                         "--day D7，只知道报价/发样/谈价那天就用 --since 2026-11-20。")
+    if not args.day and not args.since:
         parser.print_usage(sys.stderr)
-        print("\n单条话术要 --day 和 --scenario 两个都给（如 --day D3 --scenario quoted）；"
+        print("\n单条话术要 --day 或 --since 再加 --scenario（如 --day D3 --scenario quoted，"
+              "\n或 --since 2026-11-20 --scenario quoted）；"
               "\n要每天一张清单就跑 --list followups.json。不知道怎么填就跑 "
               "python scripts/nudge.py --help，里面有能直接复制的例子。",
               file=sys.stderr)
         raise SystemExit(2)
+    if not args.scenario:
+        parser.print_usage(sys.stderr)
+        print("\n单条话术还要 --scenario（quoted 已报价未回 / sampled 已发样未回 / "
+              "negotiating 已谈价未定）。不知道怎么填就跑 "
+              "python scripts/nudge.py --help，里面有能直接复制的例子。",
+              file=sys.stderr)
+        raise SystemExit(2)
     try:
-        nudge = get_nudge(args.day, args.scenario, args.company,
-                          args.contact, args.product)
+        if args.since:
+            day, elapsed = pick_day_since(args.since, today=args.today)
+            if day is None:
+                # 不到 3 天：没有话术可给，明说还要几天，不是报错。
+                start = parse_date(args.since)
+                due = start + timedelta(days=3)
+                print("还没到发的时候：Day 0 是 %s，才过去 %d 天，D3 还要 %d 天（%s），"
+                      "现在不用发。" % (start.isoformat(), elapsed, 3 - elapsed,
+                                       due.isoformat()))
+                return
+            nudge = get_nudge(day, args.scenario, args.company,
+                              args.contact, args.product)
+            # --since 模式才多这三样：--day 模式的话术、表格、JSON 一个字都不变。
+            nudge["day0"] = parse_date(args.since).isoformat()
+            nudge["days_elapsed"] = elapsed
+            nudge["reproduce"] = ("python3 scripts/nudge.py --since %s --scenario %s "
+                                  "--company %r --contact %s --product %s"
+                                  % (nudge["day0"], args.scenario, nudge["company"],
+                                     nudge["contact"], nudge["product"]))
+        else:
+            nudge = get_nudge(args.day, args.scenario, args.company,
+                              args.contact, args.product)
     except ValueError as e:
         raise SystemExit("错误：%s\n  不知道怎么填就跑：python scripts/nudge.py --help"
                          % e)

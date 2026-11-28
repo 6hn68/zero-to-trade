@@ -21,11 +21,11 @@ FILES = {
 
 # (scripts, tests, prompts) wording each version must carry.
 EXPECTED_NUMBERS = {
-    "zh": ("15 \u4e2a\u811a\u672c\u6587\u4ef6", "647 \u4e2a\u6807\u51c6\u5e93\u6d4b\u8bd5", "\u63d0\u793a\u8bcd 40 \u6761"),
-    "en": ("15 script files", "647 stdlib tests", "40 prompts"),
-    "es": ("15 scripts", "647 pruebas", "40 prompts"),
-    "pt": ("15 arquivos de script", "647 testes", "40 prompts"),
-    "ar": ("15 \u0645\u0644\u0641\u0627\u062a", "647 \u0627\u062e\u062a\u0628\u0627\u0631", "40 \u0645\u0648\u062c\u0651\u0647"),
+    "zh": ("15 \u4e2a\u811a\u672c\u6587\u4ef6", "680 \u4e2a\u6807\u51c6\u5e93\u6d4b\u8bd5", "\u63d0\u793a\u8bcd 40 \u6761"),
+    "en": ("15 script files", "680 stdlib tests", "40 prompts"),
+    "es": ("15 scripts", "680 pruebas", "40 prompts"),
+    "pt": ("15 arquivos de script", "680 testes", "40 prompts"),
+    "ar": ("15 \u0645\u0644\u0641\u0627\u062a", "680 \u0627\u062e\u062a\u0628\u0627\u0631", "40 \u0645\u0648\u062c\u0651\u0647"),
 }
 
 CURRENT_MARKER = {
@@ -84,11 +84,11 @@ class TestReadmeI18n(unittest.TestCase):
                 "%s does not say 15 scripts" % lang,
             )
 
-    def test_test_count_647_in_all_five(self):
+    def test_test_count_680_in_all_five(self):
         for lang, name in FILES.items():
             self.assertIn(
                 EXPECTED_NUMBERS[lang][1], read(name),
-                "%s does not say 647 tests" % lang,
+                "%s does not say 680 tests" % lang,
             )
 
     def test_prompt_count_40_in_all_five(self):

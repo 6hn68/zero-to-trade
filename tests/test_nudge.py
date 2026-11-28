@@ -500,5 +500,107 @@ class TestDailyListCLI(unittest.TestCase):
         self.assertNotIn("Traceback", out)
 
 
+class TestSince(unittest.TestCase):
+    """--since: 只给 Day 0，脚本自己算过去了几天、该发哪档。
+
+    2026-11-28 route-11：单条模式原来只认 --day D3/D7/D14/D30，每次都要
+    手算报价发出几天了。--since 是纯加法：--day 的行为、输出一个字都不变。
+    """
+
+    TODAY = "2026-11-28"
+
+    def test_pick_day_boundaries(self):
+        # 档位边界：3/7/14/30 当天就进档，前一天还是上一档。
+        self.assertEqual(nudge.pick_day_since("2026-11-25", self.TODAY), ("D3", 3))
+        self.assertEqual(nudge.pick_day_since("2026-11-22", self.TODAY), ("D3", 6))
+        self.assertEqual(nudge.pick_day_since("2026-11-21", self.TODAY), ("D7", 7))
+        self.assertEqual(nudge.pick_day_since("2026-11-15", self.TODAY), ("D7", 13))
+        self.assertEqual(nudge.pick_day_since("2026-11-14", self.TODAY), ("D14", 14))
+        self.assertEqual(nudge.pick_day_since("2026-10-30", self.TODAY), ("D14", 29))
+        self.assertEqual(nudge.pick_day_since("2026-10-29", self.TODAY), ("D30", 30))
+        self.assertEqual(nudge.pick_day_since("2026-09-01", self.TODAY), ("D30", 88))
+
+    def test_pick_day_not_yet(self):
+        # 不到 3 天：还没到发的时候，档是 None，不是报错。
+        self.assertEqual(nudge.pick_day_since("2026-11-28", self.TODAY), (None, 0))
+        self.assertEqual(nudge.pick_day_since("2026-11-26", self.TODAY), (None, 2))
+
+    def test_pick_day_bad_and_future_date_raise(self):
+        with self.assertRaises(ValueError):
+            nudge.pick_day_since("2026/11/20", self.TODAY)
+        with self.assertRaises(ValueError):
+            nudge.pick_day_since("下周", self.TODAY)
+        with self.assertRaises(ValueError):
+            nudge.pick_day_since("2026-11-29", self.TODAY)
+
+    def test_cli_since_picks_d7_and_shows_day0_line(self):
+        code, out = run_cli("--since", "2026-11-20", "--scenario", "quoted",
+                            "--today", self.TODAY)
+        self.assertEqual(code, 0)
+        self.assertIn("D7", out)
+        self.assertIn("问进度", out)
+        self.assertIn("Day 0：2026-11-20（已过 8 天）→ 该发 D7 这档", out)
+        self.assertIn("python3 scripts/nudge.py --since 2026-11-20 "
+                      "--scenario quoted", out)
+
+    def test_cli_since_json_carries_day0(self):
+        code, out = run_cli("--since", "2026-11-14", "--scenario", "sampled",
+                            "--today", self.TODAY, "--format", "json")
+        self.assertEqual(code, 0)
+        payload = json.loads(out)
+        self.assertEqual(payload["day"], "D14")
+        self.assertEqual(payload["day0"], "2026-11-14")
+        self.assertEqual(payload["days_elapsed"], 14)
+        self.assertIn("--since 2026-11-14", payload["reproduce"])
+
+    def test_cli_since_not_yet_is_plain_words_not_error(self):
+        code, out = run_cli("--since", "2026-11-27", "--scenario", "quoted",
+                            "--today", self.TODAY)
+        self.assertEqual(code, 0)
+        self.assertIn("还没到发的时候", out)
+        self.assertIn("D3 还要 2 天", out)
+        self.assertNotIn("Traceback", out)
+
+    def test_cli_since_and_day_together_is_human_error(self):
+        code, out = run_cli("--since", "2026-11-20", "--day", "D7",
+                            "--scenario", "quoted")
+        self.assertNotEqual(code, 0)
+        self.assertIn("二选一", out)
+        self.assertNotIn("Traceback", out)
+
+    def test_cli_since_without_scenario_is_human_error(self):
+        code, out = run_cli("--since", "2026-11-20")
+        self.assertNotEqual(code, 0)
+        self.assertIn("--help", out)
+        self.assertNotIn("Traceback", out)
+
+    def test_cli_since_bad_and_future_date_are_human_errors(self):
+        code, out = run_cli("--since", "2026/11/20", "--scenario", "quoted")
+        self.assertNotEqual(code, 0)
+        self.assertIn("YYYY-MM-DD", out)
+        self.assertNotIn("Traceback", out)
+        code, out = run_cli("--since", "2026-11-29", "--scenario", "quoted",
+                            "--today", self.TODAY)
+        self.assertNotEqual(code, 0)
+        self.assertIn("还没到", out)
+        self.assertNotIn("Traceback", out)
+
+    def test_cli_day_output_has_no_day0_line(self):
+        # --day 模式的输出一个字都不变：没有 Day 0 那一行，没有多余的键。
+        code, out = run_cli("--day", "D7", "--scenario", "quoted")
+        self.assertEqual(code, 0)
+        self.assertNotIn("Day 0：", out)
+        code, out = run_cli("--day", "D7", "--scenario", "quoted",
+                            "--format", "json")
+        payload = json.loads(out)
+        self.assertNotIn("day0", payload)
+        self.assertNotIn("days_elapsed", payload)
+
+    def test_cli_help_mentions_since(self):
+        code, out = run_cli("--help")
+        self.assertEqual(code, 0)
+        self.assertIn("--since 2026-11-20 --scenario quoted", out)
+
+
 if __name__ == "__main__":
     unittest.main()

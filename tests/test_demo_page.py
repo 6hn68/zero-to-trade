@@ -4,7 +4,7 @@
 
 - The two embedded example fallbacks (file:// open, fetch fails) must stay
   byte-identical to the CSV data rows they mirror.
-- The "more scripts" card must name all 12 scripts.
+- The "more scripts" card must name all 15 scripts.
 - The 2-minute demo card (#demo) must keep its 7 clickable steps, with
   every step's data-target resolving to a real id and every shown string
   translated into all 12 languages.
@@ -23,6 +23,7 @@ SCRIPTS = [
     "quote_engine.py", "due_diligence.py", "tire_pack.py",
     "landed_cost.py", "trade_show.py", "nudge.py", "anchor_price.py",
     "fast_path.py", "check_private_data.py",
+    "market_rules.py", "daily_video_list.py", "fulfillment_checklist.py",
 ]
 
 
@@ -47,8 +48,10 @@ class TestDemoPageSync(unittest.TestCase):
                          "lighting fallback drifted from "
                          "leads_example_lighting.csv")
 
-    def test_all_twelve_scripts_named(self):
+    def test_all_fifteen_scripts_named(self):
         html = (REPO_ROOT / "index.html").read_text(encoding="utf-8")
+        self.assertEqual(len(SCRIPTS), 15,
+                         "SCRIPTS drifted from the 15 scripts in scripts/")
         for name in SCRIPTS:
             self.assertIn(name, html, "index.html does not mention %s" % name)
 
